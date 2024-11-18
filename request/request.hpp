@@ -37,6 +37,7 @@ class request
         bool valid_elem(std::string elem);
         bool is_req_well_formed();
         bool get_matched_loc_for_req_uri();
+        bool get_resource_type();
         bool is_location_have_redir();
         bool is_method_allowed_in_loc();
         bool get_request_resource();

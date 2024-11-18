@@ -157,13 +157,16 @@ bool request::get_request_resource()
     std::string file;
     if (getcwd(buffer, sizeof(buffer)) != NULL)
     {
-        file = static_cast<std::string>(buffer) + this->current_loc->second.root + this->URI;
-        return (access(file.c_str(), F_OK));
+        file = std::string(buffer) + this->current_loc->second.root + this->URI;
+        return (access(file.c_str(), F_OK) == 0);
     }
-    return (printf("Error on getcwd\n", false));
-    //compare the ROOT/URI if it exist
+    return (printf("Error on getcwd\n"), false);
 }
 
+inline bool request::get_resource_type()
+{
+    return (this->URI.back() == '/');
+}
 
 void    request::display_req()
 {
