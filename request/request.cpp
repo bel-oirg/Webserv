@@ -153,7 +153,14 @@ bool request::is_method_allowed_in_loc()
 
 bool request::get_request_resource()
 {
-    std::string file = this->current_loc->second.root + this->URI;
+    char buffer[PATH_MAX];
+    std::string file;
+    if (getcwd(buffer, sizeof(buffer)) != NULL)
+    {
+        file = static_cast<std::string>(buffer) + this->current_loc->second.root + this->URI;
+        return (access(file.c_str(), F_OK));
+    }
+    return (printf("Error on getcwd\n", false));
     //compare the ROOT/URI if it exist
 }
 

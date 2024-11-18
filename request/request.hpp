@@ -7,6 +7,7 @@
 #include <list>
 #include <sstream>
 #include <regex>
+#include <unistd.h>
 
 struct loc_details
 {
