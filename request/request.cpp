@@ -154,17 +154,22 @@ bool request::is_method_allowed_in_loc()
 bool request::get_request_resource()
 {
     char buffer[PATH_MAX];
-    std::string file;
     if (getcwd(buffer, sizeof(buffer)) != NULL)
     {
-        file = std::string(buffer) + this->current_loc->second.root + this->URI;
-        return (access(file.c_str(), F_OK) == 0);
+        this->path = std::string(buffer) + this->current_loc->second.root + this->URI;
+        struct stat s;
+        if (!std::stat(this->path, &s))
+        {
+            if (s.st_mode & S_IFDIR)
+
+        }
     }
     return (printf("Error on getcwd\n"), false);
 }
 
 inline bool request::get_resource_type()
 {
+    //TODO conflict here continue;
     return (this->URI.back() == '/');
 }
 

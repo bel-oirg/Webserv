@@ -1,19 +1,22 @@
 #pragma once
 
+#include <unordered_map>
 #include <iostream>
+#include <unistd.h>
+#include <sstream>
 #include <string>
 #include <vector>
-#include <unordered_map>
-#include <list>
-#include <sstream>
 #include <regex>
-#include <unistd.h>
+#include <list>
+#include <sys/stat.h>
 
 struct loc_details
 {
     int status_code;
+    bool auto_index;
     std::string index;
     std::string root;
+    std::string path;
     std::vector<std::string> allowed_methods;
 };
 
