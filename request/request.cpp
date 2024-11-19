@@ -271,6 +271,8 @@ int     request::POST()
     
 }
 
+//TODO CHECK THE '/'
+
 int     request::DELETE()
 {
     int resource_type = get_request_resource();
@@ -282,8 +284,6 @@ int     request::DELETE()
             return (409);
         if (!if_location_has_cgi())
             return (403);
-
-
         if (is_dir_has_index_files())
         {
             if (if_location_has_cgi())
@@ -295,7 +295,21 @@ int     request::DELETE()
                     RUN CGI WITH POST - STAT CODE DEP ON CGI
                 */
             }
+            if (delete_all_folder_content(ressource_path))
+                return (204);
+            if (has_write_access_on_folder())
+                return (500);
+            return (403);
         }
+    }
+    else if (resource_type == 2)
+    {
+        if (!if_location_has_cgi())
+            return (204);
+        /*
+        else
+            RUN CGI WITH POST - STAT CODE DEP ON CGI
+        */
     }
 }
 
@@ -326,9 +340,50 @@ bool    request::get_auto_index()
     return (this->current_loc->second.auto_index);
 }
 
-
 //POST
 bool request::if_loc_support_upload()
 {
     return (!this->client_max_body_size.empty());
+}
+
+bool request::delete_all_folder_content(std::string ress_path)
+{
+    DIR* dir = opendir(ress_path.c_str());
+    if (!dir)
+        return(printf("Cannot open dir\n"), false);
+    struct dirent *entry;
+    struct stat s;
+    std::string sub;
+
+    while((entry == readdir(dir)))
+    {
+        sub = entry->d_name;
+        if (sub == "." || sub == "..")
+            continue;
+        
+        std::string a_path = ress_path + "/" + sub;
+        if (stat(a_path.c_str(), &s) < 0)
+            return (printf("stat fails\n"), closedir(dir), false);
+        if (S_ISDIR(s.st_mode))
+        {
+            if (!delete_all_folder_content(a_path))
+                return (closedir(dir), false);
+        }
+        else
+        {
+            if (remove(a_path.c_str()))
+                return (printf("Cannot delete file\n"), closedir(dir), false);
+        }
+    }
+    closedir(dir);
+    if (rmdir(ress_path.c_str()))
+        return (printf("Cannot delete dir\n"), false);
+    return (true);
+}
+
+bool request::has_write_access_on_folder()
+{
+    struct stat s;
+    stat(ressource_path.c_str(), &s);
+    return (s.st_mode & S_IWUSR);
 }

@@ -64,5 +64,9 @@ class request
 
         //POST
         bool if_loc_support_upload();
+
+        //DELETE
+        bool has_write_access_on_folder();
+        bool delete_all_folder_content(std::string ress_path);
 };
 
