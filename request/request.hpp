@@ -1,14 +1,13 @@
 #pragma once
 
 #include <unordered_map>
+#include <sys/stat.h>
+#include <dirent.h>
 #include <iostream>
 #include <unistd.h>
 #include <sstream>
 #include <string>
 #include <vector>
-#include <regex>
-#include <list>
-#include <sys/stat.h>
 
 struct loc_details
 {
@@ -50,7 +49,9 @@ class request
         bool is_location_have_redir();
         bool is_method_allowed_in_loc();
         int get_request_resource();
-
+        bool is_uri_has_slash_in_end();
+        bool is_dir_has_index_files();
+        bool if_location_has_cgi();
         bool is_valid_URI();
 };
 

@@ -175,7 +175,33 @@ int request::get_request_resource() //get_resource_type()
     return (printf("Error on getcwd\n"), -2);
 }
 
+inline bool request::is_uri_has_slash_in_end()
+{
+    return (this->URI.back() == '/');
+}
 
+bool request::is_dir_has_index_files()
+{
+    std::string to_check;
+    struct stat s;
+
+    for (size_t index = 0; index < this->current_loc->second.index_files.size() ; index++)
+    {
+        //TODO should i add '/' ?
+        to_check = this->current_loc->first + this->current_loc->second.index_files[index];
+        if (!stat(to_check.c_str(), &s) && S_ISREG(s.st_mode))
+        {
+            ressource_path = to_check;
+            return (true);
+        }
+    }
+    return (false);
+}
+
+bool request::if_location_has_cgi()
+{
+    return (this->current_loc->second.has_cgi);
+}
 
 void    request::display_req()
 {
