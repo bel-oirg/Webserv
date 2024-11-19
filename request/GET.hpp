@@ -6,5 +6,4 @@ class GET : public request
 {
     public:
 
-        bool get_auto_index();
 };

@@ -2,11 +2,6 @@
 
 request::request(std::string raw_req) : req(raw_req) {}
 
-bool request::is_valid_URI()
-{
-    const std::regex path_regex("^(/[-a-zA-Z0-9._~%!$&'()*+,;=:@]*)*$");
-    return (std::regex_match(URI, path_regex));
-}
 
 inline void    stat_(int status_code)
 {
@@ -61,7 +56,18 @@ bool    request::valid_elem(std::string elem)
     return (true);
 }
 
-bool request::is_req_well_formed() //REQ
+bool    is_valid_URI(std::string URI)
+{
+    std::string allowed_URI = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789 ._~:/?#[]@!$&'()*+,;=%";
+    for (size_t index = 0; index < URI.size() ; index++)
+    {
+        if (allowed_URI.find(URI[index]) == std::string::npos)
+            return (false);
+    }
+    return (true);
+}
+
+int request::is_req_well_formed() //REQ
 {
     //LINE 1
     std::string l1_s, tmp_line, field, value;
@@ -70,7 +76,7 @@ bool request::is_req_well_formed() //REQ
     this->has_body = false;
 
     if (req.empty())
-        return (printf("EMPTY\n"), false);
+        return (printf("EMPTY\n"), 400);
     std::stringstream ss(req);
     std::getline(ss, l1_s, '\n');
 
@@ -78,13 +84,13 @@ bool request::is_req_well_formed() //REQ
 
     std::getline(l1, this->method, ' ');
     if (!valid_method())
-        return (printf("METHOD REGEX\n"), false);
+        return (printf("METHOD NOT VALID\n"), 400);
 
     std::getline(l1, this->URI, ' ');
-    if (!request::is_valid_URI())
-        return (stat_(400), false);
-    if (this->URI.size() > 2048)
-        return (stat_(414), false);
+    if (!is_valid_URI(this->URI))
+        return (400);
+    if (this->URI.size() > MAX_URI_SIZE)
+        return (414);
     std::getline(l1, this->HTTP, '\r');
 
     //LINE 2
@@ -94,7 +100,7 @@ bool request::is_req_well_formed() //REQ
         if (!request::valid_elem(tmp_line))
         {
             if (tmp_line != "\r" && !blank_line)
-                return (false);
+                return (400);
             blank_line = true;
             continue;
         }
@@ -104,36 +110,32 @@ bool request::is_req_well_formed() //REQ
         this->headers.insert(std::make_pair(field, trim_line(value)));
     }
     if (headers.find("Host") == headers.end())
-        return (printf("NO HOST FOUND\n"), false);
+        return (printf("NO HOST FOUND\n"), 400);
     std::getline(ss, tmp_line);
     if (tmp_line.size())
     {
         if (tmp_line.size() >= this->max_body_size)
-            return (stat_(413), false);
+            return (413);
         this->has_body = true;
         this->headers.insert(std::make_pair("Body", tmp_line));
     }
 
-    if (this->headers.find("Transfer-Encoding") != this->headers.end())
-    {
-        if (this->headers["Transfer-Encoding"] != "chunked")
-            return (stat_(501), false);
-    }
-    else
-    {
-        if (this->headers.find("Content-Length") == this->headers.end() && this->method == "POST")
-            return (stat_(400), false);
-    }
-    return (true);
+    if (this->headers["Transfer-Encoding"] != "chunked")
+        return (501);
+
+    if (this->headers["Transfer-Encoding"].empty() && this->headers["Content-Length"].empty() && this->method == "POST")
+        return (400);
+    return (0);
 }
 
 bool request::get_matched_loc_for_req_uri() //REQ
 {
-    std::unordered_map<std::string, std::string>::iterator loc;
+    if (this->headers["Location"].empty())
+        return (printf("No location found in the header\n"), false);
 
+    std::unordered_map<std::string, std::string>::iterator loc;
     loc = std::find(headers.begin(), headers.end(), "Location");
-    if (loc == headers.end())
-        return (printf("No location found in the header\n", false));
+
     this->current_loc = std::find(locations.begin(), locations.end(), *loc);
     return (this->current_loc != locations.end());
 }
@@ -208,4 +210,67 @@ void    request::display_req()
     std::cout << this->method << " " << this->URI << " " << this->HTTP << std::endl;
     for (std::unordered_map<std::string, std::string>::iterator it = headers.begin() ; it != headers.end() ; it++)
         std::cout << it->first << ": " << it->second << std::endl;
+}
+
+int     request::GET()
+{
+    int resource_type = get_request_resource();
+    if (resource_type <= 0)
+        return (404);
+    if (resource_type == 1) // dir
+    {
+        if (!is_uri_has_slash_in_end())
+            return (301); //redir to same path + "/"
+        if (!is_dir_has_index_files())
+        {
+            if (!get_auto_index())
+                return (403);
+            return (200); //return autoindex of the directory
+        }
+    }
+    if (!if_location_has_cgi())
+        return (200);
+    /*
+    else
+        RUN CGI WITH GET - STAT CODE DEP ON CGI
+    */
+}
+
+int     request::POST()
+{
+    if (if_loc_support_upload())
+        return (201); //upload the POST req body
+    
+}
+
+int    request::req_arch()
+{
+    int stat_code;
+    stat_code = is_req_well_formed();
+    if (stat_code)
+        return ;
+    if (!get_matched_loc_for_req_uri())
+        return (404);
+    if (!is_location_have_redir())
+        return (301);
+    if (!is_method_allowed_in_loc())
+        return (405);
+    
+    if (this->method == "GET")
+        GET();
+    else if (this->method == "POST")
+        POST();
+}
+
+//GET
+bool    request::get_auto_index()
+{
+    return (this->current_loc->second.auto_index);
+}
+
+
+//POST
+bool request::if_loc_support_upload()
+{
+    return (!this->client_max_body_size.empty());
 }

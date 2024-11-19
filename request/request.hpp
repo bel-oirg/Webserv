@@ -9,6 +9,8 @@
 #include <string>
 #include <vector>
 
+#define MAX_URI_SIZE 2048
+
 struct loc_details
 {
     int status_code;
@@ -18,9 +20,9 @@ struct loc_details
     std::vector<std::string> index_files;
     std::vector<std::string> allowed_methods;
 
-    //POST
-    std::string client_max_body_size; //TODO init with ""
 };
+
+
 
 class request
 {
@@ -30,7 +32,7 @@ class request
         std::string method;
         std::string HTTP;
         bool has_body;
-        size_t max_body_size;
+        std::string client_max_body_size; //can be global or per
 
     protected:
         std::string URI;
@@ -43,7 +45,7 @@ class request
         void display_req();
         bool valid_method();
         bool valid_elem(std::string elem);
-        bool is_req_well_formed();
+        int is_req_well_formed();
         bool get_matched_loc_for_req_uri();
         // bool get_resource_type();
         bool is_location_have_redir();
@@ -52,6 +54,14 @@ class request
         bool is_uri_has_slash_in_end();
         bool is_dir_has_index_files();
         bool if_location_has_cgi();
-        bool is_valid_URI();
+        int req_arch();
+        int GET();
+        int POST();
+
+        //GET
+        bool get_auto_index();
+
+        //POST
+        bool if_loc_support_upload();
 };
 
