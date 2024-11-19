@@ -8,7 +8,7 @@ bool request::is_valid_URI()
     return (std::regex_match(URI, path_regex));
 }
 
-inline void    stat(int status_code)
+inline void    stat_(int status_code)
 {
     std::cout << status_code << std::endl;
 }
@@ -17,7 +17,7 @@ std::string trim_line(const std::string &line)
 {
     size_t first = line.find_first_not_of(" \t");
     size_t last = line.find_last_not_of(" \t");
-    std::string trimed;
+    std::string trimed; //TODO maybe remove this
     if (first == std::string::npos)
         trimed = "";
     else
@@ -61,7 +61,7 @@ bool    request::valid_elem(std::string elem)
     return (true);
 }
 
-bool request::is_req_well_formed() 
+bool request::is_req_well_formed() //REQ
 {
     //LINE 1
     std::string l1_s, tmp_line, field, value;
@@ -82,9 +82,9 @@ bool request::is_req_well_formed()
 
     std::getline(l1, this->URI, ' ');
     if (!request::is_valid_URI())
-        return (stat(400), false);
+        return (stat_(400), false);
     if (this->URI.size() > 2048)
-        return (stat(414), false);
+        return (stat_(414), false);
     std::getline(l1, this->HTTP, '\r');
 
     //LINE 2
@@ -109,7 +109,7 @@ bool request::is_req_well_formed()
     if (tmp_line.size())
     {
         if (tmp_line.size() >= this->max_body_size)
-            return (stat(413), false);
+            return (stat_(413), false);
         this->has_body = true;
         this->headers.insert(std::make_pair("Body", tmp_line));
     }
@@ -117,17 +117,17 @@ bool request::is_req_well_formed()
     if (this->headers.find("Transfer-Encoding") != this->headers.end())
     {
         if (this->headers["Transfer-Encoding"] != "chunked")
-            return (stat(501), false);
+            return (stat_(501), false);
     }
     else
     {
         if (this->headers.find("Content-Length") == this->headers.end() && this->method == "POST")
-            return (stat(400), false);
+            return (stat_(400), false);
     }
     return (true);
 }
 
-bool request::get_matched_loc_for_req_uri()
+bool request::get_matched_loc_for_req_uri() //REQ
 {
     std::unordered_map<std::string, std::string>::iterator loc;
 
@@ -138,12 +138,13 @@ bool request::get_matched_loc_for_req_uri()
     return (this->current_loc != locations.end());
 }
 
-bool request::is_location_have_redir()
+bool request::is_location_have_redir() //REQ
 {
-    return (!this->current_loc->second.index.empty());
+    //TODO init the status_code with 0
+    return (!this->current_loc->second.status_code);
 }
 
-bool request::is_method_allowed_in_loc()
+bool request::is_method_allowed_in_loc() //REQ
 {
     std::vector<std::string> met = this->current_loc->second.allowed_methods;
     return (std::find(met.begin(), met.end(), this->method) != met.end());
@@ -151,27 +152,30 @@ bool request::is_method_allowed_in_loc()
 
 //TODO check_which_req_method();
 
-bool request::get_request_resource()
+int request::get_request_resource() //get_resource_type()
 {
     char buffer[PATH_MAX];
     if (getcwd(buffer, sizeof(buffer)) != NULL)
     {
-        this->path = std::string(buffer) + this->current_loc->second.root + this->URI;
+        //TODO i think this path is invalid
+        this->ressource_path = std::string(buffer) + this->current_loc->second.root + this->URI;
         struct stat s;
-        if (!std::stat(this->path, &s))
+        if (!stat(this->ressource_path.c_str(), &s))
         {
-            if (s.st_mode & S_IFDIR)
-
+            if (S_ISDIR(s.st_mode))
+                return (1);
+            else if (S_ISREG(s.st_mode))
+                return (2);
+            else
+                return (-1);
         }
+        else
+            return (printf("Resource not found\n"), 0);
     }
-    return (printf("Error on getcwd\n"), false);
+    return (printf("Error on getcwd\n"), -2);
 }
 
-inline bool request::get_resource_type()
-{
-    //TODO conflict here continue;
-    return (this->URI.back() == '/');
-}
+
 
 void    request::display_req()
 {
