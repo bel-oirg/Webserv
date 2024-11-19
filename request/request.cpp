@@ -240,7 +240,63 @@ int     request::POST()
 {
     if (if_loc_support_upload())
         return (201); //upload the POST req body
+
+    int resource_type = get_request_resource();
+    if (resource_type <= 0)
+        return (404);
+    if (resource_type == 1) // dir
+    {
+        if (!is_uri_has_slash_in_end())
+            return (301); //redir to same path + "/"
+        if (is_dir_has_index_files())
+        {
+            if (!if_location_has_cgi())
+                return (403);
+            /*
+            else
+                RUN CGI WITH POST - STAT CODE DEP ON CGI
+            */
+        }
+        return (403);
+    }
+    else if (resource_type == 2) //file
+    {
+        if (!if_location_has_cgi())
+            return (403);
+        /*
+        else
+            RUN CGI WITH POST - STAT CODE DEP ON CGI
+        */
+    }
     
+}
+
+int     request::DELETE()
+{
+    int resource_type = get_request_resource();
+    if (resource_type <= 0)
+        return (404);
+    if (resource_type == 1) // dir
+    {
+        if (!is_uri_has_slash_in_end())
+            return (409);
+        if (!if_location_has_cgi())
+            return (403);
+
+
+        if (is_dir_has_index_files())
+        {
+            if (if_location_has_cgi())
+            {
+                if (!is_dir_has_index_files())
+                    return (403);
+                /*
+                else
+                    RUN CGI WITH POST - STAT CODE DEP ON CGI
+                */
+            }
+        }
+    }
 }
 
 int    request::req_arch()
@@ -260,6 +316,8 @@ int    request::req_arch()
         GET();
     else if (this->method == "POST")
         POST();
+    else
+        DELETE();
 }
 
 //GET

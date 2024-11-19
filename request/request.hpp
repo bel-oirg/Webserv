@@ -57,6 +57,7 @@ class request
         int req_arch();
         int GET();
         int POST();
+        int DELETE();
 
         //GET
         bool get_auto_index();
