@@ -13,6 +13,9 @@ class response
 {
     private:
         std::unordered_map<int, std::string> status;
+        std::string method;
+        int stat_code;
+
     
     public:
         void fill_status();

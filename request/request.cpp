@@ -76,7 +76,7 @@ int request::is_req_well_formed() //REQ
     this->has_body = false;
 
     if (req.empty())
-        return (printf("EMPTY\n"), 400);
+        return (perror("EMPTY\n"), 400);
     std::stringstream ss(req);
     std::getline(ss, l1_s, '\n');
 
@@ -84,7 +84,7 @@ int request::is_req_well_formed() //REQ
 
     std::getline(l1, this->method, ' ');
     if (!valid_method())
-        return (printf("METHOD NOT VALID\n"), 400);
+        return (perror("METHOD NOT VALID\n"), 400);
 
     std::getline(l1, this->URI, ' ');
     if (!is_valid_URI(this->URI))
@@ -110,7 +110,7 @@ int request::is_req_well_formed() //REQ
         this->headers.insert(std::make_pair(field, trim_line(value)));
     }
     if (headers.find("Host") == headers.end())
-        return (printf("NO HOST FOUND\n"), 400);
+        return (perror("NO HOST FOUND\n"), 400);
     std::getline(ss, tmp_line);
     if (tmp_line.size())
     {
@@ -175,9 +175,9 @@ int request::get_request_resource() //get_resource_type()
                 return (-1);
         }
         else
-            return (printf("Resource not found\n"), 0);
+            return (perror("Resource not found\n"), 0);
     }
-    return (printf("Error on getcwd\n"), -2);
+    return (perror("Error on getcwd\n"), -2);
 }
 
 inline bool request::is_uri_has_slash_in_end()
@@ -356,7 +356,7 @@ bool request::delete_all_folder_content(std::string ress_path)
 {
     DIR* dir = opendir(ress_path.c_str());
     if (!dir)
-        return(printf("Cannot open dir\n"), false);
+        return(perror("Cannot open dir\n"), false);
     struct dirent *entry;
     struct stat s;
     std::string sub;
@@ -369,7 +369,7 @@ bool request::delete_all_folder_content(std::string ress_path)
         
         std::string a_path = ress_path + sub;
         if (stat(a_path.c_str(), &s) < 0)
-            return (printf("stat fails\n"), closedir(dir), false);
+            return (perror("stat fails\n"), closedir(dir), false);
         if (S_ISDIR(s.st_mode))
         {
             if (!delete_all_folder_content(a_path))
@@ -378,12 +378,12 @@ bool request::delete_all_folder_content(std::string ress_path)
         else
         {
             if (remove(a_path.c_str()))
-                return (printf("Cannot delete file\n"), closedir(dir), false);
+                return (perror("Cannot delete file\n"), closedir(dir), false);
         }
     }
     closedir(dir);
     if (rmdir(ress_path.c_str()))
-        return (printf("Cannot delete dir\n"), false);
+        return (perror("Cannot delete dir\n"), false);
     return (true);
 }
 
@@ -393,10 +393,3 @@ bool request::has_write_access_on_folder()
     stat(ressource_path.c_str(), &s);
     return (s.st_mode & S_IWUSR);
 }
-
-/*
-STAT CODE
-    501 - 500
-    301
-    204 - 200 - 201
-*/
