@@ -393,3 +393,10 @@ bool request::has_write_access_on_folder()
     stat(ressource_path.c_str(), &s);
     return (s.st_mode & S_IWUSR);
 }
+
+/*
+STAT CODE
+    501 - 500
+    301
+    204 - 200 - 201
+*/
