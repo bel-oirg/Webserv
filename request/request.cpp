@@ -72,7 +72,7 @@ int request::is_req_well_formed() //REQ
     //LINE 1
     std::string l1_s, tmp_line, field, value;
     bool blank_line = false;
-    this->max_body_size = 200;
+    this->client_max_body_size = 450;
     this->has_body = false;
 
     if (req.empty())
@@ -114,7 +114,7 @@ int request::is_req_well_formed() //REQ
     std::getline(ss, tmp_line);
     if (tmp_line.size())
     {
-        if (tmp_line.size() >= this->max_body_size)
+        if (tmp_line.size() >= this->client_max_body_size)
             return (413);
         this->has_body = true;
         this->headers.insert(std::make_pair("Body", tmp_line));
@@ -130,14 +130,17 @@ int request::is_req_well_formed() //REQ
 
 bool request::get_matched_loc_for_req_uri() //REQ
 {
-    if (this->headers["Location"].empty())
-        return (printf("No location found in the header\n"), false);
-
-    std::unordered_map<std::string, std::string>::iterator loc;
-    loc = std::find(headers.begin(), headers.end(), "Location");
-
-    this->current_loc = std::find(locations.begin(), locations.end(), *loc);
-    return (this->current_loc != locations.end());
+    std::string head_val = headers["Location"];
+    if (head_val.empty())
+        return (false);
+    for (std::unordered_map<std::string, loc_details>::iterator loc = locations.begin();
+        loc != locations.end();
+        loc++)
+    {
+        if (loc->first == head_val && !loc->second.index_files.empty())
+            return (true);
+    }
+    return (false);
 }
 
 bool request::is_location_have_redir() //REQ
@@ -234,6 +237,7 @@ int     request::GET()
     else
         RUN CGI WITH GET - STAT CODE DEP ON CGI
     */
+   return (0); //tmp
 }
 
 int     request::POST()
@@ -268,7 +272,7 @@ int     request::POST()
             RUN CGI WITH POST - STAT CODE DEP ON CGI
         */
     }
-    
+    return (0); //tmp
 }
 
 //TODO CHECK THE '/'
@@ -311,6 +315,7 @@ int     request::DELETE()
             RUN CGI WITH POST - STAT CODE DEP ON CGI
         */
     }
+    return (0); //tmp
 }
 
 int    request::req_arch()
@@ -318,7 +323,7 @@ int    request::req_arch()
     int stat_code;
     stat_code = is_req_well_formed();
     if (stat_code)
-        return ;
+        return (stat_code);
     if (!get_matched_loc_for_req_uri())
         return (404);
     if (!is_location_have_redir())
@@ -332,6 +337,7 @@ int    request::req_arch()
         POST();
     else
         DELETE();
+    return (0); //tmp
 }
 
 //GET
@@ -343,7 +349,7 @@ bool    request::get_auto_index()
 //POST
 bool request::if_loc_support_upload()
 {
-    return (!this->client_max_body_size.empty());
+    return (this->client_max_body_size);
 }
 
 bool request::delete_all_folder_content(std::string ress_path)
@@ -355,13 +361,13 @@ bool request::delete_all_folder_content(std::string ress_path)
     struct stat s;
     std::string sub;
 
-    while((entry == readdir(dir)))
+    while((entry = readdir(dir)))
     {
         sub = entry->d_name;
         if (sub == "." || sub == "..")
             continue;
         
-        std::string a_path = ress_path + "/" + sub;
+        std::string a_path = ress_path + sub;
         if (stat(a_path.c_str(), &s) < 0)
             return (printf("stat fails\n"), closedir(dir), false);
         if (S_ISDIR(s.st_mode))

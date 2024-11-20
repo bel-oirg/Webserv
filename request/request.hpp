@@ -22,23 +22,19 @@ struct loc_details
 
 };
 
-
-
 class request
 {
     private:
+        std::unordered_map<std::string, loc_details>::iterator current_loc;
+        std::unordered_map<std::string, loc_details> locations;
         std::unordered_map<std::string, std::string> headers;
         std::string req;
         std::string method;
         std::string HTTP;
         bool has_body;
-        std::string client_max_body_size; //can be global or per
-
-    protected:
+        size_t client_max_body_size; //can be global or per
         std::string URI;
         std::string ressource_path;
-        std::unordered_map<std::string, loc_details> locations;
-        std::unordered_map<std::string, loc_details>::iterator current_loc;
 
     public:
         request(std::string raw_req);
