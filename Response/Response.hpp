@@ -20,12 +20,11 @@ class response
         std::string method;
         int stat_code;
 
-        std::string _content_length;
-        std::string _location;
-        std::string _content_type;
-        std::string _date;
+        std::string _content_length; 
+        std::string _location; 
+        std::string _content_type; 
         std::string _host;
-        std::string _server;
+        std::string _server; 
         std::string _connection;
         std::string _transfer_encoding;
     

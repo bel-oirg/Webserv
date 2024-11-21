@@ -38,6 +38,9 @@ void response::set_server()
 
 void response::set_content_type()
 {
+    //TODO _content_type init with ""
+    if (this->stat_code == 204 || this->stat_code == 304)
+        return ;
     std::unordered_map<std::string, std::string> mime; //TODO static const for efficiency
 
     mime["html"] = "text/html";
@@ -67,3 +70,13 @@ void response::set_content_type()
     if (it != mime.end())
         this->_content_type = it->second;
 }
+
+void resopnse::set_transfer_encoding()
+{
+    this->_transfer_encoding = "chunked";
+}
+
+
+/*
+unchunk data
+*/
