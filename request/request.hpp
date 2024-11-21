@@ -19,7 +19,6 @@ struct loc_details
     std::string root;
     std::vector<std::string> index_files;
     std::vector<std::string> allowed_methods;
-
 };
 
 class request
