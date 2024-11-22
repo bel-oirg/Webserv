@@ -8,7 +8,8 @@ request::request(std::string raw_req) : req(raw_req)
         false, 
         false, 
         true, 
-        "/Users/bel-oirg/Desktop/Webserv/Request", 
+        "/Users/bel-oirg/Desktop/Webserv/Request",
+        0,
         std::vector<std::string>(1, "about.html"), 
         std::vector<std::string>(2, "POST"));
 
@@ -18,7 +19,8 @@ request::request(std::string raw_req) : req(raw_req)
         false, 
         false, 
         true, 
-        "/Users/bel-oirg/Desktop/Webserv/Request", 
+        "/Users/bel-oirg/Desktop/Webserv/Request",
+        0,
         std::vector<std::string>(1, "about.html"), 
         std::vector<std::string>(2, "GET"));
 
@@ -29,6 +31,7 @@ request::request(std::string raw_req) : req(raw_req)
         false, 
         true, 
         "/Users/bel-oirg/Desktop", 
+        0,
         std::vector<std::string>(1, "a.out"), 
         std::vector<std::string>(2, "GET"));
 
@@ -104,7 +107,6 @@ int request::is_req_well_formed() //REQ
     //LINE 1
     std::string l1_s, tmp_line, field, value;
     bool blank_line = false;
-    this->client_max_body_size = 450;
     this->has_body = false;
 
     if (req.empty())
@@ -146,10 +148,12 @@ int request::is_req_well_formed() //REQ
     std::getline(ss, tmp_line);
     if (tmp_line.size())
     {
-        if (tmp_line.size() >= this->client_max_body_size)
+        if (this->method != "POST")
+            return (400);
+        if (tmp_line.size() >= current_loc.client_max_body_size)
             return (413);
         this->has_body = true;
-        this->headers.insert(std::make_pair("Body", tmp_line));
+        _body = tmp_line;
     }
 
     if (this->headers.find("Transfer-Encoding") != this->headers.end()
@@ -387,10 +391,39 @@ bool    request::get_auto_index()
     return (current_loc.auto_index);
 }
 
+//TODO continue from here
+
 //POST
 bool request::if_loc_support_upload()
 {
-    return (this->client_max_body_size);
+    if (current_loc.client_max_body_size)
+    {
+        if (headers["Content-Type"] == "multipart/form-data")
+        {
+            std::string line, boundry, field, value;
+            std::stringstream upload(_body);
+            std::getline(upload, boundry);
+            while(std::getline(upload, line))
+            {
+                if (line.empty())
+                {
+
+                }
+                if (line == boundry + "--")
+                    return (true);
+                std::getline(upload, field, ':');
+                std::getline(upload, value);
+                this->upload_headers.insert(std::make_pair(field, trim_line(value)));
+            }
+        }
+
+        /*
+        else
+        TODO Unsupported Media Type
+            return (415);    check 415 first then 413
+        */
+    }
+    return (current_loc.client_max_body_size);
 }
 
 bool request::delete_all_folder_content(std::string ress_path)

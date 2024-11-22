@@ -20,9 +20,9 @@ struct loc_details
     bool has_cgi;
     bool add_slash;
     std::string root;
+    size_t client_max_body_size;
     std::vector<std::string> index_files;
     std::vector<std::string> allowed_methods;
-
 
     loc_details()
         : status_code(0),
@@ -31,6 +31,7 @@ struct loc_details
           has_cgi(false),
           add_slash(false),
           root(""),
+          client_max_body_size(0),
           index_files(),
           allowed_methods() {}
 
@@ -41,6 +42,7 @@ struct loc_details
         bool has_cgi,
         bool add_slash,
         std::string root,
+        size_t client_max_body_size,
         std::vector<std::string> index_files,
         std::vector<std::string> allowed_methods
     )
@@ -50,6 +52,7 @@ struct loc_details
           has_cgi(has_cgi),
           add_slash(add_slash),
           root(root),
+          client_max_body_size(client_max_body_size),
           index_files(index_files),
           allowed_methods(allowed_methods)
     {}
@@ -69,7 +72,8 @@ class request
         int         stat_code;
         bool        add_slash;
         bool        has_body;
-        size_t      client_max_body_size;
+        std::string _body;
+        std::unordered_map<std::string, std::string> upload_headers;
 
     public:
         request(std::string raw_req);
