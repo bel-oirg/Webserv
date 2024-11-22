@@ -1,12 +1,12 @@
 #pragma once
 
 #include "../Request/request.hpp"
+#define CHUNK_SIZE 2048
 
 class response : public request
 {
     private:
         std::unordered_map<int, std::string> status;
-        std::string resource_path;
         int stat_code;
         int _content_length; 
 
@@ -15,9 +15,10 @@ class response : public request
         std::string _server; 
         std::string _connection;
         std::string _transfer_encoding;
+        std::string _body;
     
     public:
-        response();
+        // response();
         void fill_status();
         void set_content_length();
         void set_server();
@@ -25,5 +26,6 @@ class response : public request
         void set_transfer_encoding();
         void set_connection();
         void set_content_type();
+        void set_body();
         std::string the_head();
 };

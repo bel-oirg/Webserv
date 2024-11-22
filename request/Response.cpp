@@ -91,13 +91,14 @@ void response::set_content_type()
         this->_content_type = it->second;
 }
 
-void response::set_transfer_encoding()
-{
+//TODO no need for this for now i will use only content_len
+// void response::set_transfer_encoding()
+// {
     //TODO if there a content-length, you MUST NOT USE TRANSF_ENC
-    this->_transfer_encoding = "";
-    if (this->_content_length == -1)
-        this->_transfer_encoding = "chunked";
-}
+    // this->_transfer_encoding = "";
+    // if (this->_content_length == -1)
+    //     this->_transfer_encoding = "chunked";
+// }
 
 void response::set_location()
 {
@@ -110,14 +111,39 @@ void response::set_location()
     }
 }
 
-/*
-    locations
-    transfer-encoding/content-length
-    content-type
-    server
-    _connection
-*/
-
+void response::set_body()
+{
+    std::stringstream ss;
+    std::ifstream infile;
+    _body = "";
+    if (this->stat_code / 400)
+    {
+        infile.open("/Users/bel-oirg/Desktop/Webserv/Error_pages/" + std::to_string(this->stat_code) + ".html");
+        if (!infile)
+        {
+            std::cerr << "Error opening error_page.html" << std::endl;
+            return;
+        }
+    }
+    else if (this->stat_code / 300)
+    {
+        _body = "Redirecting to another location. Status Code: " + std::to_string(this->stat_code);
+        _content_length = _body.size();     
+        return ;
+    }
+    else if (this->stat_code == 200)
+    {
+        infile.open(this->resource_path);
+        if (!infile)
+        {
+            std::cerr << "Error opening 200" << std::endl;
+            return;
+        }
+    }
+    ss << infile.rdbuf();
+    _body = ss.str();
+    _content_length = _body.size();     
+}
 
 // response::response()
 // {
@@ -132,7 +158,6 @@ void response::set_location()
 //     set_server();
 //     std::cout << the_head() << std::endl;
 // }
-
 
 /*
 TODO unchunk data

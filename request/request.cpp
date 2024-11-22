@@ -163,9 +163,9 @@ int request::get_request_resource() //get_resource_type()
     if (getcwd(buffer, sizeof(buffer)) != NULL)
     {
         //TODO i think this path is invalid
-        this->ressource_path = std::string(buffer) + this->current_loc->second.root + this->URI;
+        this->resource_path = std::string(buffer) + this->current_loc->second.root + this->URI;
         struct stat s;
-        if (!stat(this->ressource_path.c_str(), &s))
+        if (!stat(this->resource_path.c_str(), &s))
         {
             if (S_ISDIR(s.st_mode))
                 return (1);
@@ -196,7 +196,7 @@ bool request::is_dir_has_index_files()
         to_check = this->current_loc->first + this->current_loc->second.index_files[index];
         if (!stat(to_check.c_str(), &s) && S_ISREG(s.st_mode))
         {
-            ressource_path = to_check;
+            resource_path = to_check;
             return (true);
         }
     }
@@ -302,7 +302,7 @@ int     request::DELETE()
                     RUN CGI WITH POST - STAT CODE DEP ON CGI
                 */
             }
-            if (delete_all_folder_content(ressource_path))
+            if (delete_all_folder_content(resource_path))
                 return (204);
             if (has_write_access_on_folder())
                 return (500);
@@ -393,6 +393,6 @@ bool request::delete_all_folder_content(std::string ress_path)
 bool request::has_write_access_on_folder()
 {
     struct stat s;
-    stat(ressource_path.c_str(), &s);
+    stat(resource_path.c_str(), &s);
     return (s.st_mode & S_IWUSR);
 }

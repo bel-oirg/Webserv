@@ -6,6 +6,7 @@
 #include <iostream>
 #include <unistd.h>
 #include <sstream>
+#include <fstream>
 #include <string>
 #include <vector>
 
@@ -29,7 +30,7 @@ class request
         std::unordered_map<std::string, loc_details>::iterator current_loc;
         std::unordered_map<std::string, loc_details> locations;
         std::unordered_map<std::string, std::string> headers;
-        std::string ressource_path;
+        std::string resource_path;
         std::string req;
         std::string method;
         std::string HTTP;
