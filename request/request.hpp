@@ -33,7 +33,7 @@ struct loc_details
           root(""),
           index_files(),
           allowed_methods() {}
-          
+
     loc_details(
         int status_code,
         std::string redir_to,
@@ -58,7 +58,7 @@ struct loc_details
 class request
 {
     protected:
-        std::unordered_map<std::string, loc_details>::iterator current_loc;
+        loc_details current_loc;
         std::unordered_map<std::string, loc_details> locations;
         std::unordered_map<std::string, std::string> headers;
         std::string resource_path;
@@ -66,6 +66,7 @@ class request
         std::string method;
         std::string HTTP;
         std::string URI;
+        int         stat_code;
         bool        add_slash;
         bool        has_body;
         size_t      client_max_body_size;

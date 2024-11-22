@@ -7,7 +7,6 @@ class response : public request
 {
     private:
         std::unordered_map<int, std::string> status;
-        int stat_code;
         int _content_length; 
 
         std::string _location; 

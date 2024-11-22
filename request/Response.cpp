@@ -25,9 +25,13 @@ std::string response::the_head()
     line << "Connection: " << this->_connection << "\r\n";
     line << "Server: " << this->_server << "\r\n";
     line << "Content-Type: " << this->_content_type << "\r\n";
-    line << "Transfer-Encoding: " << this->_transfer_encoding << "\r\n";
+    if (this->_content_length == -1)
+        line << "Transfer-Encoding: " << this->_transfer_encoding << "\r\n";
+    else
+        line << "Content-Length: " << this->_content_length << "\r\n";
     line << "\r\n";
     line << _body;
+    std::cout << "USED loc " << current_loc.root << std::endl;
     return (line.str());
 }
 
@@ -109,7 +113,7 @@ void response::set_location()
         if (add_slash)
             this->_location = this->resource_path + "/";
         else
-            this->_location = this->current_loc->second.redir_to;
+            this->_location = current_loc.redir_to;
     }
 }
 
