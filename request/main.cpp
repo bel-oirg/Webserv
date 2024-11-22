@@ -19,3 +19,12 @@ int main()
     else
         std::cout << "NOT Valid" << std::endl;
 }
+
+/*
+#include "Response.hpp"
+
+int main()
+{
+    response a;
+}
+*/

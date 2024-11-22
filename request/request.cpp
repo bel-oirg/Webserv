@@ -224,6 +224,7 @@ int     request::GET()
     {
         if (!is_uri_has_slash_in_end())
             return (301); //redir to same path + "/"
+        this->add_slash = true;
         if (!is_dir_has_index_files())
         {
             if (!get_auto_index())
@@ -252,6 +253,7 @@ int     request::POST()
     {
         if (!is_uri_has_slash_in_end())
             return (301); //redir to same path + "/"
+        this->add_slash = true;
         if (is_dir_has_index_files())
         {
             if (!if_location_has_cgi())
@@ -286,6 +288,7 @@ int     request::DELETE()
     {
         if (!is_uri_has_slash_in_end())
             return (409);
+        this->add_slash = true;
         if (!if_location_has_cgi())
             return (403);
         if (is_dir_has_index_files())

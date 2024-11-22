@@ -2,11 +2,11 @@ NAME = Req
 CC = c++
 CFLAGS = -Wall -Wextra -Werror -std=c++98# -fsanitize=address -g
 
-SRCS = main.cpp request.cpp
+SRCS = main.cpp Request.cpp Response.cpp
 
 OBJS = $(SRCS:.cpp=.o)
 
-HEADER = request.hpp
+HEADER = Request.hpp Response.hpp
 
 all : $(NAME)
 

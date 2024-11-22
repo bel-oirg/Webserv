@@ -14,8 +14,10 @@
 struct loc_details
 {
     int status_code;
+    std::string redir_to;
     bool auto_index;
     bool has_cgi;
+    bool add_slash;
     std::string root;
     std::vector<std::string> index_files;
     std::vector<std::string> allowed_methods;
@@ -23,17 +25,18 @@ struct loc_details
 
 class request
 {
-    private:
+    protected:
         std::unordered_map<std::string, loc_details>::iterator current_loc;
         std::unordered_map<std::string, loc_details> locations;
         std::unordered_map<std::string, std::string> headers;
+        std::string ressource_path;
         std::string req;
         std::string method;
         std::string HTTP;
-        bool has_body;
-        size_t client_max_body_size; //can be global or per
         std::string URI;
-        std::string ressource_path;
+        bool        add_slash;
+        bool        has_body;
+        size_t      client_max_body_size;
 
     public:
         request(std::string raw_req);
@@ -64,4 +67,3 @@ class request
         bool has_write_access_on_folder();
         bool delete_all_folder_content(std::string ress_path);
 };
-
