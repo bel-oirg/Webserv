@@ -1,6 +1,17 @@
-#include "request.hpp"
+#include "Response.hpp"
 
-request::request(std::string raw_req) : req(raw_req) {}
+request::request(std::string raw_req) : req(raw_req)
+{
+    locations["/about"] = loc_details(
+        301, 
+        "/home", 
+        false, 
+        false, 
+        true, 
+        "/var/www/about", 
+        std::vector<std::string>(1, "about.html"), 
+        std::vector<std::string>(2, "GET"));
+}
 
 
 inline void    stat_(int status_code)

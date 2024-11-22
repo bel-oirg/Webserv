@@ -21,11 +21,13 @@ std::string response::the_head()
 {
     std::stringstream line;
     fill_status();
-    line << "HTTP/1.1 " << status[this->stat_code] << "\n";
-    line << "Connection: " << this->_connection << "\n";
-    line << "Server: " << this->_server << "\n";
-    line << "Content-Type: " << this->_content_type << "\n";
-    line << "Transfer-Encoding: " << this->_transfer_encoding << "\n";
+    line << "HTTP/1.1 " << status[this->stat_code] << "\r\n";
+    line << "Connection: " << this->_connection << "\r\n";
+    line << "Server: " << this->_server << "\r\n";
+    line << "Content-Type: " << this->_content_type << "\r\n";
+    line << "Transfer-Encoding: " << this->_transfer_encoding << "\r\n";
+    line << "\r\n";
+    line << _body;
     return (line.str());
 }
 
@@ -145,19 +147,16 @@ void response::set_body()
     _content_length = _body.size();     
 }
 
-// response::response()
-// {
-//     resource_path = "/any.php";
-//     stat_code = 200;
-//     method = "GET"; //WHY
-
-//     set_content_length();
-//     set_transfer_encoding();
-//     set_connection();
-//     set_content_type();
-//     set_server();
-//     std::cout << the_head() << std::endl;
-// }
+response::response(std::string req) : request(req)
+{
+    set_content_length();
+    // set_transfer_encoding();
+    set_connection();
+    set_content_type();
+    set_server();
+    set_body();
+    std::cout << the_head() << std::endl;
+}
 
 /*
 TODO unchunk data

@@ -22,6 +22,37 @@ struct loc_details
     std::string root;
     std::vector<std::string> index_files;
     std::vector<std::string> allowed_methods;
+
+
+    loc_details()
+        : status_code(0),
+          redir_to(""),
+          auto_index(false),
+          has_cgi(false),
+          add_slash(false),
+          root(""),
+          index_files(),
+          allowed_methods() {}
+          
+    loc_details(
+        int status_code,
+        std::string redir_to,
+        bool auto_index,
+        bool has_cgi,
+        bool add_slash,
+        std::string root,
+        std::vector<std::string> index_files,
+        std::vector<std::string> allowed_methods
+    )
+        : status_code(status_code),
+          redir_to(redir_to),
+          auto_index(auto_index),
+          has_cgi(has_cgi),
+          add_slash(add_slash),
+          root(root),
+          index_files(index_files),
+          allowed_methods(allowed_methods)
+    {}
 };
 
 class request

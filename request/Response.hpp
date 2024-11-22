@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../Request/request.hpp"
+#include "Request.hpp"
 #define CHUNK_SIZE 2048
 
 class response : public request
@@ -18,12 +18,12 @@ class response : public request
         std::string _body;
     
     public:
-        // response();
+        response(std::string req);
         void fill_status();
         void set_content_length();
         void set_server();
         void set_location();
-        void set_transfer_encoding();
+        // void set_transfer_encoding();
         void set_connection();
         void set_content_type();
         void set_body();
