@@ -389,7 +389,41 @@ int    request::req_arch()
 //GET
 bool    request::get_auto_index()
 {
-    return (current_loc.auto_index);
+    if (!current_loc.auto_index)
+        return (false);
+
+    std::string dir = this->resource_path;
+
+    DIR *dirp = opendir(dir.c_str());
+    std::string current;
+
+    if (!dirp)
+        return (perror("opendir filed"), false);
+
+    struct dirent *dp;
+    
+    dirp = opendir(dir.c_str());
+    if (dirp == NULL)
+            return (false);
+    
+    struct stat s;
+    std::cout << "<title>Directory listing for "<< dir << "</title>\n<body>\n<h2>Directory listing for "<< dir << "</h2>\n<hr>\n<ul>" << std::endl;
+    while ((dp = readdir(dirp)) != NULL)
+    {
+        current = dp->d_name;
+        if ((current == ".") || (current == ".."))
+            continue;
+        if (stat(dp->d_name, &s) < 0)
+            return (perror("stat failed"), false);
+
+        if (S_ISDIR(s.st_mode))
+            std::cout << "<li><a href=\"" << current << "/\">" << current << "</a>" << std::endl;
+        else if (S_ISREG(s.st_mode))
+            std::cout << "<li><a href=\"" << current << "\">." << current << "</a>" << std::endl;
+    }
+    std::cout << "</ul>\n<hr>\n</body>\n</html>" << std::endl;
+    return (true);
+
 }
 
 std::string get_file_name(const std::string &raw)
@@ -456,6 +490,25 @@ int request::if_loc_support_upload()
     3 prob
         handled index ?? if there is index and autoindex check the index first
 */
+
+bool auto_ind(std::string dir)
+{
+    DIR *dirp = opendir(".");
+
+    if (!dirp)
+        return (perror("opendir filed"), false);
+
+    struct dirent *dp;
+
+    dirp = opendir(".");
+    if (dirp == NULL)
+            return (false);
+    while ((dp = readdir(dirp)) != NULL)
+    {
+        std::cout << dp->d_name << std::endl;
+    }
+    return (true);
+}
 
 bool request::delete_all_folder_content(std::string ress_path)
 {
