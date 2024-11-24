@@ -11,6 +11,9 @@
 #include <vector>
 
 #define MAX_URI_SIZE 2048
+#define GLOBAL_CLIENT_MAX_BODY_SIZE 4000
+
+#define p std::cout << 
 
 struct loc_details
 {
@@ -73,7 +76,10 @@ class request
         bool        add_slash;
         bool        has_body;
         std::string _body;
+
+        //POST
         std::unordered_map<std::string, std::string> upload_headers;
+
 
     public:
         request(std::string raw_req);
@@ -98,7 +104,8 @@ class request
         bool get_auto_index();
 
         //POST
-        bool if_loc_support_upload();
+        int if_loc_support_upload();
+        int multipart();
 
         //DELETE
         bool has_write_access_on_folder();

@@ -49,14 +49,6 @@ void response::set_server()
     this->_server = "Webserv 2.0";
 }
 
-// void response::set_location()
-// {
-//     if (!(this->stat_code / 300))
-//     {
-
-//     }
-// }
-
 void response::set_connection()
 {
     this->_connection = "keep-alive";
@@ -159,6 +151,7 @@ response::response(std::string req) : request(req)
     set_content_type();
     set_server();
     set_body();
+    // the_head();
     std::cout << the_head() << std::endl;
 }
 

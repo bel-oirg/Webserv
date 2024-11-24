@@ -20,11 +20,11 @@ request::request(std::string raw_req) : req(raw_req)
         false, 
         true, 
         "/Users/bel-oirg/Desktop/Webserv/Request",
-        0,
+        1210,
         std::vector<std::string>(1, "about.html"), 
-        std::vector<std::string>(2, "GET"));
+        std::vector<std::string>(3, "POST"));
 
-                locations["/Desktop"] = loc_details(
+        locations["/Desktop"] = loc_details(
         0, 
         "", 
         false, 
@@ -41,6 +41,11 @@ request::request(std::string raw_req) : req(raw_req)
 inline void    stat_(int status_code)
 {
     std::cout << status_code << std::endl;
+}
+
+inline void     err_(const std::string &err)
+{
+    std::cerr << err << std::endl;
 }
 
 std::string trim_line(const std::string &line)
@@ -106,11 +111,10 @@ int request::is_req_well_formed() //REQ
 {
     //LINE 1
     std::string l1_s, tmp_line, field, value;
-    bool blank_line = false;
     this->has_body = false;
 
     if (req.empty())
-        return (perror("EMPTY\n"), 400);
+        return (err_("EMPTY"), 400);
     std::stringstream ss(req);
     std::getline(ss, l1_s, '\n');
 
@@ -118,7 +122,7 @@ int request::is_req_well_formed() //REQ
 
     std::getline(l1, this->method, ' ');
     if (!valid_method())
-        return (perror("METHOD NOT VALID\n"), 400);
+        return (err_("METHOD NOT VALID"), 400);
 
     std::getline(l1, this->URI, ' ');
     if (!is_valid_URI(this->URI))
@@ -128,32 +132,30 @@ int request::is_req_well_formed() //REQ
     std::getline(l1, this->HTTP, '\r');
 
     //LINE 2
+    //locate the second line to \r\n
+    size_t head_beg = req.find("\r\n");
+    size_t head_end = req.find("\r\n\r\n");
+    std::stringstream headers_raw(req.substr(head_beg, head_end - head_beg));
 
-    while(std::getline(ss, tmp_line, '\n'))
+    while(std::getline(headers_raw, tmp_line, '\n'))
     {
-        if (!request::valid_elem(tmp_line))
-        {
-            if (tmp_line != "\r" && !blank_line)
-                return (400);
-            blank_line = true;
-            continue;
-        }
         std::stringstream raw(tmp_line);
         std::getline(raw, field, ':');
         std::getline(raw, value, '\r');
         this->headers.insert(std::make_pair(field, trim_line(value)));
     }
     if (headers.find("Host") == headers.end())
-        return (perror("NO HOST FOUND\n"), 400);
-    std::getline(ss, tmp_line);
-    if (tmp_line.size())
+        return (err_("NO HOST FOUND"), 400);
+
+    if (req.size() >= head_end + 4)
     {
+        this->_body = req.substr(head_end + 4);
+        
         if (this->method != "POST")
             return (400);
-        if (tmp_line.size() >= current_loc.client_max_body_size)
-            return (413);
+        if (this->_body.size() > GLOBAL_CLIENT_MAX_BODY_SIZE)
+            return ( 413);
         this->has_body = true;
-        _body = tmp_line;
     }
 
     if (this->headers.find("Transfer-Encoding") != this->headers.end()
@@ -175,7 +177,7 @@ bool request::get_matched_loc_for_req_uri() //REQ
     std::string correct_loc;
     for (std::unordered_map<std::string, loc_details>::iterator it = locations.begin(); it != locations.end(); it++)
     {
-        if (URI.rfind(it->first) != std::string::npos)
+        if (URI.rfind(it->first) == 0) //TODO ma
             potential_locations.push_back(it->first);
     }
     if (!potential_locations.size())
@@ -216,11 +218,11 @@ int request::get_request_resource() //get_resource_type()
         else if (S_ISREG(s.st_mode))
             return (2);
         else
-            return (perror("get_request_resource"), -1);
+            return (err_("get_request_resource"), -1);
     }
     else
-        return (perror("Resource not found\n"), 0);
-    return (perror("Error on getcwd\n"), -2);
+        return (err_("Resource not found"), 0);
+    return (err_("Error on getcwd"), -2);
 }
 
 inline bool request::is_uri_has_slash_in_end()
@@ -235,7 +237,6 @@ bool request::is_dir_has_index_files()
 
     for (size_t index = 0; index < current_loc.index_files.size() ; index++)
     {
-        //TODO should i add '/' ?
         to_check = current_loc.root + "/" + current_loc.index_files[index];
         if (!stat(to_check.c_str(), &s) && S_ISREG(s.st_mode))
         {
@@ -286,8 +287,8 @@ int     request::GET()
 
 int     request::POST()
 {
-    if (if_loc_support_upload())
-        return (201); //upload the POST req body
+    if (current_loc.client_max_body_size > 0)
+        return (if_loc_support_upload()); //upload the POST req body
 
     int resource_type = get_request_resource();
     if (resource_type <= 0)
@@ -380,9 +381,9 @@ int    request::req_arch()
         return (GET());
     else if (this->method == "POST")
         return (POST());
-    else
+    else if (this->method == "DELETE")
         return (DELETE());
-    return (0); //tmp
+    return (501);
 }
 
 //GET
@@ -391,46 +392,76 @@ bool    request::get_auto_index()
     return (current_loc.auto_index);
 }
 
-//TODO continue from here
+std::string get_file_name(const std::string &raw)
+{
+    size_t beg = raw.find("name=\"");
+    size_t end = raw.find("\"", beg + 6);
+    if (beg == std::string::npos || end == std::string::npos)
+        return ("");
+    return (raw.substr(beg + 6, end - beg - 6));
+}
+
+bool process_multipart(std::string _body, std::string _boundary)
+{
+    std::string line;
+    size_t pos = 0;
+
+    while((pos = _body.find("--" + _boundary, pos)) != std::string::npos)
+    {
+        size_t next = _body.find("--" + _boundary, pos + 2 + _boundary.size());
+        std::string current_part = _body.substr(pos, next - pos);
+
+        size_t file_beg = current_part.find("filename=\"");
+        size_t file_end = current_part.find("\"", file_beg + 10);
+        if (file_beg == std::string::npos || file_end == std::string::npos)
+            return (err_("Cannot find name") ,false);
+        std::string file_name = current_part.substr(file_beg + 10, file_end - file_beg - 10);
+
+        size_t cont_beg = current_part.find("\r\n\r\n");
+        size_t cont_end = current_part.size();
+        if (cont_beg == std::string::npos || cont_end == std::string::npos)
+            return (err_("No body found to upload"), false);
+
+        std::ofstream outfile("/Users/bel-oirg/Desktop/Webserv/Upload/" + file_name);
+        if (!outfile)
+            return (err_("Failed to open the upload_file"), false);
+        outfile << _body.substr(cont_beg + 4, cont_end - cont_beg - 4);
+
+        if (_body.find("--" + _boundary + "--", next) != std::string::npos)
+            break;
+        pos = next;
+    }
+    return (true);
+}
 
 //POST
-bool request::if_loc_support_upload()
+int request::if_loc_support_upload()
 {
-    if (current_loc.client_max_body_size)
-    {
-        if (headers["Content-Type"] == "multipart/form-data")
-        {
-            std::string line, boundry, field, value;
-            std::stringstream upload(_body);
-            std::getline(upload, boundry);
-            while(std::getline(upload, line))
-            {
-                if (line.empty())
-                {
+    if (_body.size() > current_loc.client_max_body_size)
+        return (err_("body_size on loc_support_upload"), 413);
 
-                }
-                if (line == boundry + "--")
-                    return (true);
-                std::getline(upload, field, ':');
-                std::getline(upload, value);
-                this->upload_headers.insert(std::make_pair(field, trim_line(value)));
-            }
-        }
+    if (headers["Content-Type"].rfind("multipart/form-data") == std::string::npos)
+        return (err_("multipart/form not found on loc_support_upload"), 415);
+    
+    size_t bound_beg = headers["Content-Type"].find("boundary=");
+    size_t bound_end = headers["Content-Type"].find_first_of(" \r\n", bound_beg);
+    std::string _boundary = headers["Content-Type"].substr(bound_beg + 9, bound_end - bound_beg - 9);
 
-        /*
-        else
-        TODO Unsupported Media Type
-            return (415);    check 415 first then 413
-        */
-    }
-    return (current_loc.client_max_body_size);
+    if (!process_multipart(_body, _boundary))
+        return (err_("process_multipart err"), 400);
+    return (0);
 }
+
+/*
+    3 prob
+        handled index ?? if there is index and autoindex check the index first
+*/
 
 bool request::delete_all_folder_content(std::string ress_path)
 {
     DIR* dir = opendir(ress_path.c_str());
     if (!dir)
-        return(perror("Cannot open dir\n"), false);
+        return(err_("Cannot open dir"), false);
     struct dirent *entry;
     struct stat s;
     std::string sub;
@@ -443,7 +474,7 @@ bool request::delete_all_folder_content(std::string ress_path)
         
         std::string a_path = ress_path + sub;
         if (stat(a_path.c_str(), &s) < 0)
-            return (perror("stat fails\n"), closedir(dir), false);
+            return (err_("stat fails"), closedir(dir), false);
         if (S_ISDIR(s.st_mode))
         {
             if (!delete_all_folder_content(a_path))
@@ -452,12 +483,12 @@ bool request::delete_all_folder_content(std::string ress_path)
         else
         {
             if (remove(a_path.c_str()))
-                return (perror("Cannot delete file\n"), closedir(dir), false);
+                return (err_("Cannot delete file"), closedir(dir), false);
         }
     }
     closedir(dir);
     if (rmdir(ress_path.c_str()))
-        return (perror("Cannot delete dir\n"), false);
+        return (err_("Cannot delete dir"), false);
     return (true);
 }
 
