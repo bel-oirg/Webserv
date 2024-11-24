@@ -31,7 +31,6 @@ std::string response::the_head()
         line << "Content-Length: " << this->_content_length << "\r\n";
     line << "\r\n";
     line << _body;
-    std::cout << "USED loc " << current_loc.root << std::endl;
     return (line.str());
 }
 
@@ -109,6 +108,40 @@ void response::set_location()
     }
 }
 
+bool response::prepare_autoindex()
+{
+    std::string dir = this->resource_path;//this->resource_path; //you can replace this
+    DIR *dirp = opendir(dir.c_str());
+
+    if (!dirp)
+        return (perror("opendir failed"), false);
+    
+    std::stringstream raw_body;
+    raw_body    << "<title>Directory listing for "<< dir
+                << "</title>\n<body>\n<h2>Directory listing for "
+                << dir << "</h2>\n<hr>\n<ul>\r";
+    std::string current;
+    struct dirent *dp;
+    while ((dp = readdir(dirp)) != NULL)
+    {
+        struct stat s;
+        current = dp->d_name;
+        if ((current == ".") || (current == ".."))
+            continue;
+        current = dir + dp->d_name;
+        if (stat(current.c_str(), &s) < 0)
+            return (perror(NULL), false);
+
+        if (S_ISDIR(s.st_mode))
+            raw_body << "<li><a href=\"" << dp->d_name << "/\">" << dp->d_name << "</a>" << std::endl;
+        else if (S_ISREG(s.st_mode))
+            raw_body << "<li><a href=\"" << dp->d_name << "\">." << dp->d_name << "</a>" << std::endl;
+    }
+    raw_body << "</ul>\n<hr>\n</body>\n</html>\n";
+    _body = raw_body.str();
+    return (true);
+}
+
 void response::set_body()
 {
     std::stringstream ss;
@@ -119,9 +152,12 @@ void response::set_body()
         infile.open("/Users/bel-oirg/Desktop/Webserv/Error_pages/" + std::to_string(this->stat_code) + ".html");
         if (!infile)
         {
+            this->stat_code = 501;
             std::cerr << "Error opening error_page.html" << std::endl;
             return;
         }
+        ss << infile.rdbuf();
+        _body = ss.str();
     }
     else if (this->stat_code / 300)
     {
@@ -131,15 +167,24 @@ void response::set_body()
     }
     else if (this->stat_code == 200)
     {
-        infile.open(this->resource_path);
-        if (!infile)
+        if (get_auto_index())
         {
-            std::cerr << "Error opening 200" << std::endl;
-            return;
+            if (!prepare_autoindex())
+                this->stat_code = 501;
+        }
+        else
+        {
+            infile.open(this->resource_path);
+            if (!infile)
+            {
+                this->stat_code = 501;
+                std::cerr << "Error opening 200" << std::endl;
+                return;
+            }
+            ss << infile.rdbuf();
+            _body = ss.str();
         }
     }
-    ss << infile.rdbuf();
-    _body = ss.str();
     _content_length = _body.size();     
 }
 
@@ -152,7 +197,7 @@ response::response(std::string req) : request(req)
     set_server();
     set_body();
     // the_head();
-    std::cout << the_head() << std::endl;
+    std::cout << the_head();
 }
 
 /*

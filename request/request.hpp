@@ -76,6 +76,7 @@ class request
         bool        add_slash;
         bool        has_body;
         std::string _body;
+        bool respond_with_autoindex;
 
         //POST
         std::unordered_map<std::string, std::string> upload_headers;
@@ -105,7 +106,6 @@ class request
 
         //POST
         int if_loc_support_upload();
-        int multipart();
 
         //DELETE
         bool has_write_access_on_folder();

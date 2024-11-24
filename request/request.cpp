@@ -24,15 +24,15 @@ request::request(std::string raw_req) : req(raw_req)
         std::vector<std::string>(1, "about.html"), 
         std::vector<std::string>(3, "POST"));
 
-        locations["/Desktop"] = loc_details(
+        locations["/pool"] = loc_details(
         0, 
         "", 
-        false, 
-        false, 
+        true, 
+        true, 
         true, 
         "/Users/bel-oirg/Desktop", 
         0,
-        std::vector<std::string>(1, "a.out"), 
+        std::vector<std::string>(1, "2a.out"), 
         std::vector<std::string>(2, "GET"));
 
     this->stat_code = req_arch();
@@ -126,7 +126,7 @@ int request::is_req_well_formed() //REQ
 
     std::getline(l1, this->URI, ' ');
     if (!is_valid_URI(this->URI))
-        return (400);
+        return (err_("invalid URI"), 400);
     if (this->URI.size() > MAX_URI_SIZE)
         return (414);
     std::getline(l1, this->HTTP, '\r');
@@ -147,14 +147,14 @@ int request::is_req_well_formed() //REQ
     if (headers.find("Host") == headers.end())
         return (err_("NO HOST FOUND"), 400);
 
-    if (req.size() >= head_end + 4)
+    if (req.size() > head_end + 4)
     {
         this->_body = req.substr(head_end + 4);
         
         if (this->method != "POST")
-            return (400);
+            return (err_("there is body but non-POST method is used"), 400);
         if (this->_body.size() > GLOBAL_CLIENT_MAX_BODY_SIZE)
-            return ( 413);
+            return (err_("Big BODY"), 413);
         this->has_body = true;
     }
 
@@ -165,7 +165,7 @@ int request::is_req_well_formed() //REQ
     if (this->headers.find("Transfer-Encoding") == this->headers.end()
         && this->headers.find("Content-Length") == this->headers.end()
         && this->method == "POST")
-        return (400);
+        return (err_("no Trans/Cont length and the method is POST"), 400);
     return (0);
 }
 
@@ -262,6 +262,7 @@ void    request::display_req()
 int     request::GET()
 {
     int resource_type = get_request_resource();
+    // p this->resource_path << "PPPOO" << std::endl;
     if (resource_type <= 0)
         return (404);
     if (resource_type == 1) // dir
@@ -272,7 +273,7 @@ int     request::GET()
         if (!is_dir_has_index_files())
         {
             if (!get_auto_index())
-                return (403);
+                return (err_("NO AUTO_INDEX"), 403);
             return (200); //return autoindex of the directory
         }
     }
@@ -320,8 +321,6 @@ int     request::POST()
     }
     return (0); //tmp
 }
-
-//TODO CHECK THE '/'
 
 int     request::DELETE()
 {
@@ -389,41 +388,11 @@ int    request::req_arch()
 //GET
 bool    request::get_auto_index()
 {
+    respond_with_autoindex = false;
     if (!current_loc.auto_index)
         return (false);
-
-    std::string dir = this->resource_path;
-
-    DIR *dirp = opendir(dir.c_str());
-    std::string current;
-
-    if (!dirp)
-        return (perror("opendir filed"), false);
-
-    struct dirent *dp;
-    
-    dirp = opendir(dir.c_str());
-    if (dirp == NULL)
-            return (false);
-    
-    struct stat s;
-    std::cout << "<title>Directory listing for "<< dir << "</title>\n<body>\n<h2>Directory listing for "<< dir << "</h2>\n<hr>\n<ul>" << std::endl;
-    while ((dp = readdir(dirp)) != NULL)
-    {
-        current = dp->d_name;
-        if ((current == ".") || (current == ".."))
-            continue;
-        if (stat(dp->d_name, &s) < 0)
-            return (perror("stat failed"), false);
-
-        if (S_ISDIR(s.st_mode))
-            std::cout << "<li><a href=\"" << current << "/\">" << current << "</a>" << std::endl;
-        else if (S_ISREG(s.st_mode))
-            std::cout << "<li><a href=\"" << current << "\">." << current << "</a>" << std::endl;
-    }
-    std::cout << "</ul>\n<hr>\n</body>\n</html>" << std::endl;
+    respond_with_autoindex = true;
     return (true);
-
 }
 
 std::string get_file_name(const std::string &raw)
@@ -491,24 +460,24 @@ int request::if_loc_support_upload()
         handled index ?? if there is index and autoindex check the index first
 */
 
-bool auto_ind(std::string dir)
-{
-    DIR *dirp = opendir(".");
+// bool auto_ind(std::string dir)
+// {
+//     DIR *dirp = opendir(".");
 
-    if (!dirp)
-        return (perror("opendir filed"), false);
+//     if (!dirp)
+//         return (perror("opendir filed"), false);
 
-    struct dirent *dp;
+//     struct dirent *dp;
 
-    dirp = opendir(".");
-    if (dirp == NULL)
-            return (false);
-    while ((dp = readdir(dirp)) != NULL)
-    {
-        std::cout << dp->d_name << std::endl;
-    }
-    return (true);
-}
+//     dirp = opendir(".");
+//     if (dirp == NULL)
+//             return (false);
+//     while ((dp = readdir(dirp)) != NULL)
+//     {
+//         std::cout << dp->d_name << std::endl;
+//     }
+//     return (true);
+// }
 
 bool request::delete_all_folder_content(std::string ress_path)
 {

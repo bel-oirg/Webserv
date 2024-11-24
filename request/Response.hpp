@@ -7,7 +7,7 @@ class response : public request
 {
     private:
         std::unordered_map<int, std::string> status;
-        int _content_length; 
+        int _content_length;
 
         std::string _location; 
         std::string _content_type; 
@@ -26,5 +26,6 @@ class response : public request
         void set_connection();
         void set_content_type();
         void set_body();
+        bool prepare_autoindex();
         std::string the_head();
 };
