@@ -18,14 +18,17 @@
 struct loc_details
 {
     int status_code;
-    std::string redir_to;
     bool auto_index;
     bool has_cgi;
-    bool add_slash;
     std::string root;
+    std::vector<std::string> allowed_methods;
+
+    std::string redir_to;
+    
+    bool add_slash;
+
     size_t client_max_body_size;
     std::vector<std::string> index_files;
-    std::vector<std::string> allowed_methods;
 
     loc_details()
         : status_code(0),
@@ -61,11 +64,12 @@ struct loc_details
     {}
 };
 
+
 class request
 {
     protected:
         loc_details current_loc;
-        std::unordered_map<std::string, loc_details> locations;
+        std::unordered_map<std::string, loc_details> locations; // TODO c++11
         std::unordered_map<std::string, std::string> headers;
         std::string resource_path;
         std::string req;

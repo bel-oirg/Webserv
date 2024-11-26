@@ -1,7 +1,14 @@
 #include "Response.hpp"
+#include "server.hpp"
 
-request::request(std::string raw_req) : req(raw_req)
+request::request(std::string raw_req, Server &server) : req(raw_req)
 {
+
+    if (server.locations["/"])
+        // 
+    else
+        server.location["default"]
+
     locations["/about"] = loc_details(
         0, 
         "", 
@@ -23,6 +30,7 @@ request::request(std::string raw_req) : req(raw_req)
         1210,
         std::vector<std::string>(1, "about.html"), 
         std::vector<std::string>(3, "POST"));
+
 
         locations["/pool"] = loc_details(
         0, 

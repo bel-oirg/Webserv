@@ -1,12 +1,12 @@
 NAME = Req
 CC = c++
-CFLAGS = -Wall -Wextra -Werror -std=c++98# -fsanitize=address -g
+CFLAGS = #-Wall -Wextra -Werror #-std=c++98# -fsanitize=address -g
 
-SRCS = main.cpp Request.cpp Response.cpp
+SRCS = $(shell find ./ -name "*.cpp")
 
 OBJS = $(SRCS:.cpp=.o)
 
-HEADER = Request.hpp Response.hpp
+HEADER = Request/*.hpp Server/*.hpp
 
 all : $(NAME)
 
