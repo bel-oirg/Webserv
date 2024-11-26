@@ -1,4 +1,4 @@
-#include "../Request/Response.hpp"
+// #include "../Request/Response.hpp"
 #include "server.hpp"
 #include "config.hpp"
 
@@ -33,16 +33,20 @@ void	Server::accept_connections()
 
  void	serve(int fd, std::vector<Server> &servers)
 {
-	// for (int i = 0 ; i < servers.size(); i++)
-	// {
-		// Config cur_server = servers[i];
-		// if (Server::pool.is_server(fd))
-		// {
-		// 	servers[i].accept_connections();
-		// 	cout << "new connections" << endl;
-		// }
 			char buffer[8192] = {0};
-			int valread = read(fd, buffer, 8192);
+			string readed_request;
+
+			int valread;
+
+			while (true)
+			{
+				valread = read(fd, buffer, 8190); // TODO protect
+				if (valread == 0)
+					break;
+				buffer[valread] = '\0';
+				readed_request += buffer;
+			}
+
 			if (valread == 0)
 			{
 				std::cout << "Client disconnected" << std::endl;
@@ -54,7 +58,7 @@ void	Server::accept_connections()
 				/*
 					req here --> resp
 				*/
-				response resp(buffer); 
+				// response resp(buffer); 
 
 				send(fd, (void*)http_response, sizeof(http_response), 0);
 				Server::pool.remove(fd);
@@ -112,7 +116,6 @@ void	Server::setup()
 
 void	Server::run(std::vector<Server> &servers)
 {
-	cout << "num of fds :" << Server::pool.size() << endl;
 	while (true)
 	{
 		std::vector<pollfd> fds = Server::pool.data();

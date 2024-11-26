@@ -2,7 +2,7 @@ NAME = Req
 CC = c++
 CFLAGS = #-Wall -Wextra -Werror #-std=c++98# -fsanitize=address -g
 
-SRCS = $(shell find ./ -name "*.cpp")
+SRCS = $(shell find ./Server -name "*.cpp")
 
 OBJS = $(SRCS:.cpp=.o)
 

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Request.hpp"
+#include "request.hpp"
 #define CHUNK_SIZE 2048
 
 class response : public request

@@ -62,7 +62,7 @@ std::vector<std::string> split(const std::string& str, char delimiter = ' ') {
     return tokens;
 }
 
-void	check_syntax(std::map<string, string>::iterator iter, Server &server)
+void	check_syntax(std::map<string, string>::iterator iter, Server &server, loc_details loc)
 {
 	string key = iter->first;
 	string value = iter->second;
@@ -78,6 +78,10 @@ void	check_syntax(std::map<string, string>::iterator iter, Server &server)
 			throw runtime_error("port richded limit");
 		server.port = port;
 	}
+	else if (key == "server_name")
+	{
+		server.server_name = value;
+	}
 	else if (key == "host")
 	{
 		in_addr_t host;
@@ -87,14 +91,14 @@ void	check_syntax(std::map<string, string>::iterator iter, Server &server)
 		server.host = host;
 	}
 
-	else if (key == "index")
+	else if (key == "index") // for location
 	{
 		if (value.empty())
 			throw runtime_error("index can't be empty");
 		else
-			server.index = value;
+			loc.index_path = value;
 	}
-	else if (key == "error_page")
+	else if (key == "error_page") // for location
 	{
 		int code ;
 		string page;
@@ -104,13 +108,23 @@ void	check_syntax(std::map<string, string>::iterator iter, Server &server)
 			std::istringstream stream(pages[i]);
 			if (!(stream >> code >> page))
 				throw runtime_error("syntax error for `error_page'");
-			server.error_pages[code] = page;
+			loc.error_pages[code] = page;
 		}
 	}
-	else if (key == "server_name")
+	else if (key == "client_max_body_size")
 	{
-		server.server_name = value;
+		uint32_t cmbs_value;
+		cmbs_value = atoll(value.c_str());
+		loc.client_max_body_size = cmbs_value;
+		cout << "max : " << cmbs_value << endl;
+		// else 
+		// 	throw runtime_error("invalid value for client_max_body_size");
 	}
+	else if (key == "root")
+	{
+		loc.redir_to = value;
+	}
+	
 }
 
 
@@ -143,7 +157,7 @@ void	set_location_data(map<string, string>::iterator loc, loc_details &dest)
 	}
 	else if (key == "return")
 	{
-		dest.return_path = value;
+		dest.redir_to = value;
 	}
 	else if (key == "client_max_body_size")
 	{
@@ -166,12 +180,14 @@ std::vector<Server> Parse::config2server(std::vector<Config> configs)
 		{
 			 Server cur_server;
 			 // iterate over all all defaults in one server
+			loc_details 		server_default = {0};
 			 for (std::map<std::string, std::string>::iterator iter = it->defaults.begin();
 			 	iter != it->defaults.end(); ++iter)
 				{
-					check_syntax(iter, cur_server);
+					check_syntax(iter, cur_server, server_default);
 				}
-			 for (std::map< string, std::map<string, string> >::iterator iter = it->location.begin();
+			cur_server.locations["default"] = server_default;
+			for (std::map< string, std::map<string, string> >::iterator iter = it->location.begin();
 			 	iter != it->location.end(); ++iter)
 				{
 					// cout << "\tLocation : "  << iter->first << endl;

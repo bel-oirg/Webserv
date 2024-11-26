@@ -63,8 +63,10 @@ struct	loc_details
 	bool				auto_index;
 	bool				has_cgi;
 	string 				root;
-	string 				return_path; // redir_to 
+	string 				redir_to; // redir_to 
     size_t				client_max_body_size;
+	std::map<int, string>			error_pages;
+	bool				has_slash;
 
 
 	 void print() const {
@@ -74,29 +76,27 @@ struct	loc_details
         cout << "    Autoindex: " << (auto_index ? "true" : "false") << endl;
         cout << "    Has CGI: " << (has_cgi ? "true" : "false") << endl;
         cout << "    Root: " << root << endl;
-        cout << "    Return Path: " << return_path << endl;
+        cout << "    Return Path: " << redir_to << endl;
     }
 };
 
 class	Server
 {
 	public :
-		int 					server_index;
+		// int 					server_index;	
 		static	Pollfd			pool;
 		std::map<string, loc_details>	locations;
-		std::map<int, string>			error_pages;
 
 		uint16_t	port;
 		string		server_name;
 		in_addr_t	host;
-		string		index;
-		bool		auto_index;
 		int 		socket_fd;
 		struct sockaddr_in	address;
+		int				index;
 
 	public :
 		Server():
-		port(-1), server_name(""), host(0), index("") { }
+		port(-1), server_name(""), host(0) { }
 
 		// void	run(std::vector<Server> &servers)
 		void	setup();
@@ -111,11 +111,8 @@ class	Server
 				port = cpy.port;
 				server_name = cpy.server_name;
 				host = cpy.host;
-				index = cpy.index;
-				auto_index = cpy.auto_index;
 
 				locations = cpy.locations;
-				error_pages = cpy.error_pages;
 			}
 			return *this;
 		}
@@ -130,13 +127,9 @@ class	Server
         std::cout << "Port: " << port << std::endl;
         std::cout << "Host: " << host << std::endl;
         std::cout << "Index: " << index << std::endl;
-        std::cout << "Auto Index: " << (auto_index ? "true" : "false") << std::endl;
 
         // Print error pages
         std::cout << "Error Pages:" << std::endl;
-        for (std::map<int, std::string>::const_iterator it = error_pages.begin(); it != error_pages.end(); ++it) {
-            std::cout << "  " << it->first << " -> " << it->second << std::endl;
-        }
 
         // Print locations
         std::cout << "Locations:" << std::endl;
