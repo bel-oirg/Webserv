@@ -1,5 +1,3 @@
-
-
 #include "parse.hpp"
 #include <iostream>
 #include <fstream>
@@ -8,8 +6,6 @@
 #include <map>
 #include <vector>
 #include <arpa/inet.h>
-
-
 
 std::string trim(const std::string& str) {
     size_t start = str.find_first_not_of(" \t");
@@ -132,9 +128,9 @@ void	set_location_data(map<string, string>::iterator loc, loc_details &dest)
 {
 	string key = loc->first;
 	string value = loc->second;
-	if (key == "allowed_methodes")
+	if (key == "allowed_methods")
 	{
-		dest.allowed_methodes = split(value, ' ');
+		dest.allowed_methods = split(value, ' ');
 	}
 	else if (key == "autoindex")
 	{

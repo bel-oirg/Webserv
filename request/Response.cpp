@@ -58,7 +58,7 @@ void response::set_content_type()
     this->_content_type = "";
     if (this->stat_code == 204 || this->stat_code == 304)
         return ;
-    std::unordered_map<std::string, std::string> mime; //TODO static const for efficiency
+    std::map<std::string, std::string> mime; //TODO static const for efficiency
 
     mime["html"] = "text/html";
     mime["htm"] = "text/html";
@@ -83,7 +83,7 @@ void response::set_content_type()
     std::string ext = this->resource_path.substr(dot_p + 1);
     std::transform(ext.begin(), ext.end(), ext.begin(), ::tolower);
 
-    std::unordered_map<std::string, std::string>::iterator it = mime.find(ext);
+    std::map<std::string, std::string>::iterator it = mime.find(ext);
     if (it != mime.end())
         this->_content_type = it->second;
 }
@@ -188,7 +188,7 @@ void response::set_body()
     _content_length = _body.size();     
 }
 
-response::response(std::string req) : request(req)
+response::response(std::string req, std::map<string, loc_details> locations) : request(req, locations)
 {
     set_content_length();
     // set_transfer_encoding();

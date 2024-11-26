@@ -1,6 +1,7 @@
 // #include "../Request/Response.hpp"
 #include "server.hpp"
 #include "config.hpp"
+#include "Response.hpp"
 
 Pollfd			Server::pool;
 
@@ -41,11 +42,13 @@ void	Server::accept_connections()
 			while (true)
 			{
 				valread = read(fd, buffer, 8190); // TODO protect
-				if (valread == 0)
-					break;
+				// if (valread == 0)
+				// 	break;
 				buffer[valread] = '\0';
 				readed_request += buffer;
+				p buffer << std::endl;
 			}
+
 
 			if (valread == 0)
 			{
@@ -58,7 +61,7 @@ void	Server::accept_connections()
 				/*
 					req here --> resp
 				*/
-				// response resp(buffer); 
+				// response resp(buffer, servers[1].locations);//, servers); 
 
 				send(fd, (void*)http_response, sizeof(http_response), 0);
 				Server::pool.remove(fd);

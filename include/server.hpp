@@ -22,7 +22,9 @@
 #include "config.hpp"
 #include <cstdint>
 #include "pollfd.hpp"
+// #include "../request/Response.hpp"
 
+// class response;
 
 using std::string;
 using std::cout;
@@ -34,7 +36,7 @@ using std::cerr;
 //     bool auto_index;
 //     bool has_cgi;
 //     std::string root;
-//     std::vector<std::string> index_files;
+//     std::vector<std::string> index_path;
 //     std::vector<std::string> allowed_methods;
 
 // 		uint16_t						_port;
@@ -58,8 +60,8 @@ typedef	in_addr_t	ip_addr;
 struct	loc_details
 {
 	int 				status_code;
-	string 				index_path; //index_files
-	std::vector<string> allowed_methodes;
+	string 				index_path; //index_path
+	std::vector<string> allowed_methods;
 	bool				auto_index;
 	bool				has_cgi;
 	string 				root;
@@ -72,7 +74,7 @@ struct	loc_details
 	 void print() const {
         cout << "    Status Code: " << status_code << endl;
         cout << "    Index Path: " << index_path << endl;
-        // cout << "    Allow Methods: " << allowed_methodes << endl;
+        // cout << "    Allow Methods: " << allowed_methods << endl;
         cout << "    Autoindex: " << (auto_index ? "true" : "false") << endl;
         cout << "    Has CGI: " << (has_cgi ? "true" : "false") << endl;
         cout << "    Root: " << root << endl;
@@ -96,7 +98,7 @@ class	Server
 
 	public :
 		Server():
-		port(-1), server_name(""), host(0) { }
+		port(0), server_name(""), host(0) { }
 
 		// void	run(std::vector<Server> &servers)
 		void	setup();

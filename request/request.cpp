@@ -1,48 +1,8 @@
 #include "Response.hpp"
 #include "server.hpp"
 
-request::request(std::string raw_req, Server &server) : req(raw_req)
+request::request(std::string raw_req, std::map<std::string, loc_details> locations) : locations(locations), req(raw_req)
 {
-
-    if (server.locations["/"])
-        // 
-    else
-        server.location["default"]
-
-    locations["/about"] = loc_details(
-        0, 
-        "", 
-        false, 
-        false, 
-        true, 
-        "/Users/bel-oirg/Desktop/Webserv/Request",
-        0,
-        std::vector<std::string>(1, "about.html"), 
-        std::vector<std::string>(2, "POST"));
-
-        locations["/"] = loc_details(
-        0, 
-        "", 
-        false, 
-        false, 
-        true, 
-        "/Users/bel-oirg/Desktop/Webserv/Request",
-        1210,
-        std::vector<std::string>(1, "about.html"), 
-        std::vector<std::string>(3, "POST"));
-
-
-        locations["/pool"] = loc_details(
-        0, 
-        "", 
-        true, 
-        true, 
-        true, 
-        "/Users/bel-oirg/Desktop", 
-        0,
-        std::vector<std::string>(1, "2a.out"), 
-        std::vector<std::string>(2, "GET"));
-
     this->stat_code = req_arch();
 }
 
@@ -183,13 +143,18 @@ bool request::get_matched_loc_for_req_uri() //REQ
     size_t tmp_size = 0;
     std::vector<std::string> potential_locations;
     std::string correct_loc;
-    for (std::unordered_map<std::string, loc_details>::iterator it = locations.begin(); it != locations.end(); it++)
+    for (std::map<std::string, loc_details>::iterator it = locations.begin(); it != locations.end(); it++)
     {
         if (URI.rfind(it->first) == 0) //TODO ma
             potential_locations.push_back(it->first);
     }
     if (!potential_locations.size())
-        return (false);
+    {
+        if (locations["default"].index_path.empty())
+            return (false);
+        // else
+            
+    }
     for (std::vector<std::string>::iterator it = potential_locations.begin(); it != potential_locations.end(); it++)
     {
         //TODO why *it.size() do not work?
@@ -238,14 +203,14 @@ inline bool request::is_uri_has_slash_in_end()
     return (this->URI.back() == '/');
 }
 
-bool request::is_dir_has_index_files()
+bool request::is_dir_has_index_path()
 {
     std::string to_check;
     struct stat s;
 
-    for (size_t index = 0; index < current_loc.index_files.size() ; index++)
+    for (size_t index = 0; index < current_loc.index_path.size() ; index++)
     {
-        to_check = current_loc.root + "/" + current_loc.index_files[index];
+        to_check = current_loc.root + "/" + current_loc.index_path[index];
         if (!stat(to_check.c_str(), &s) && S_ISREG(s.st_mode))
         {
             resource_path = to_check;
@@ -263,7 +228,7 @@ bool request::if_location_has_cgi()
 void    request::display_req()
 {
     std::cout << this->method << " " << this->URI << " " << this->HTTP << std::endl;
-    for (std::unordered_map<std::string, std::string>::iterator it = headers.begin() ; it != headers.end() ; it++)
+    for (std::map<std::string, std::string>::iterator it = headers.begin() ; it != headers.end() ; it++)
         std::cout << it->first << ": " << it->second << std::endl;
 }
 
@@ -278,7 +243,7 @@ int     request::GET()
         if (!is_uri_has_slash_in_end())
             return (301); //redir to same path + "/"
         this->add_slash = true;
-        if (!is_dir_has_index_files())
+        if (!is_dir_has_index_path())
         {
             if (!get_auto_index())
                 return (err_("NO AUTO_INDEX"), 403);
@@ -307,7 +272,7 @@ int     request::POST()
         if (!is_uri_has_slash_in_end())
             return (301); //redir to same path + "/"
         this->add_slash = true;
-        if (is_dir_has_index_files())
+        if (is_dir_has_index_path())
         {
             if (!if_location_has_cgi())
                 return (403);
@@ -342,11 +307,11 @@ int     request::DELETE()
         this->add_slash = true;
         if (!if_location_has_cgi())
             return (403);
-        if (is_dir_has_index_files())
+        if (is_dir_has_index_path())
         {
             if (if_location_has_cgi())
             {
-                if (!is_dir_has_index_files())
+                if (!is_dir_has_index_path())
                     return (403);
                 /*
                 else
@@ -467,25 +432,6 @@ int request::if_loc_support_upload()
     3 prob
         handled index ?? if there is index and autoindex check the index first
 */
-
-// bool auto_ind(std::string dir)
-// {
-//     DIR *dirp = opendir(".");
-
-//     if (!dirp)
-//         return (perror("opendir filed"), false);
-
-//     struct dirent *dp;
-
-//     dirp = opendir(".");
-//     if (dirp == NULL)
-//             return (false);
-//     while ((dp = readdir(dirp)) != NULL)
-//     {
-//         std::cout << dp->d_name << std::endl;
-//     }
-//     return (true);
-// }
 
 bool request::delete_all_folder_content(std::string ress_path)
 {

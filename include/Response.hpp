@@ -3,10 +3,12 @@
 #include "request.hpp"
 #define CHUNK_SIZE 2048
 
+using std::string; 
+
 class response : public request
 {
     private:
-        std::unordered_map<int, std::string> status;
+        std::map<int, std::string> status;
         int _content_length;
 
         std::string _location; 
@@ -17,7 +19,7 @@ class response : public request
         std::string _body;
     
     public:
-        response(std::string req);
+        response(std::string req, std::map<std::string, loc_details> locations);
         void fill_status();
         void set_content_length();
         void set_server();
