@@ -1,6 +1,7 @@
 NAME = Req
 CC = c++
-CFLAGS = #-Wall -Wextra -Werror #-std=c++98# -fsanitize=address -g
+# CFLAGS = #-Wall -Wextra -Werror #-std=c++98# -fsanitize=address -g
+CFLAGS = -fsanitize=address
 
 SRCS = $(shell find ./ -name "*.cpp")
 

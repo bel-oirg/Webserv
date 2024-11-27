@@ -33,147 +33,73 @@ struct	wbs_pollfd
 typedef	std::map<int, std::map<int, pollfd> >::iterator pool_iter;
 
 
-// class	Pollfd
-// {
-// 	private :
-// 		// the key is server idex pos & the data is the fd's under this server; 
-// 		std::map<int, std::map<int, pollfd> >		pool;
-// 		std::vector<pollfd> 						ret;
-// 		size_t 										n_events;
-
-// 	public	:
-// 		Pollfd() : n_events(0) {}
-	
-// 		void	add(int server_index, int fd)
-// 		{
-// 			pollfd nu = {0};
-
-// 			nu.fd = fd;
-// 			nu.revents = POLLIN;
-// 			nu.events = 0;
-
-// 			this->n_events++;
-// 			pool[server_index][fd] = nu;
-// 		}
-
-// 		// pollfd&	operator[] (int pos)
-// 		// {
-// 		// 	return (pool.at(pos).fd);
-// 		// }
-
-// 		void	remove(int fd)
-// 		{
-// 			close(fd);
-// 			for (pool_iter it = pool.begin(); it != pool.end(); it++)
-// 			{
-// 				std::map<int, pollfd>::iterator found = it->second.find(fd);
-// 				if ( found != it->second.end())
-// 				{
-// 					it->second.erase(found);
-// 					this->n_events--;
-// 					break;
-// 				}
-// 			}
-//  		};
-
-// 		size_t	size()
-// 		{
-// 			return (this->n_events);
-// 		}
-
-// 		// std::map<int, wbs_pollfd>::iterator begin()
-// 		// {
-// 		// 	return (pool.begin());
-// 		// }
-
-// 		// std::map<int, wbs_pollfd>::iterator end()
-// 		// {
-// 		// 	return (pool.end());
-// 		// }
-
-
-// 		bool	is_server(int fd)
-// 		{
-// 			for (pool_iter it = pool.begin(); it != pool.end(); it++)
-// 			{
-// 				if (fd == it->first)
-// 					return true;
-// 			}
-// 			return  false;
-// 		}
-
-
-// 		pollfd	*data()
-// 		{
-// 			ret.clear();
-// 			// ret.reserve(pool.size());
-// 			for (pool_iter it = pool.begin(); it != pool.end(); it++)
-// 			{
-// 				for (std::map<int, pollfd>::iterator iter = it->second.begin(); iter != it->second.end(); iter++)
-// 				{
-// 					ret.push_back(iter->second);
-// 				}
-// 			}
-// 			return (ret.data());
-// 		}
-
-// };
-
-
 #include <map>
 #include <vector>
 #include <poll.h>
 #include <unistd.h>
 
 class Pollfd {
-private:
-    std::map<int, std::map<int, pollfd> > pool; // server_index -> fd -> pollfd
-    size_t n_events;
 
-public:
-    Pollfd() : n_events(0) {}
+	private:
+		std::map<int, std::map<int, pollfd> > pool; // server_index -> fd -> pollfd
+		size_t n_events;
 
-    void add(int server_index, int fd) {
-        pollfd nu;
-        nu.fd = fd;
-        nu.events = POLLIN;
-        nu.revents = 0;
+	public:
+		Pollfd() : n_events(0) {}
 
-        if (pool[server_index].find(fd) == pool[server_index].end()) {
-            pool[server_index][fd] = nu;
-            n_events++;
-        }
-    }
+		void add(int server_index, int fd) {
+			pollfd nu;
+			nu.fd = fd;
+			nu.events = POLLIN;
+			nu.revents = 0;
 
-    void remove(int fd) {
-        for (std::map<int, std::map<int, pollfd> >::iterator server = pool.begin(); server != pool.end(); ++server) {
-            std::map<int, pollfd>::iterator found = server->second.find(fd);
-            if (found != server->second.end()) {
-                close(fd);
-                server->second.erase(found);
-                n_events--;
-                return;
-            }
-        }
-    }
+			if (pool[server_index].find(fd) == pool[server_index].end()) {
+				pool[server_index][fd] = nu;
+				n_events++;
+			}
+		}
 
-    size_t size() const {
-        return n_events;
-    }
+		void remove(int fd) {
+			for (std::map<int, std::map<int, pollfd> >::iterator server = pool.begin(); server != pool.end(); ++server) {
+				std::map<int, pollfd>::iterator found = server->second.find(fd);
+				if (found != server->second.end()) {
+					close(fd);
+					server->second.erase(found);
+					n_events--;
+					return;
+				}
+			}
+		}
 
-    bool is_server(int fd) const {
-        return pool.find(fd) != pool.end();
-    }
+		size_t size() const {
+			return n_events;
+		}
 
-    std::vector<pollfd> data() const 
-	{
-        std::vector<pollfd> result;
-        for (std::map<int, std::map<int, pollfd> >::const_iterator server = pool.begin(); server != pool.end(); ++server)
+		bool is_server(int fd) const 
 		{
-            for (std::map<int, pollfd>::const_iterator fd_entry = server->second.begin(); fd_entry != server->second.end(); ++fd_entry) {
-                result.push_back(fd_entry->second);
+			return pool.find(fd) != pool.end();
+		}
+
+		std::vector<pollfd> data() const 
+		{
+			std::vector<pollfd> result;
+			for (std::map<int, std::map<int, pollfd> >::const_iterator server = pool.begin(); server != pool.end(); ++server)
+			{
+				for (std::map<int, pollfd>::const_iterator fd_entry = server->second.begin(); fd_entry != server->second.end(); ++fd_entry) {
+					result.push_back(fd_entry->second);
+				}
+			}
+			return result;
+		}
+	 int get_server_index(int client_fd)
+	 {
+        for (pool_iter server = pool.begin(); server != pool.end(); ++server)
+		{
+            if (server->second.find(client_fd) != server->second.end())
+			{
+                return server->first;
             }
         }
-        return result;
+        return -1;
     }
 };

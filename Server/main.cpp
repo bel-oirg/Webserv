@@ -24,19 +24,27 @@ using namespace std;
 int	main(/*int argc, char **argv*/)
 {
 		std::vector<Server>	servers;
+		std::map<int , Server>	servers_as_map;
 		std::string		filename("./test.conf");
 
 
 
 		servers = Parse::get_servers(filename);
 
+
 		for (size_t i = 0; i < servers.size(); i++)
 		{
-			servers[i].index = i;
-			servers[i].print();
 			servers[i].setup();
-
 		}
 
-		Server::run(servers);
+		// TODO tmp until fixing get_servers func
+
+		for (int i = 0; i < servers.size(); i++)
+		{
+			servers_as_map[servers[i].socket_fd] = servers[i];
+			servers_as_map[servers[i].socket_fd].print();
+		}
+
+
+		Server::run(servers_as_map);
 }

@@ -94,7 +94,7 @@ class	Server
 		in_addr_t	host;
 		int 		socket_fd;
 		struct sockaddr_in	address;
-		int				index;
+		// int				index;
 
 	public :
 		Server():
@@ -102,7 +102,7 @@ class	Server
 
 		// void	run(std::vector<Server> &servers)
 		void	setup();
-		static void	run(std::vector<Server> &servers);
+		static void run(std::map<int , Server> &servers);
 		void	accept_connections();
 
 		Server& operator= (const Server &cpy)
@@ -128,7 +128,7 @@ class	Server
         std::cout << "Server Name: " << server_name << std::endl;
         std::cout << "Port: " << port << std::endl;
         std::cout << "Host: " << host << std::endl;
-        std::cout << "Index: " << index << std::endl;
+        // std::cout << "Index: " << index << std::endl;
 
         // Print error pages
         std::cout << "Error Pages:" << std::endl;
