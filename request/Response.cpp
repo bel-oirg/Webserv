@@ -24,14 +24,16 @@ std::string response::the_head()
     line << "HTTP/1.1 " << status[this->stat_code] << "\r\n";
     line << "Connection: " << this->_connection << "\r\n";
     line << "Server: " << this->_server << "\r\n";
-    line << "Content-Type: " << this->_content_type << "\r\n";
+    line << "Content-Type: " << "text/html" << "\r\n";
     if (this->_content_length == -1)
         line << "Transfer-Encoding: " << this->_transfer_encoding << "\r\n";
     else
         line << "Content-Length: " << this->_content_length << "\r\n";
     line << "\r\n";
     line << _body;
-    return (line.str());
+
+
+return (line.str());
 }
 
 void response::set_content_length()
@@ -50,7 +52,7 @@ void response::set_server()
 
 void response::set_connection()
 {
-    this->_connection = "keep-alive";
+    this->_connection = "close";
 }
 
 void response::set_content_type()
@@ -188,7 +190,7 @@ void response::set_body()
     _content_length = _body.size();     
 }
 
-response::response(std::string req, std::map<string, loc_details> locations) : request(req, locations)
+response::response(std::string req, std::string &http_response, std::map<string, loc_details> locations) : request(req, locations)
 {
     set_content_length();
     // set_transfer_encoding();
@@ -197,7 +199,9 @@ response::response(std::string req, std::map<string, loc_details> locations) : r
     set_server();
     set_body();
     // the_head();
-    std::cout << the_head();
+    http_response.clear();
+    http_response = the_head();
+    p http_response << std::endl;
 }
 
 /*

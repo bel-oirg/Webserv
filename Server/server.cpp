@@ -39,15 +39,15 @@ void	Server::accept_connections()
 
 			int valread;
 
-			while (true)
-			{
+			// while (true)
+			// {
 				valread = read(fd, buffer, 8190); // TODO protect
 				// if (valread == 0)
 				// 	break;
 				buffer[valread] = '\0';
 				readed_request += buffer;
-				p buffer << std::endl;
-			}
+				// p buffer << std::endl;
+			// }
 
 
 			if (valread == 0)
@@ -61,9 +61,11 @@ void	Server::accept_connections()
 				/*
 					req here --> resp
 				*/
-				// response resp(buffer, servers[1].locations);//, servers); 
+				string http_response;
+				p  "\t\t\t\tAAAAAAAA" << servers[0].locations["default"].root << std::endl;
+				response resp(buffer, http_response ,servers[0].locations);//, servers); 
 
-				send(fd, (void*)http_response, sizeof(http_response), 0);
+				send(fd, (void *) http_response.c_str(), http_response.size(), 0);
 				Server::pool.remove(fd);
 				cout << "data sended" << endl;
 			}

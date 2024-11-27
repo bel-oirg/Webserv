@@ -34,6 +34,7 @@ bool    request::valid_method()
     all.push_back("POST");
     all.push_back("DELETE");
     all.push_back("GET");
+    p "METHODS  \t" << this->method << std::endl;
     return (std::find(all.begin(), all.end(), this->method) != all.end());
 }
 
@@ -150,7 +151,7 @@ bool request::get_matched_loc_for_req_uri() //REQ
     }
     if (!potential_locations.size())
     {
-        if (locations["default"].index_path.empty())
+        if (locations["default"].root.empty())
             return (false);
         // else
             

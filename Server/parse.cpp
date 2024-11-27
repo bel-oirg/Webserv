@@ -58,7 +58,7 @@ std::vector<std::string> split(const std::string& str, char delimiter = ' ') {
     return tokens;
 }
 
-void	check_syntax(std::map<string, string>::iterator iter, Server &server, loc_details loc)
+void	check_syntax(std::map<string, string>::iterator iter, Server &server, loc_details &loc)
 {
 	string key = iter->first;
 	string value = iter->second;
@@ -118,7 +118,7 @@ void	check_syntax(std::map<string, string>::iterator iter, Server &server, loc_d
 	}
 	else if (key == "root")
 	{
-		loc.redir_to = value;
+		loc.root = value;
 	}
 	
 }

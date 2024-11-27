@@ -19,7 +19,7 @@ class response : public request
         std::string _body;
     
     public:
-        response(std::string req, std::map<std::string, loc_details> locations);
+        response(std::string req, std::string &http_response, std::map<std::string, loc_details> locations);
         void fill_status();
         void set_content_length();
         void set_server();
