@@ -146,15 +146,15 @@ bool request::get_matched_loc_for_req_uri() //REQ
     std::string correct_loc;
     for (std::map<std::string, loc_details>::iterator it = locations.begin(); it != locations.end(); it++)
     {
-        if (URI.rfind(it->first) == 0) //TODO ma
+        if (URI.rfind(it->first) == 0) //TODO maybe change it with begin_with
             potential_locations.push_back(it->first);
     }
     if (!potential_locations.size())
     {
         if (locations["default"].root.empty())
             return (false);
-        // else
-            
+        else
+            potential_locations.push_back("default");
     }
     for (std::vector<std::string>::iterator it = potential_locations.begin(); it != potential_locations.end(); it++)
     {
@@ -178,6 +178,9 @@ bool request::is_location_have_redir() //REQ
 bool request::is_method_allowed_in_loc() //REQ
 {
     std::vector<std::string> met = current_loc.allowed_methods;
+
+    std::cout <<  current_loc.root << "DKLSADMS\n"; 
+    
     return (std::find(met.begin(), met.end(), this->method) != met.end());
 }
 

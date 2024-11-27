@@ -120,7 +120,10 @@ void	check_syntax(std::map<string, string>::iterator iter, Server &server, loc_d
 	{
 		loc.root = value;
 	}
-	
+	if (key == "allowed_methods")
+	{
+		loc.allowed_methods = split(value, ' ');
+	}
 }
 
 

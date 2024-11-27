@@ -63,6 +63,7 @@ void	Server::accept_connections()
 				*/
 				string http_response;
 				p  "\t\t\t\tAAAAAAAA" << servers[0].locations["default"].root << std::endl;
+				
 				response resp(buffer, http_response ,servers[0].locations);//, servers); 
 
 				send(fd, (void *) http_response.c_str(), http_response.size(), 0);
