@@ -25,17 +25,18 @@ void Server::accept_connections()
 				exit(EXIT_FAILURE);
 			}
 		}
-		Server::pool.add(this->socket_fd, ret);
+		Server::pool.add_client(ret, this->socket_fd);
 		cout << "fd connection: " << ret << endl;
 	}
 }
 
-#define REQUEST_MAX_SIZE 40000
+#define REQUEST_MAX_SIZE 3000000
 
-void serve(int fd, std::map<int, Server> &servers)
+void serve(int fd, std::vector<Server> &servers)
 {
+
+	cout << "SERVER ENTRED" << endl;
 	char buffer[REQUEST_MAX_SIZE] = {0};
-	string readed_request;
 
 	int valread;
 	valread = read(fd, buffer, REQUEST_MAX_SIZE - 1);
@@ -58,19 +59,14 @@ void serve(int fd, std::map<int, Server> &servers)
 	}
 	else
 	{
-		buffer[valread] = '\0';
 		cout << buffer << endl;
+		/*
+			req here --> resp
+		*/
 		string http_response;
-		// get the server index that responsible to serve the client
-		int server_index = Server::pool.get_server_index(fd);
-		cout << "THE SERVER FOR : " << fd << "IS : " << server_index << endl;
-		if (server_index == -1)
-		{
-			clog << "can't find client fd in pool : action => closing connection" << endl;
-			Server::pool.remove(fd);
-		}
-		response resp(buffer, http_response, servers[0].locations);
 
+		Server &cur_server = Server::pool.get_server(fd, servers);
+		response resp(buffer, http_response, cur_server.locations);
 
 		send(fd, (void *)http_response.c_str(), http_response.size(), 0);
 		Server::pool.remove(fd);
@@ -85,20 +81,20 @@ void Server::setup()
 	this->socket_fd = socket(AF_INET, SOCK_STREAM, 0);
 	if (this->socket_fd == -1)
 	{
-		perror("socket() failed");
+		perror("socket() faild");
 		exit(EXIT_FAILURE);
 	}
 
 	int fd_flags = fcntl(this->socket_fd, F_GETFL, 0);
 	if (fd_flags == -1)
 	{
-		perror("fcntl( F_GETFL ) failed");
+		perror("fcntl( F_GETFL ) faild");
 		exit(EXIT_FAILURE);
 	}
 	fd_flags = fcntl(this->socket_fd, F_SETFL, fd_flags | O_NONBLOCK);
 	if (fd_flags == -1)
 	{
-		perror("fcntl( F_SETFL ) failed");
+		perror("fcntl( F_SETFL ) faild");
 		exit(EXIT_FAILURE);
 	}
 
@@ -109,21 +105,21 @@ void Server::setup()
 	int bind_t = ::bind(this->socket_fd, (const struct sockaddr *)&(this->address), sizeof(this->address));
 	if (bind_t == -1)
 	{
-		perror("dind() failed");
+		perror("dind() faild");
 		exit(EXIT_FAILURE);
 	}
 
 	int listen_t = listen(this->socket_fd, 1000);
 	if (listen_t == -1)
 	{
-		perror("listen() failed");
+		perror("listen() faild");
 		exit(EXIT_FAILURE);
 	}
 
-	Server::pool.add(this->socket_fd, this->socket_fd);
+	Server::pool.add_server(this->socket_fd);
 }
 
-void Server::run(std::map<int , Server> &servers)
+void Server::run(std::vector<Server> &servers)
 {
 	while (true)
 	{
@@ -131,7 +127,7 @@ void Server::run(std::map<int , Server> &servers)
 		int ret = poll(fds.data(), Server::pool.size(), -1);
 		if (ret == -1)
 		{
-			perror("poll() failed");
+			perror("poll() faild");
 			exit(EXIT_FAILURE);
 		}
 		for (int i = 0; i < fds.size(); i++)
@@ -140,22 +136,15 @@ void Server::run(std::map<int , Server> &servers)
 			{
 				if (Server::pool.is_server(fds[i].fd))
 				{
-					for (auto server_iter = servers.begin(); server_iter != servers.end(); server_iter++)
+					for (int j = 0; j < servers.size(); j++)
 					{
-						// cout << FD
-						// if (server_iter->first == fds[i].fd)
-						// {
-						// 	cout << " Server Event Found. "  << endl;
-						// 	server_iter->second.accept_connections();
-						// }
+						if (servers[j].socket_fd == fds[i].fd)
+							servers[j].accept_connections();
 					}
 				}
 				else
-				{
-					;;// serve(fds[i].fd, servers);
-				}
+					serve(fds[i].fd, servers);
 			}
-			// cout << "IN LOOP" << endl;
 		}
 	}
 }

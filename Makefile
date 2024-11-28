@@ -1,7 +1,6 @@
-NAME = Req
+NAME = wbs
 CC = c++
-# CFLAGS = #-Wall -Wextra -Werror #-std=c++98# -fsanitize=address -g
-CFLAGS = -fsanitize=address
+CFLAGS = #-Wall -Wextra -Werror #-std=c++98# -fsanitize=address -g
 
 SRCS = $(shell find ./ -name "*.cpp")
 

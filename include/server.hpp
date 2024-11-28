@@ -31,27 +31,6 @@ using std::cout;
 using std::endl;
 using std::cerr;
 
-
-//		int status_code;
-//     bool auto_index;
-//     bool has_cgi;
-//     std::string root;
-//     std::vector<std::string> index_path;
-//     std::vector<std::string> allowed_methods;
-
-// 		uint16_t						_port;
-// 		in_addr_t						_host;
-// 		std::string						_server_name;
-// 		std::string						_root;
-// 		unsigned long					_client_max_body_size;
-// 		std::string						_index;
-// 		bool							_autoindex;
-// 		std::map<short, std::string>	_error_pages;
-// 		std::vector<Location> 			_locations;
-//         struct sockaddr_in 				_server_address;
-//         int     						_listen_fd;
-
-
 typedef	uint16_t	PORT;
 typedef	in_addr_t	ip_addr;
 
@@ -94,7 +73,7 @@ class	Server
 		in_addr_t	host;
 		int 		socket_fd;
 		struct sockaddr_in	address;
-		// int				index;
+		int				index;
 
 	public :
 		Server():
@@ -102,7 +81,7 @@ class	Server
 
 		// void	run(std::vector<Server> &servers)
 		void	setup();
-		static void run(std::map<int , Server> &servers);
+		static void	run(std::vector<Server> &servers);
 		void	accept_connections();
 
 		Server& operator= (const Server &cpy)
@@ -128,14 +107,15 @@ class	Server
         std::cout << "Server Name: " << server_name << std::endl;
         std::cout << "Port: " << port << std::endl;
         std::cout << "Host: " << host << std::endl;
-        // std::cout << "Index: " << index << std::endl;
+        std::cout << "Index: " << index << std::endl;
 
         // Print error pages
         std::cout << "Error Pages:" << std::endl;
 
         // Print locations
         std::cout << "Locations:" << std::endl;
-        for (std::map<std::string, loc_details>::const_iterator it = locations.begin(); it != locations.end(); ++it) {
+        for (std::map<std::string, loc_details>::const_iterator it = locations.begin(); it != locations.end(); ++it)
+		{
             std::cout << "  Location: " << it->first << std::endl;
             it->second.print(); // Print details of the location
         }
