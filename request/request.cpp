@@ -81,6 +81,11 @@ int request::is_req_well_formed() //REQ
     std::string l1_s, tmp_line, field, value;
     this->has_body = false;
 
+    if (req == "Internal_err")
+        return(err_("CGI_ERR"), 500);
+    if (req == "Timeout_err")
+        return(err_("CGI_ERR"), 504);
+
     if (req.empty())
         return (err_("EMPTY"), 400);
     std::stringstream ss(req);
@@ -251,7 +256,7 @@ int     request::GET()
     }
     if (!if_location_has_cgi())
         return (200);
-   return (1337);
+   return (-1);
 }
 
 int     request::POST()
@@ -271,7 +276,7 @@ int     request::POST()
         {
             if (!if_location_has_cgi())
                 return (403);
-            return (1337);
+            return (-1);
         }
         return (403);
     }
@@ -279,7 +284,7 @@ int     request::POST()
     {
         if (!if_location_has_cgi())
             return (403);
-        return (1337);
+        return (-1);
     }
     return (0); //tmp
 }
@@ -302,7 +307,7 @@ int     request::DELETE()
             {
                 if (!is_dir_has_index_path())
                     return (403);
-                return (1337);
+                return (-1);
             }
             if (delete_all_folder_content(resource_path))
                 return (204);
@@ -315,7 +320,7 @@ int     request::DELETE()
     {
         if (!if_location_has_cgi())
             return (204);
-        return (1337);
+        return (-1);
     }
     //TODO you can remove this else if ; it will never touch return 0
     return (0); //tmp

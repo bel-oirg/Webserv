@@ -15,20 +15,24 @@ class response : public request
         std::string _location; 
         std::string _content_type; 
         std::string _server; 
+        std::string _cookies; 
         std::string _connection;
         std::string _transfer_encoding;
         std::string _body;
+        bool        prep_cgi;
     
     public:
-        response(std::string req, std::string &http_response, std::map<std::string, loc_details> locations);
+        response(std::string req, std::map<std::string, loc_details> locations);
         void fill_status();
         void set_content_length();
         void set_server();
         void set_location();
+        void set_cookies();
         // void set_transfer_encoding();
         void set_connection();
         void set_content_type();
         void set_body();
+        std::string get_response();
         bool prepare_autoindex();
-        std::string the_head();
+        std::map<std::string, std::string>    prepare_cgi();
 };

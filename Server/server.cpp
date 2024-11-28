@@ -105,17 +105,21 @@ void get_request(pollfd &pfd, std::vector<Server> &servers)
 	}
 	else
 	{
-		string http_response;
-
+		std::string response_http;
+		std::map<string, string> CGI_RAW;
 		Server &cur_server = Server::pool.get_server(pfd.fd, servers);
 
-		response resp(buffer, http_response, cur_server.locations);
+		response resp(buffer, cur_server.locations);
 
-		Server::responses.insert(make_pair(pfd.fd, http_response));
+		response_http = resp.get_response();
+		if (response_http == "CGI")
+			CGI_RAW = resp.prepare_cgi();
+
+		Server::responses.insert(make_pair(pfd.fd, response_http));
 		Server::pool.change_event(pfd.fd, POLLOUT);
 	}
 }
-
+// CGI -> crash -> try catch -> obj(crash, resp);
 void	send_response(pollfd &pfd, std::vector<Server> &servers)
 {
 	Server cur_server;

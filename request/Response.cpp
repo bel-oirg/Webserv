@@ -15,11 +15,12 @@ void response::fill_status()
     status[414] = std::string("URI Too Long");
     status[500] = std::string("Internal Server Error");
     status[501] = std::string("Not Implemented");
+    status[504] = std::string("Gateway Timeout");
 }
 
-std::string response::the_head()
+std::string response::get_response()
 {
-    if (this->stat_code == 1337)
+    if (this->stat_code == -1)
         return (p "GOTO CGI\n", "CGI");
     std::stringstream   line;
     fill_status();
@@ -32,8 +33,8 @@ std::string response::the_head()
     else
         line << "Content-Length: " << this->_content_length << "\r\n";
 
-    if (headers.find("Cookie") != headers.end())
-        line << "Set-Cookie: " << headers["Cookie"] << "\r\n";
+    if (!_cookies.empty())
+        line << "Set-Cookie: " << _cookies << "\r\n";
         
     line << "\r\n";
     line << _body;
@@ -53,6 +54,11 @@ void response::set_content_length()
 void response::set_server()
 {
     this->_server = "Webserv 2.0";
+}
+
+void response::set_cookies()
+{
+    _cookies = headers["Cookie"];
 }
 
 void response::set_connection()
@@ -197,16 +203,29 @@ void response::set_body()
     _content_length = _body.size();     
 }
 
-response::response(std::string req, std::string &http_response, std::map<string, loc_details> locations) : request(req, locations)
+std::map<std::string, std::string>    response::prepare_cgi()
+{
+    std::map<std::string, std::string> environ_vars;
+    environ_vars["REQUEST_METHOD"] = this->method;
+    environ_vars["SERVER_NAME"] = this->_server;
+    environ_vars["SCRIPT_NAME"] = this->URI ;
+    environ_vars["CONTENT_TYPE"] = this->_content_type;
+    environ_vars["CONTENT_LENGTH"] = this->_content_length;
+    environ_vars["SCRIPT_FILENAME"] = this->resource_path;
+    environ_vars["HTTP_USER_AGENT"] = this->headers["User-Agent"];
+    environ_vars["HTTP_COOKIE"] = this->_cookies;
+
+    return (environ_vars);
+}
+
+response::response(std::string req, std::map<string, loc_details> locations) : request(req, locations)
 {
     set_content_length();
     set_connection();
     set_content_type();
     set_server();
+    set_cookies();
     set_body();
-    http_response.clear();
-    http_response = the_head();
-    p http_response << std::endl;
 }
 
 /*
