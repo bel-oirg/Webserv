@@ -19,7 +19,9 @@ void response::fill_status()
 
 std::string response::the_head()
 {
-    std::stringstream line;
+    if (this->stat_code == 1337)
+        return (p "GOTO CGI\n", "CGI");
+    std::stringstream   line;
     fill_status();
     line << "HTTP/1.1 " << status[this->stat_code] << "\r\n";
     line << "Connection: " << this->_connection << "\r\n";
@@ -29,11 +31,14 @@ std::string response::the_head()
         line << "Transfer-Encoding: " << this->_transfer_encoding << "\r\n";
     else
         line << "Content-Length: " << this->_content_length << "\r\n";
+
+    if (headers.find("Cookie") != headers.end())
+        line << "Set-Cookie: " << headers["Cookie"] << "\r\n";
+        
     line << "\r\n";
     line << _body;
 
-
-return (line.str());
+    return (line.str());
 }
 
 void response::set_content_length()
@@ -52,7 +57,7 @@ void response::set_server()
 
 void response::set_connection()
 {
-    this->_connection = "close";
+    this->_connection = headers["Connection"];
 }
 
 void response::set_content_type()
@@ -137,7 +142,7 @@ bool response::prepare_autoindex()
         if (S_ISDIR(s.st_mode))
             raw_body << "<li><a href=\"" << dp->d_name << "/\">" << dp->d_name << "</a>" << std::endl;
         else if (S_ISREG(s.st_mode))
-            raw_body << "<li><a href=\"" << dp->d_name << "\">." << dp->d_name << "</a>" << std::endl;
+            raw_body << "<li><a href=\"" << dp->d_name << "\">" << dp->d_name << "</a>" << std::endl;
     }
     raw_body << "</ul>\n<hr>\n</body>\n</html>\n";
     _body = raw_body.str();
@@ -151,7 +156,7 @@ void response::set_body()
     _body = "";
     if (this->stat_code / 400)
     {
-        infile.open("/Users/bel-oirg/Desktop/Webserv/Error_pages/" + std::to_string(this->stat_code) + ".html");
+        infile.open(ERR_DIR + std::to_string(this->stat_code) + ".html");
         if (!infile)
         {
             this->stat_code = 501;
@@ -169,7 +174,9 @@ void response::set_body()
     }
     else if (this->stat_code == 200)
     {
-        if (get_auto_index())
+        int res = get_request_resource();
+
+        if (res == 1 && get_auto_index())
         {
             if (!prepare_autoindex())
                 this->stat_code = 501;
@@ -193,12 +200,10 @@ void response::set_body()
 response::response(std::string req, std::string &http_response, std::map<string, loc_details> locations) : request(req, locations)
 {
     set_content_length();
-    // set_transfer_encoding();
     set_connection();
     set_content_type();
     set_server();
     set_body();
-    // the_head();
     http_response.clear();
     http_response = the_head();
     p http_response << std::endl;

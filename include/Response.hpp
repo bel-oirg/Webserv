@@ -2,6 +2,7 @@
 
 #include "request.hpp"
 #define CHUNK_SIZE 2048
+#define ERR_DIR "/Users/bel-oirg/Desktop/Webserv/Error_pages/"
 
 using std::string; 
 

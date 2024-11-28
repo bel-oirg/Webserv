@@ -11,35 +11,34 @@
 #include <vector>
 #include "server.hpp"
 
-class server;
+#define UPLOAD_DIR "/Users/bel-oirg/Desktop/Webserv/Upload/"
 
 #define MAX_URI_SIZE 2048
 #define GLOBAL_CLIENT_MAX_BODY_SIZE 4000
 
 #define p std::cout << 
 
-
-
 class request
 {
     protected:
         loc_details current_loc;
         std::map<std::string, loc_details> locations;
+
         std::map<std::string, std::string> headers;
+
         std::string resource_path;
         std::string req;
         std::string method;
         std::string HTTP;
         std::string URI;
+        std::string _body;
         int         stat_code;
         bool        add_slash;
         bool        has_body;
-        std::string _body;
         bool respond_with_autoindex;
 
         //POST
         std::map<std::string, std::string> upload_headers;
-
 
     public:
         request(std::string raw_req, std::map<std::string, loc_details> locations);
@@ -55,6 +54,7 @@ class request
         bool    is_dir_has_index_path();
         bool    if_location_has_cgi();
         int     req_arch();
+
         int     GET();
         int     POST();
         int     DELETE();

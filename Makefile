@@ -2,21 +2,21 @@ NAME = Req
 CC = c++
 CFLAGS = #-Wall -Wextra -Werror #-std=c++98# -fsanitize=address -g
 
-SRCS = $(shell find ./ -name "*.cpp")
+SRCS = $(shell find . -name "*.cpp")
 
 OBJS = $(SRCS:.cpp=.o)
 
-HEADER = -I include/
+HEADERS = $(shell find . -name "*.hpp")
+
+INCLUDE = -I include/
 
 all : $(NAME)
 
-$(NAME) : $(OBJS) #$(HEADER)
+$(NAME) : $(OBJS)
 	$(CC) $(CFLAGS) $(OBJS) -o $(NAME)
 
-# $(OBJS) : $(HEADER)
-
-%.o : %.cpp
-	$(CC) $(CFLAGS) $(HEADER) -c $< -o $@
+%.o : %.cpp $(HEADERS)
+	$(CC) $(CFLAGS) $(INCLUDE) -c $< -o $@
 
 fclean : clean
 	$(RM) $(NAME)

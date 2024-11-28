@@ -124,6 +124,15 @@ void	check_syntax(std::map<string, string>::iterator iter, Server &server, loc_d
 	{
 		loc.allowed_methods = split(value, ' ');
 	}
+	else if (key == "autoindex")
+	{
+		if (value == "on")
+			loc.auto_index = true;
+		else if (value == "off")
+			loc.auto_index = false;
+		else
+			throw runtime_error ("invalid format for autoindex");
+	}
 }
 
 

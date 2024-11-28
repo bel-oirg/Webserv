@@ -34,7 +34,6 @@ bool    request::valid_method()
     all.push_back("POST");
     all.push_back("DELETE");
     all.push_back("GET");
-    p "METHODS  \t" << this->method << std::endl;
     return (std::find(all.begin(), all.end(), this->method) != all.end());
 }
 
@@ -122,7 +121,7 @@ int request::is_req_well_formed() //REQ
         
         if (this->method != "POST")
             return (err_("there is body but non-POST method is used"), 400);
-        if (this->_body.size() > GLOBAL_CLIENT_MAX_BODY_SIZE)
+        if (this->_body.size() > GLOBAL_CLIENT_MAX_BODY_SIZE) //TODO change this
             return (err_("Big BODY"), 413);
         this->has_body = true;
     }
@@ -177,10 +176,7 @@ bool request::is_location_have_redir() //REQ
 
 bool request::is_method_allowed_in_loc() //REQ
 {
-    std::vector<std::string> met = current_loc.allowed_methods;
-
-    std::cout <<  current_loc.root << "DKLSADMS\n"; 
-    
+    std::vector<std::string> met = current_loc.allowed_methods;    
     return (std::find(met.begin(), met.end(), this->method) != met.end());
 }
 
@@ -239,7 +235,6 @@ void    request::display_req()
 int     request::GET()
 {
     int resource_type = get_request_resource();
-    // p this->resource_path << "PPPOO" << std::endl;
     if (resource_type <= 0)
         return (404);
     if (resource_type == 1) // dir
@@ -256,11 +251,7 @@ int     request::GET()
     }
     if (!if_location_has_cgi())
         return (200);
-    /*
-    else
-        RUN CGI WITH GET - STAT CODE DEP ON CGI
-    */
-   return (0); //tmp
+   return (1337);
 }
 
 int     request::POST()
@@ -280,10 +271,7 @@ int     request::POST()
         {
             if (!if_location_has_cgi())
                 return (403);
-            /*
-            else
-                RUN CGI WITH POST - STAT CODE DEP ON CGI
-            */
+            return (1337);
         }
         return (403);
     }
@@ -291,10 +279,7 @@ int     request::POST()
     {
         if (!if_location_has_cgi())
             return (403);
-        /*
-        else
-            RUN CGI WITH POST - STAT CODE DEP ON CGI
-        */
+        return (1337);
     }
     return (0); //tmp
 }
@@ -317,10 +302,7 @@ int     request::DELETE()
             {
                 if (!is_dir_has_index_path())
                     return (403);
-                /*
-                else
-                    RUN CGI WITH POST - STAT CODE DEP ON CGI
-                */
+                return (1337);
             }
             if (delete_all_folder_content(resource_path))
                 return (204);
@@ -329,15 +311,13 @@ int     request::DELETE()
             return (403);
         }
     }
-    else if (resource_type == 2)
+    else if (resource_type == 2) //file
     {
         if (!if_location_has_cgi())
             return (204);
-        /*
-        else
-            RUN CGI WITH POST - STAT CODE DEP ON CGI
-        */
+        return (1337);
     }
+    //TODO you can remove this else if ; it will never touch return 0
     return (0); //tmp
 }
 
@@ -402,7 +382,7 @@ bool process_multipart(std::string _body, std::string _boundary)
         if (cont_beg == std::string::npos || cont_end == std::string::npos)
             return (err_("No body found to upload"), false);
 
-        std::ofstream outfile("/Users/bel-oirg/Desktop/Webserv/Upload/" + file_name);
+        std::ofstream outfile(UPLOAD_DIR + file_name);
         if (!outfile)
             return (err_("Failed to open the upload_file"), false);
         outfile << _body.substr(cont_beg + 4, cont_end - cont_beg - 4);
