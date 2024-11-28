@@ -31,9 +31,6 @@ using std::cout;
 using std::endl;
 using std::cerr;
 
-typedef	uint16_t	PORT;
-typedef	in_addr_t	ip_addr;
-
 
 
 struct	loc_details
@@ -66,6 +63,7 @@ class	Server
 	public :
 		// int 					server_index;	
 		static	Pollfd			pool;
+		static std::map<int , string>	responses;
 		std::map<string, loc_details>	locations;
 
 		uint16_t	port;

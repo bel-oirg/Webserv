@@ -35,6 +35,22 @@ private:
 public:
     Pollfd() : n_events(0) {}
 
+	void change_event(int fd, int event)
+	{
+		for (map<int, vector<pollfd> >::iterator server = pool.begin(); server != pool.end(); server++)
+		{
+			vector<pollfd>::iterator fds;
+			for (fds = server->second.begin(); fds != server->second.end() ; fds++)
+			{
+				if (fds->fd == fd)
+				{
+					fds->events = event;
+					break;
+				}
+			}  
+        }
+	}
+
     void add_server(int server_fd)
 	{
         pollfd nu;

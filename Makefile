@@ -1,4 +1,4 @@
-NAME = wbs
+NAME = Req
 CC = c++
 CFLAGS = #-Wall -Wextra -Werror #-std=c++98# -fsanitize=address -g
 
