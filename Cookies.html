@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <style>
+      body {
+        padding: 25px;
+        background-color: white;
+        color: black;
+        font-size: 25px;
+      }
+
+      .dark-mode {
+        background-color: black;
+        color: white;
+      }
+    </style>
+  </head>
+  <body>
+    <h2>Toggle Dark/Light Mode</h2>
+    <p>Click the button to toggle between dark and light mode for this page.</p>
+
+    <script>
+      function get_cook(cookiename)
+      {
+        const cookies = document.cookie.split('; ');
+        for (let cookie of cookies)
+        {
+          const [name, value] = cookie.split('=');
+          if (name === cookiename)
+            return (value);
+        }
+        return null;
+      }
+
+      function set_cookie(name, value, days)
+      {
+        const date = new Date();
+        date.setTime(date.getTime() + (days * 24 * 60 * 60 * 1000));
+        document.cookie = `${name}=${value}; expires=${date.toUTCString()}; path=/`;
+      }
+
+      console.log(get_cook("theme"));
+
+      (function()
+      {
+        let onpageLoad = get_cook("theme") || "";
+        let element = document.body;
+        element.classList.add(onpageLoad);
+        document.getElementById("theme").textContent = get_cook("theme") || "light";
+      })();
+
+      function themeToggle()
+      {
+        let element = document.body;
+        element.classList.toggle("dark-mode");
+        let theme = get_cook("theme");
+        if (theme && theme === "dark-mode")
+          set_cookie("theme", "", 3);
+        else
+          set_cookie("theme", "dark-mode", 3);
+        
+        document.getElementById("theme").textContent = get_cook("theme");
+      }
+    </script>
+    <button type="button" onclick="themeToggle()">Theme Toggle</button>
+    <div id="theme"></div>
+  </body>
+</html>

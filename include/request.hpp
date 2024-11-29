@@ -11,7 +11,8 @@
 #include <vector>
 #include "server.hpp"
 
-#define UPLOAD_DIR "/Users/bel-oirg/Desktop/Webserv/Upload/"
+#define UPLOAD_DIR "/Users/bel-oirg/Desktop/SSEERR/Upload/"
+//TODO change UPLOAD_DIR based on config file
 
 #define MAX_URI_SIZE 2048
 #define GLOBAL_CLIENT_MAX_BODY_SIZE 4000
@@ -20,25 +21,23 @@
 
 class request
 {
-    protected:
-        loc_details current_loc;
+    private:
+        std::string HTTP;
+        std::string req;
         std::map<std::string, loc_details> locations;
 
+    protected:
         std::map<std::string, std::string> headers;
+        loc_details current_loc;
 
         std::string resource_path;
-        std::string req;
         std::string method;
-        std::string HTTP;
         std::string URI;
-        std::string _body;
+        std::string body;
         int         stat_code;
         bool        add_slash;
         bool        has_body;
         bool respond_with_autoindex;
-
-        //POST
-        std::map<std::string, std::string> upload_headers;
 
     public:
         request(std::string raw_req, std::map<std::string, loc_details> locations);

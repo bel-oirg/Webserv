@@ -3,15 +3,16 @@
 #include "request.hpp"
 #define CHUNK_SIZE 2048
 #define ERR_DIR "/Users/bel-oirg/Desktop/Webserv/Error_pages/"
+//TODO change the err pages based on config file
 
 using std::string; 
 
 class response : public request
 {
     private:
-        std::map<int, std::string> status;
         int _content_length;
 
+        std::string _status;
         std::string _location; 
         std::string _content_type; 
         std::string _server; 
@@ -19,11 +20,10 @@ class response : public request
         std::string _connection;
         std::string _transfer_encoding;
         std::string _body;
-        bool        prep_cgi;
     
     public:
         response(std::string req, std::map<std::string, loc_details> locations);
-        void fill_status();
+        void set_status();
         void set_content_length();
         void set_server();
         void set_location();

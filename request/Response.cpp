@@ -1,21 +1,23 @@
-#include "Response.hpp"
+#include "response.hpp"
 
-void response::fill_status()
+void response::set_status()
 {
-    status[200] = std::string("OK");
-    status[201] = std::string("Created");
-    status[204] = std::string("No Content");
-    status[301] = std::string("Moved Permanently");
-    status[400] = std::string("Bad Request");
-    status[403] = std::string("Forbidden");
-    status[404] = std::string("Not Found");
-    status[405] = std::string("Method Not Allowed");
-    status[409] = std::string("Conflict");
-    status[413] = std::string("Content Too Large");
-    status[414] = std::string("URI Too Long");
-    status[500] = std::string("Internal Server Error");
-    status[501] = std::string("Not Implemented");
-    status[504] = std::string("Gateway Timeout");
+    std::map<int, std::string> status_map;
+    status_map[200] = std::string("OK");
+    status_map[201] = std::string("Created");
+    status_map[204] = std::string("No Content");
+    status_map[301] = std::string("Moved Permanently");
+    status_map[400] = std::string("Bad Request");
+    status_map[403] = std::string("Forbidden");
+    status_map[404] = std::string("Not Found");
+    status_map[405] = std::string("Method Not Allowed");
+    status_map[409] = std::string("Conflict");
+    status_map[413] = std::string("Content Too Large");
+    status_map[414] = std::string("URI Too Long");
+    status_map[500] = std::string("Internal Server Error");
+    status_map[501] = std::string("Not Implemented");
+    status_map[504] = std::string("Gateway Timeout");
+    _status = status_map[stat_code];
 }
 
 std::string response::get_response()
@@ -23,8 +25,7 @@ std::string response::get_response()
     if (this->stat_code == -1)
         return (p "GOTO CGI\n", "CGI");
     std::stringstream   line;
-    fill_status();
-    line << "HTTP/1.1 " << status[this->stat_code] << "\r\n";
+    line << "HTTP/1.1 " << _status << "\r\n";
     line << "Connection: " << this->_connection << "\r\n";
     line << "Server: " << this->_server << "\r\n";
     line << "Content-Type: " << "text/html" << "\r\n";
@@ -39,6 +40,7 @@ std::string response::get_response()
     line << "\r\n";
     line << _body;
 
+    p "------RESP-----\n" << line.str() << std::endl;
     return (line.str());
 }
 
@@ -69,7 +71,7 @@ void response::set_connection()
 void response::set_content_type()
 {
     this->_content_type = "";
-    if (this->stat_code == 204 || this->stat_code == 304)
+    if (this->stat_code == 304)
         return ;
     std::map<std::string, std::string> mime; //TODO static const for efficiency
 
@@ -178,6 +180,8 @@ void response::set_body()
         _content_length = _body.size();     
         return ;
     }
+    else if (this->stat_code == 204)
+        _body = "Content Uploaded Successfully";
     else if (this->stat_code == 200)
     {
         int res = get_request_resource();
@@ -220,6 +224,7 @@ std::map<std::string, std::string>    response::prepare_cgi()
 
 response::response(std::string req, std::map<string, loc_details> locations) : request(req, locations)
 {
+    set_status();
     set_content_length();
     set_connection();
     set_content_type();

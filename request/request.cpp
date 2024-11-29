@@ -1,4 +1,4 @@
-#include "Response.hpp"
+#include "response.hpp"
 #include "server.hpp"
 
 request::request(std::string raw_req, std::map<std::string, loc_details> locations) : locations(locations), req(raw_req)
@@ -122,11 +122,11 @@ int request::is_req_well_formed() //REQ
 
     if (req.size() > head_end + 4)
     {
-        this->_body = req.substr(head_end + 4);
+        this->body = req.substr(head_end + 4);
         
         if (this->method != "POST")
             return (err_("there is body but non-POST method is used"), 400);
-        if (this->_body.size() > GLOBAL_CLIENT_MAX_BODY_SIZE) //TODO change this
+        if (this->body.size() > GLOBAL_CLIENT_MAX_BODY_SIZE) //TODO change this
             return (err_("Big BODY"), 413);
         this->has_body = true;
     }
@@ -275,15 +275,15 @@ int     request::POST()
         if (is_dir_has_index_path())
         {
             if (!if_location_has_cgi())
-                return (403);
+                return (err_("NO CGI ON DIR"), 403);
             return (-1);
         }
-        return (403);
+        return (err_("NO INDEX PATH"), 403);
     }
     else if (resource_type == 2) //file
     {
         if (!if_location_has_cgi())
-            return (403);
+            return (err_("NO CGI ON FILE"), 403);
         return (-1);
     }
     return (0); //tmp
@@ -366,15 +366,15 @@ std::string get_file_name(const std::string &raw)
     return (raw.substr(beg + 6, end - beg - 6));
 }
 
-bool process_multipart(std::string _body, std::string _boundary)
+bool process_multipart(std::string body, std::string _boundary)
 {
     std::string line;
     size_t pos = 0;
 
-    while((pos = _body.find("--" + _boundary, pos)) != std::string::npos)
+    while((pos = body.find("--" + _boundary, pos)) != std::string::npos)
     {
-        size_t next = _body.find("--" + _boundary, pos + 2 + _boundary.size());
-        std::string current_part = _body.substr(pos, next - pos);
+        size_t next = body.find("--" + _boundary, pos + 2 + _boundary.size());
+        std::string current_part = body.substr(pos, next - pos);
 
         size_t file_beg = current_part.find("filename=\"");
         size_t file_end = current_part.find("\"", file_beg + 10);
@@ -390,9 +390,9 @@ bool process_multipart(std::string _body, std::string _boundary)
         std::ofstream outfile(UPLOAD_DIR + file_name);
         if (!outfile)
             return (err_("Failed to open the upload_file"), false);
-        outfile << _body.substr(cont_beg + 4, cont_end - cont_beg - 4);
+        outfile << body.substr(cont_beg + 4, cont_end - cont_beg - 4);
 
-        if (_body.find("--" + _boundary + "--", next) != std::string::npos)
+        if (body.find("--" + _boundary + "--", next) != std::string::npos)
             break;
         pos = next;
     }
@@ -402,7 +402,7 @@ bool process_multipart(std::string _body, std::string _boundary)
 //POST
 int request::if_loc_support_upload()
 {
-    if (_body.size() > current_loc.client_max_body_size)
+    if (body.size() > current_loc.client_max_body_size)
         return (err_("body_size on loc_support_upload"), 413);
 
     if (headers["Content-Type"].rfind("multipart/form-data") == std::string::npos)
@@ -412,9 +412,9 @@ int request::if_loc_support_upload()
     size_t bound_end = headers["Content-Type"].find_first_of(" \r\n", bound_beg);
     std::string _boundary = headers["Content-Type"].substr(bound_beg + 9, bound_end - bound_beg - 9);
 
-    if (!process_multipart(_body, _boundary))
+    if (!process_multipart(body, _boundary))
         return (err_("process_multipart err"), 400);
-    return (0);
+    return (204);
 }
 
 /*
