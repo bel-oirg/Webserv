@@ -171,6 +171,15 @@ void	set_location_data(map<string, string>::iterator loc, loc_details &dest)
 	{
 		dest.client_max_body_size = atoi(value.c_str());
 	}
+	else if (key == "cgi_pass")
+	{
+		if (value == "on")
+			dest.has_cgi = true;
+		else if (value == "off")
+			dest.has_cgi = false;
+		else
+			throw runtime_error ("invalid format for cgi_pass");
+	}
 }
 
 std::vector<Server> Parse::config2server(std::vector<Config> configs)

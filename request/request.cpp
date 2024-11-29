@@ -66,7 +66,7 @@ bool    request::valid_elem(std::string elem)
 
 bool    is_valid_URI(std::string URI)
 {
-    std::string allowed_URI = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789 ._~:/?#[]@!$&'()*+,;=%";
+    std::string allowed_URI = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789- ._~:/?#[]@!$&'()*+,;=%";
     for (size_t index = 0; index < URI.size() ; index++)
     {
         if (allowed_URI.find(URI[index]) == std::string::npos)

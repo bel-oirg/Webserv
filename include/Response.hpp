@@ -31,6 +31,8 @@ class response : public request
         // void set_transfer_encoding();
         void set_connection();
         void set_content_type();
+		std::string get_body();
+		string get_script_path();
         void set_body();
         std::string get_response();
         bool prepare_autoindex();

@@ -3,6 +3,7 @@
 #include "config.hpp"
 #include "response.hpp"
 #include "cgi_response.hpp"
+#include "cgi.hpp"
 
 Pollfd Server::pool;
 map<int, string> Server::responses;
@@ -98,7 +99,6 @@ void get_request(pollfd &pfd, std::vector<Server> &servers)
 		Server::pool.remove(pfd.fd);
 		return;
 	}
-	cout << "READ PASS" << endl;
 	if (valread == 0)
 	{
 		std::cout << "Client disconnected" << std::endl;
@@ -113,9 +113,23 @@ void get_request(pollfd &pfd, std::vector<Server> &servers)
 		response resp(buffer, cur_server.locations);
 		// p "------REQ-----\n" << buffer << std::endl;
 
+		// std::string var1 = "Content-Type: text/html\r\n"
+		// 					"\r\n"
+		// 					"ANYDATA"
+		// 					"\r\n"
+		// 					"MORE DATA";
+							
+
+
 		response_http = resp.get_response();
 		if (response_http == "CGI")
+		{
+			cerr << "IS CGI" << endl;
 			CGI_RAW = resp.prepare_cgi();
+			Cgi cgi(resp.get_script_path(), resp.get_body(), CGI_RAW);
+			cgi_response cgii(cgi.cgi_get_response(), cgi.cgi_get_code());
+			response_http =  cgii.get_cgi_response();
+		}
 
 		Server::responses.insert(make_pair(pfd.fd, response_http));
 		Server::pool.change_event(pfd.fd, POLLOUT);

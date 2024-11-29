@@ -1,5 +1,17 @@
 #include "response.hpp"
 
+
+
+string response::get_script_path()
+{
+	return (this->resource_path);
+}
+
+string response::get_body()
+{
+	return (this->_body);
+}
+
 void response::set_status()
 {
     std::map<int, std::string> status_map;
