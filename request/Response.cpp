@@ -60,9 +60,7 @@ void response::set_content_length()
 {
     //specifies the content of the response BODY
     //unless using transfer-encoding : chunked
-    this->_content_length = -1;
-    if (!this->has_body)
-        this->_content_length = 0;
+    this->_content_length = _body.size();
 }
 
 void response::set_server()
@@ -102,12 +100,12 @@ void response::set_content_type()
     mime["png"] = "image/png";
     mime["json"] = "application/json";
 
-    _content_type = "text/plain";
-    size_t dot_p = this->resource_path.find_last_of('.');
+    _content_type = "text/html";
+    size_t dot_p = this->URI.find_last_of('.');
     if (dot_p == std::string::npos)
         return ;
 
-    std::string ext = this->resource_path.substr(dot_p + 1);
+    std::string ext = this->URI.substr(dot_p + 1);
     std::transform(ext.begin(), ext.end(), ext.begin(), ::tolower);
 
     std::map<std::string, std::string>::iterator it = mime.find(ext);
@@ -237,12 +235,12 @@ std::map<std::string, std::string>    response::prepare_cgi()
 response::response(std::string req, std::map<string, loc_details> locations) : request(req, locations)
 {
     set_status();
-    set_content_length();
     set_connection();
     set_content_type();
     set_server();
     set_cookies();
     set_body();
+    set_content_length();
 }
 
 /*

@@ -1,9 +1,4 @@
 #!/usr/bin/env ruby
-
-# Output HTTP headers
-puts "Content-Type: text/html\n\n"
-
-# Output HTML content
 puts <<~HTML
 <html>
 <head>

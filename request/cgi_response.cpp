@@ -10,26 +10,19 @@ void cgi_response::set_status()
     _status = status_map[cgi_stat_code];
 }
 
-cgi_response::cgi_response(std::string cgi_body, int cgi_stat_code) : cgi_stat_code(cgi_stat_code)
+cgi_response::cgi_response(std::string cgi_body, int cgi_stat_code) : cgi_stat_code(cgi_stat_code), _body(cgi_body)
 {
+    std::cout <<  "RAW_RESPO--------###" << cgi_body << "ENDHERE-----\n";
     set_status();
     set_server();
-    set_body(cgi_body);
+    set_body();
     set_connection();
     set_content_length();
 }
 
-void cgi_response::set_body(std::string cgi_body)
+void cgi_response::set_body()
 {
-    if (cgi_stat_code == 200)
-    {
-        size_t conttype_beg = cgi_body.find(":");
-        size_t body_beg = cgi_body.find("\r\n\r\n");
-        _content_type = cgi_body.substr(conttype_beg + 1, body_beg - conttype_beg - 1);
-        size_t body_end = cgi_body.size();
-        _body = cgi_body.substr(body_beg + 4, body_end - 4 - body_beg);
-    }
-    else
+    if (cgi_stat_code != 200)
     {
         std::ifstream infile;
         infile.open(CGI_ERR_DIR + std::to_string(cgi_stat_code) + ".html");
@@ -41,8 +34,8 @@ void cgi_response::set_body(std::string cgi_body)
         std::stringstream ss;
         ss << infile.rdbuf();
         _body = ss.str();
-        _content_type = "text/html";
     }
+    _content_type = "text/html";
 }
 
 void    cgi_response::set_content_length()
@@ -73,6 +66,5 @@ std::string cgi_response::get_cgi_response()
     line << "\r\n";
     line << _body;
 
-    std::cout << line.str() << std::endl;
     return (line.str());
 }
