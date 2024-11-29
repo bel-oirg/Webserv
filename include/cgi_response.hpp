@@ -8,6 +8,8 @@
 #include <string>
 #include <vector>
 
+#define CGI_ERR_DIR "/Users/bel-oirg/Desktop/SSEERR/Error_pages/"
+
 class cgi_response
 {
     private:
@@ -22,7 +24,7 @@ class cgi_response
     public:
         void    set_status();
         void    set_content_length();
-        void    set_body(std::string cgi_body);
+        void    set_body(std::string cgi_body); //it set also the content type
         void    set_server();
         void    set_connection();
         std::string get_cgi_response();

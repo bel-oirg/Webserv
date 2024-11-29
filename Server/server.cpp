@@ -113,16 +113,6 @@ void get_request(pollfd &pfd, std::vector<Server> &servers)
 		response resp(buffer, cur_server.locations);
 		// p "------REQ-----\n" << buffer << std::endl;
 
-		std::string var1 = "Content-Type: text/html\r\n"
-							"\r\n"
-							"ANYDATA"
-							"\r\n"
-							"MORE DATA";
-							
-
-		cgi_response cgii(var1, 200);
-		cgii.get_cgi_response();
-
 		response_http = resp.get_response();
 		if (response_http == "CGI")
 			CGI_RAW = resp.prepare_cgi();

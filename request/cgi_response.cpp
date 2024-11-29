@@ -21,11 +21,28 @@ cgi_response::cgi_response(std::string cgi_body, int cgi_stat_code) : cgi_stat_c
 
 void cgi_response::set_body(std::string cgi_body)
 {
-    size_t conttype_beg = cgi_body.find(":");
-    size_t body_beg = cgi_body.find("\r\n\r\n");
-    _content_type = cgi_body.substr(conttype_beg + 1, body_beg - conttype_beg - 1);
-    size_t body_end = cgi_body.size();
-    _body = cgi_body.substr(body_beg + 4, body_end - 4 - body_beg);
+    if (cgi_stat_code == 200)
+    {
+        size_t conttype_beg = cgi_body.find(":");
+        size_t body_beg = cgi_body.find("\r\n\r\n");
+        _content_type = cgi_body.substr(conttype_beg + 1, body_beg - conttype_beg - 1);
+        size_t body_end = cgi_body.size();
+        _body = cgi_body.substr(body_beg + 4, body_end - 4 - body_beg);
+    }
+    else
+    {
+        std::ifstream infile;
+        infile.open(CGI_ERR_DIR + std::to_string(cgi_stat_code) + ".html");
+        if (!infile)
+        {
+            std::cerr << "Error opening error_file on CGI" << std::endl;
+            return;
+        }
+        std::stringstream ss;
+        ss << infile.rdbuf();
+        _body = ss.str();
+        _content_type = "text/html";
+    }
 }
 
 void    cgi_response::set_content_length()
