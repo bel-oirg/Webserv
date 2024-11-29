@@ -28,7 +28,7 @@ std::string response::get_response()
     line << "HTTP/1.1 " << _status << "\r\n";
     line << "Connection: " << this->_connection << "\r\n";
     line << "Server: " << this->_server << "\r\n";
-    line << "Content-Type: " << "text/html" << "\r\n";
+    line << "Content-Type: " << this->_content_type << "\r\n";
     if (this->_content_length == -1)
         line << "Transfer-Encoding: " << this->_transfer_encoding << "\r\n";
     else
@@ -40,7 +40,7 @@ std::string response::get_response()
     line << "\r\n";
     line << _body;
 
-    p "------RESP-----\n" << line.str() << std::endl;
+    // p "------RESP-----\n" << line.str() << std::endl;
     return (line.str());
 }
 

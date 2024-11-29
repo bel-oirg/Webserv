@@ -392,8 +392,12 @@ bool process_multipart(std::string body, std::string _boundary)
             return (err_("Failed to open the upload_file"), false);
         outfile << body.substr(cont_beg + 4, cont_end - cont_beg - 4);
 
-        if (body.find("--" + _boundary + "--", next) != std::string::npos)
+        p "--->>>>>" << current_part << std::endl;
+        if (body.find("--" + _boundary + "--", next) == body.find("--" + _boundary, next))
+        {
+            p "DASDJKASNDKASN4435-403====-=---=-=-\n";
             break;
+        }
         pos = next;
     }
     return (true);
