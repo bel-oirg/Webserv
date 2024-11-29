@@ -113,6 +113,7 @@ void Cgi::cgi_run()
 		{
 			if (WEXITSTATUS(status) == 0)
 			{
+				code = 200;
 				char buffer[101];
 				lseek(fdout, 0, SEEK_SET);
 				while (true)
