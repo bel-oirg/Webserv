@@ -6,7 +6,6 @@
 #include <sstream>
 #include <fstream>
 #include <string>
-#include <vector>
 
 #define CGI_ERR_DIR "/Users/bel-oirg/Desktop/CGICGI/Error_pages/"
 

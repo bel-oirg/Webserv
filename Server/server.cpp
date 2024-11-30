@@ -10,7 +10,6 @@ map<int, string> Server::responses;
 
 #define REQUEST_MAX_SIZE 3000000
 
-
 void Server::setup()
 {
 	struct pollfd tmp = {0};
@@ -80,10 +79,9 @@ void Server::accept_connections()
 	}
 }
 
-
 void get_request(pollfd &pfd, std::vector<Server> &servers)
 {
-	cout << "SERVER ENTRED" << endl;
+	// cout << "SERVER ENTRED" << endl;
 	char buffer[REQUEST_MAX_SIZE] = {0};
 
 	int valread;
@@ -111,15 +109,6 @@ void get_request(pollfd &pfd, std::vector<Server> &servers)
 		Server &cur_server = Server::pool.get_server(pfd.fd, servers);
 
 		response resp(buffer, cur_server.locations);
-		// p "------REQ-----\n" << buffer << std::endl;
-
-		// std::string var1 = "Content-Type: text/html\r\n"
-		// 					"\r\n"
-		// 					"ANYDATA"
-		// 					"\r\n"
-		// 					"MORE DATA";
-							
-
 
 		response_http = resp.get_response();
 		if (response_http == "CGI")
@@ -135,7 +124,7 @@ void get_request(pollfd &pfd, std::vector<Server> &servers)
 		Server::pool.change_event(pfd.fd, POLLOUT);
 	}
 }
-// CGI -> crash -> try catch -> obj(crash, resp);
+
 void	send_response(pollfd &pfd, std::vector<Server> &servers)
 {
 	Server cur_server;

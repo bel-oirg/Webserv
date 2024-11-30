@@ -13,7 +13,7 @@ inline void    stat_(int status_code)
 
 inline void     err_(const std::string &err)
 {
-    std::cerr << err << std::endl;
+    std::cerr << "[-] " << err << std::endl;
 }
 
 std::string trim_line(const std::string &line)
@@ -147,7 +147,6 @@ bool request::get_matched_loc_for_req_uri() //REQ
     // std::string head_val = headers["Location"];
     size_t tmp_size = 0;
     std::vector<std::string> potential_locations;
-    std::string correct_loc;
     for (std::map<std::string, loc_details>::iterator it = locations.begin(); it != locations.end(); it++)
     {
         if (URI.rfind(it->first) == 0) //TODO maybe change it with begin_with
@@ -166,10 +165,10 @@ bool request::get_matched_loc_for_req_uri() //REQ
         if (tmp_size < it->size())
         {
             tmp_size = it->size();
-            correct_loc = *it;
+            correct_loc_name = *it;
         }
     }
-    current_loc = this->locations[correct_loc];
+    current_loc = this->locations[correct_loc_name];
     return (true);
 }
 
@@ -187,7 +186,11 @@ bool request::is_method_allowed_in_loc() //REQ
 
 int request::get_request_resource() //get_resource_type()
 {
-    this->resource_path = current_loc.root + this->URI;
+    if (correct_loc_name != "default")
+        this->resource_path = current_loc.root + this->URI.erase(0, correct_loc_name.size());
+    else
+        this->resource_path = current_loc.root + this->URI;
+
     struct stat s;
     if (!stat(this->resource_path.c_str(), &s))
     {
@@ -374,12 +377,14 @@ bool process_multipart(std::string body, std::string _boundary)
     while((pos = body.find("--" + _boundary, pos)) != std::string::npos)
     {
         size_t next = body.find("--" + _boundary, pos + 2 + _boundary.size());
-        std::string current_part = body.substr(pos, next - pos);
+        std::string current_part = body.substr(pos + 2 + _boundary.size(), next - pos - 2 - _boundary.size());
 
         size_t file_beg = current_part.find("filename=\"");
         size_t file_end = current_part.find("\"", file_beg + 10);
+
         if (file_beg == std::string::npos || file_end == std::string::npos)
             return (err_("Cannot find name") ,false);
+
         std::string file_name = current_part.substr(file_beg + 10, file_end - file_beg - 10);
 
         size_t cont_beg = current_part.find("\r\n\r\n");
@@ -387,17 +392,14 @@ bool process_multipart(std::string body, std::string _boundary)
         if (cont_beg == std::string::npos || cont_end == std::string::npos)
             return (err_("No body found to upload"), false);
 
-        std::ofstream outfile(UPLOAD_DIR + file_name);
+        //Prevent corruption of binary files that why used ios::binary
+        std::ofstream outfile(UPLOAD_DIR + file_name, std::ios::binary);
         if (!outfile)
             return (err_("Failed to open the upload_file"), false);
-        outfile << body.substr(cont_beg + 4, cont_end - cont_beg - 4);
+        outfile << current_part.substr(cont_beg + 4, cont_end - cont_beg - 4);
 
-        p "--->>>>>" << current_part << std::endl;
-        if (body.find("--" + _boundary + "--", next) == body.find("--" + _boundary, next))
-        {
-            p "DASDJKASNDKASN4435-403====-=---=-=-\n";
+        if (body.find("--" + _boundary + "--", next) == next)
             break;
-        }
         pos = next;
     }
     return (true);

@@ -34,6 +34,7 @@ class request
         std::string method;
         std::string URI;
         std::string body;
+        std::string correct_loc_name;
         int         stat_code;
         bool        add_slash;
         bool        has_body;
