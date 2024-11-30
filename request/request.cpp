@@ -20,12 +20,9 @@ std::string trim_line(const std::string &line)
 {
     size_t first = line.find_first_not_of(" \t");
     size_t last = line.find_last_not_of(" \t");
-    std::string trimed; //TODO maybe remove this
     if (first == std::string::npos)
-        trimed = "";
-    else
-        trimed = line.substr(first, last - first + 1);
-    return (trimed);
+        return("");
+    return (line.substr(first, last - first + 1));
 }
 
 bool    request::valid_method()
@@ -126,7 +123,7 @@ int request::is_req_well_formed() //REQ
         
         if (this->method != "POST")
             return (err_("there is body but non-POST method is used"), 400);
-        if (this->body.size() > GLOBAL_CLIENT_MAX_BODY_SIZE) //TODO change this
+        if (this->body.size() > current_loc.client_max_body_size)
             return (err_("Big BODY"), 413);
         this->has_body = true;
     }
@@ -144,12 +141,11 @@ int request::is_req_well_formed() //REQ
 
 bool request::get_matched_loc_for_req_uri() //REQ
 {
-    // std::string head_val = headers["Location"];
     size_t tmp_size = 0;
     std::vector<std::string> potential_locations;
     for (std::map<std::string, loc_details>::iterator it = locations.begin(); it != locations.end(); it++)
     {
-        if (URI.rfind(it->first) == 0) //TODO maybe change it with begin_with
+        if (URI.rfind(it->first) == 0)
             potential_locations.push_back(it->first);
     }
     if (!potential_locations.size())
@@ -161,7 +157,6 @@ bool request::get_matched_loc_for_req_uri() //REQ
     }
     for (std::vector<std::string>::iterator it = potential_locations.begin(); it != potential_locations.end(); it++)
     {
-        //TODO why *it.size() do not work?
         if (tmp_size < it->size())
         {
             tmp_size = it->size();
@@ -174,7 +169,6 @@ bool request::get_matched_loc_for_req_uri() //REQ
 
 bool request::is_location_have_redir() //REQ
 {
-    //TODO init the status_code with 0
     return (!current_loc.status_code);
 }
 
@@ -283,13 +277,10 @@ int     request::POST()
         }
         return (err_("NO INDEX PATH"), 403);
     }
-    else if (resource_type == 2) //file
-    {
-        if (!if_location_has_cgi())
-            return (err_("NO CGI ON FILE"), 403);
-        return (-1);
-    }
-    return (0); //tmp
+    //file
+    if (!if_location_has_cgi())
+        return (err_("NO CGI ON FILE"), 403);
+    return (-1);
 }
 
 int     request::DELETE()
@@ -319,14 +310,10 @@ int     request::DELETE()
             return (403);
         }
     }
-    else if (resource_type == 2) //file
-    {
-        if (!if_location_has_cgi())
-            return (204);
-        return (-1);
-    }
-    //TODO you can remove this else if ; it will never touch return 0
-    return (0); //tmp
+    //file
+    if (!if_location_has_cgi())
+        return (204);
+    return (-1);
 }
 
 int    request::req_arch()

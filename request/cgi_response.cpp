@@ -50,8 +50,7 @@ void cgi_response::set_server()
 
 void cgi_response::set_connection()
 {
-    //TODO for now it is closed
-    this->_connection = "Close";
+    this->_connection = "close";
 }
 
 std::string cgi_response::get_cgi_response()

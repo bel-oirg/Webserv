@@ -1,7 +1,5 @@
 #include "response.hpp"
 
-
-
 string response::get_script_path()
 {
 	return (this->resource_path);
@@ -14,7 +12,7 @@ string response::get_body()
 
 void response::set_status()
 {
-    std::map<int, std::string> status_map;
+    static std::map<int, std::string> status_map;
     status_map[200] = std::string("OK");
     status_map[201] = std::string("Created");
     status_map[204] = std::string("No Content");
@@ -83,7 +81,7 @@ void response::set_content_type()
     this->_content_type = "";
     if (this->stat_code == 304)
         return ;
-    std::map<std::string, std::string> mime; //TODO static const for efficiency
+    static std::map<std::string, std::string> mime;
 
     mime["html"] = "text/html";
     mime["htm"] = "text/html";
@@ -113,7 +111,6 @@ void response::set_content_type()
         this->_content_type = it->second;
 }
 
-//TODO no need for this for now i will use only content_len
 // void response::set_transfer_encoding()
 // {
     //TODO if there a content-length, you MUST NOT USE TRANSF_ENC
@@ -135,7 +132,7 @@ void response::set_location()
 
 bool response::prepare_autoindex()
 {
-    std::string dir = this->resource_path;//this->resource_path; //you can replace this
+    std::string dir = this->resource_path;
     DIR *dirp = opendir(dir.c_str());
 
     if (!dirp)
@@ -242,7 +239,3 @@ response::response(std::string req, std::map<string, loc_details> locations) : r
     set_body();
     set_content_length();
 }
-
-/*
-TODO unchunk data
-*/
