@@ -1,5 +1,8 @@
 #include "server.hpp"
 
+
+// TODO add the cgi to every server
+
 enum script_type
 {
 	unknown,
@@ -17,6 +20,7 @@ class Cgi
 		string script_path;
 		int code;
 		script_type type;
+		int		child_stat;
 		char **env;
 		string request_body;
 

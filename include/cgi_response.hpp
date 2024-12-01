@@ -7,7 +7,7 @@
 #include <fstream>
 #include <string>
 
-#define CGI_ERR_DIR "/Users/bel-oirg/Desktop/CGICGI/Error_pages/"
+#define CGI_ERR_DIR "/Users/bel-oirg/Desktop/Webserv/Error_pages/"
 
 class cgi_response
 {

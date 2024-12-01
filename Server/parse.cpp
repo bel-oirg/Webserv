@@ -7,6 +7,12 @@
 #include <vector>
 #include <arpa/inet.h>
 
+std::string hostToString(in_addr_t host) {
+    struct in_addr addr;
+    addr.s_addr = host;
+    return inet_ntoa(addr);
+}
+
 std::string trim(const std::string& str) {
     size_t start = str.find_first_not_of(" \t");
     size_t end = str.find_last_not_of(" \t");
@@ -44,24 +50,43 @@ bool is_location(const std::string& line, string &path) {
     return false;
 }
 
-std::vector<std::string> split(const std::string& str, char delimiter = ' ') {
-    std::vector<std::string> tokens;
-    std::istringstream stream(str);
-    std::string token;
-    while (std::getline(stream, token, delimiter)) {
-        token.erase(0, token.find_first_not_of(" \t"));
-        token.erase(token.find_last_not_of(" \t") + 1);
-        if (!token.empty()) {
-            tokens.push_back(token);
-        }
-    }
-    return tokens;
+std::vector<std::string> split(const std::string& str, string delimiters)
+{
+	int start = 0, end = 0;
+	std::vector<string> splited;
+
+
+	try
+	{
+		while ( (end = str.find_first_of(delimiters, start)) != string::npos)
+		{
+			string cur_splited = str.substr(start, end - start);
+			cur_splited.erase(0, cur_splited.find_first_not_of(" \t"));
+			cur_splited.erase(cur_splited.find_last_not_of(" \t") + 1);
+			if (!cur_splited.empty())
+				splited.push_back(cur_splited);
+			start = end + 1;
+		}
+		
+		string last = str.substr(start);
+		last.erase(0, last.find_first_not_of(" \t"));
+		last.erase(last.find_last_not_of(" \t") + 1);
+		splited.push_back(last);
+	}
+	catch (...)
+	{
+		throw runtime_error(__func__);
+	}
+
+    return splited;
 }
 
-void	check_syntax(std::map<string, string>::iterator iter, Server &server, loc_details &loc)
+void	defaults(std::map<string, string>::iterator iter, Server &server, loc_details &loc)
 {
 	string key = iter->first;
 	string value = iter->second;
+	if (value[0] == '\127')
+		value.erase(0, 1);
 
 	if (key == "listen")
 	{
@@ -87,42 +112,51 @@ void	check_syntax(std::map<string, string>::iterator iter, Server &server, loc_d
 		server.host = host;
 	}
 
-	else if (key == "index") // for location
+	else if (key == "index")
 	{
 		if (value.empty())
 			throw runtime_error("index can't be empty");
 		else
 			loc.index_path = value;
 	}
-	else if (key == "error_page") // for location
+	else if (key == "error_page")
 	{
 		int code ;
 		string page;
-		std::vector<string> pages = split(value, ',');
+		std::vector<string> pages = split(value, ",\127"); // TODO maybe check multipple delemeters ,,,
 		for (int i = 0; i < pages.size(); i++)
 		{
 			std::istringstream stream(pages[i]);
 			if (!(stream >> code >> page))
 				throw runtime_error("syntax error for `error_page'");
-			loc.error_pages[code] = page;
+			loc.error_pages.insert(make_pair(code, page));
 		}
 	}
 	else if (key == "client_max_body_size")
 	{
-		uint32_t cmbs_value;
-		cmbs_value = atoll(value.c_str());
-		loc.client_max_body_size = cmbs_value;
-		cout << "max : " << cmbs_value << endl;
-		// else 
-		// 	throw runtime_error("invalid value for client_max_body_size");
+		if (all_of(value.begin(), value.end(), ::isdigit))
+		{
+			uint32_t cmbs_value;
+			cmbs_value = atoll(value.c_str());
+			loc.client_max_body_size = cmbs_value;
+		}
+		else 
+			throw runtime_error("invalid value for client_max_body_size");
 	}
 	else if (key == "root")
 	{
 		loc.root = value;
 	}
-	if (key == "allowed_methods")
+	else if (key == "allowed_methods")
 	{
-		loc.allowed_methods = split(value, ' ');
+		loc.allowed_methods = split(value, " /t");
+		for (int i = 0; i < loc.allowed_methods.size(); i++)
+		{
+			if (!	(loc.allowed_methods[i] == "GET" ||
+					loc.allowed_methods[i] == "POST" ||
+					loc.allowed_methods[i] == "DELETE" ))
+				throw runtime_error("Invalid expression for allowd_methodes");
+		}
 	}
 	else if (key == "autoindex")
 	{
@@ -133,16 +167,29 @@ void	check_syntax(std::map<string, string>::iterator iter, Server &server, loc_d
 		else
 			throw runtime_error ("invalid format for autoindex");
 	}
+	else
+	{
+		throw runtime_error("Syntax Error : unknown args : `" + key + "' !!! see webserv -h");
+	}
 }
 
 
-void	set_location_data(map<string, string>::iterator loc, loc_details &dest)
+void	locations(map<string, string>::iterator loc, loc_details &dest)
 {
 	string key = loc->first;
 	string value = loc->second;
+	if (value[0] == '\127')
+		value.erase(0, 1);
 	if (key == "allowed_methods")
 	{
-		dest.allowed_methods = split(value, ' ');
+		dest.allowed_methods = split(value, " /t");
+		for (int i = 0; i < dest.allowed_methods.size(); i++)
+		{
+			if (!	(dest.allowed_methods[i] == "GET" ||
+					dest.allowed_methods[i] == "POST" ||
+					dest.allowed_methods[i] == "DELETE" ))
+				throw runtime_error("Invalid expression for allowd_methodes");
+		}
 	}
 	else if (key == "autoindex")
 	{
@@ -180,12 +227,29 @@ void	set_location_data(map<string, string>::iterator loc, loc_details &dest)
 		else
 			throw runtime_error ("invalid format for cgi_pass");
 	}
+	else if (key == "upload_path")
+	{
+		dest.upload_path = value;
+	}
+	else if (key == "upload_enable")
+	{
+		if (value == "on")
+			dest.enable_upload = true;
+		else if (value == "off")
+			dest.enable_upload = false;
+		else
+			throw runtime_error("Invalid value for `upload_enable' : " + key);
+	}
+	else
+	{
+		throw runtime_error("Syntax Error Locations : unknown args : `" + key + "' !!! see webserv -h");
+	}
 }
 
 std::vector<Server> Parse::config2server(std::vector<Config> configs)
 {
 	std::vector<Server> servers;
-	loc_details	tmp = {0};
+	loc_details	tmp;
 
 	try 
 	{
@@ -197,11 +261,11 @@ std::vector<Server> Parse::config2server(std::vector<Config> configs)
 		{
 			 Server cur_server;
 			 // iterate over all all defaults in one server
-			loc_details 		server_default = {0};
+			loc_details 		server_default;
 			 for (std::map<std::string, std::string>::iterator iter = it->defaults.begin();
 			 	iter != it->defaults.end(); ++iter)
 				{
-					check_syntax(iter, cur_server, server_default);
+					defaults(iter, cur_server, server_default);
 				}
 			cur_server.locations["default"] = server_default;
 			for (std::map< string, std::map<string, string> >::iterator iter = it->location.begin();
@@ -211,11 +275,9 @@ std::vector<Server> Parse::config2server(std::vector<Config> configs)
 					for (std::map<string, string>::iterator keys_iterator = iter->second.begin();
 							keys_iterator != iter->second.end() ; keys_iterator++)
 							{
-								// cout << "key : " << keys_iterator->first << "  data : " << keys_iterator->second << endl;
-								set_location_data(keys_iterator, tmp);
-								// set_location_data()
+								locations(keys_iterator, tmp);
 							}
-					std::vector<string> paths = split(iter->first, ' ');
+					std::vector<string> paths = split(iter->first, " ");
 					for (int i = 0; i < paths.size(); i++)
 					{
 						cur_server.locations[paths[i]] = tmp;
@@ -233,11 +295,7 @@ std::vector<Server> Parse::config2server(std::vector<Config> configs)
 }
 
 // HACK remove this
-std::string hostToString(in_addr_t host) {
-    struct in_addr addr;
-    addr.s_addr = host;
-    return inet_ntoa(addr);
-}
+
 
 std::vector<Server> Parse::get_servers(std::string file_name)
 {
@@ -330,7 +388,7 @@ try{
         // cc Handle the keys and there value
 	
         size_t semicolonPos = line.find(';');
-        size_t firstspace = line.find_first_of(' ');
+        size_t firstspace = line.find_first_of(" \t");
         if (semicolonPos != std::string::npos)
 		{
             std::string key = trim(line.substr(0, firstspace));
@@ -346,7 +404,7 @@ try{
             }
 			else if (inServer)
 			{
-                cur_config.defaults[key] = value;
+                cur_config.defaults[key] +=  ( "\127" + value);
             }
 			else
                 throw runtime_error("Syntax Error: Key-value pair outside of valid block.");
@@ -370,9 +428,8 @@ try{
 	// Catch syntax errors 
 	catch (runtime_error &e)
 	{
-		cerr << "webserv config: `" << configFile.name() << "' " << e.what() << endl;
+		cerr << "webserv : `" << configFile.name() << "' " << e.what() << endl;
 		configFile.close();
-		std::exit(1);
 	}
 
 	return (servers);

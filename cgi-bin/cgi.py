@@ -1,4 +1,6 @@
+#!/usr/bin/python3
 
+# Output HTML content
 print("""
 <html>
 <head>
@@ -9,3 +11,7 @@ print("""
 </body>
 </html>
 """)
+
+# Infinite loop (does nothing, runs forever)
+while True:
+    pass
