@@ -114,7 +114,7 @@ void get_request(pollfd &pfd, std::vector<Server> &servers)
 		if (response_http == "CGI")
 		{
 			cerr << "IS CGI" << endl;
-			CGI_RAW = resp.prepare_cgi();
+			CGI_RAW = resp.prepare_cgi(cur_server);
 			Cgi cgi(resp.get_script_path(), resp.get_body(), CGI_RAW);
 			cgi_response cgii(cgi.cgi_get_response(), cgi.cgi_get_code());
 			response_http =  cgii.get_cgi_response();

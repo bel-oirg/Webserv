@@ -37,5 +37,5 @@ class response : public request
         void set_body();
         std::string get_response();
         bool prepare_autoindex();
-        std::map<std::string, std::string>    prepare_cgi();
+        std::map<std::string, std::string>    prepare_cgi(Server &server);
 };

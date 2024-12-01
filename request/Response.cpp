@@ -214,7 +214,28 @@ void response::set_body()
     _content_length = _body.size();     
 }
 
-std::map<std::string, std::string>    response::prepare_cgi()
+// SERVER_NAME				Done
+// GATEWAY_INTERFACE		Done
+// SERVER_PROTOCOL			Done
+// SERVER_PORT				Done
+// REQUEST_METHOD			Done
+// HTTP_USER_AGENT			Done
+// SCRIPT_NAME				Done
+// REMOTE_ADDR				Done
+// CONTENT_TYPE				Done
+// HTTP_ACCEPT				Done
+// SERVER_SOFTWARE			Done
+// REMOTE_HOST				Done
+// CONTENT_LENGTH			Done
+// PATH_TRANSLATED info: the virtual path translated , ex : location /non-exist -> virtual path
+// AUTH_TYPE : If the server supports user authentication
+// REMOTE_USER : If the server supports user authentication
+// PATH_INFO
+// QUERY_STRING
+
+
+
+std::map<std::string, std::string>    response::prepare_cgi(Server &server)
 {
     std::map<std::string, std::string> environ_vars;
     environ_vars["REQUEST_METHOD"] = this->method;
@@ -225,6 +246,14 @@ std::map<std::string, std::string>    response::prepare_cgi()
     environ_vars["SCRIPT_FILENAME"] = this->resource_path;
     environ_vars["HTTP_USER_AGENT"] = this->headers["User-Agent"];
     environ_vars["HTTP_COOKIE"] = this->_cookies;
+    environ_vars["SERVER_PORT"] = to_string(server.port); // BUG c++ 11
+	environ_vars["GATEWAY_INTERFACE"] = "CGI/1337";
+	environ_vars["SERVER_SOFTWARE"] = "42 webserv (Unix)";
+	environ_vars["SERVER_PROTOCOL"] =  "HTTP/1.1";
+	environ_vars["REMOTE_ADDR"] = hostToString(server.host);
+	environ_vars["REMOTE_HOST"] = server.server_name;
+	// TODO add QUERY_STRING
+
 
     return (environ_vars);
 }
