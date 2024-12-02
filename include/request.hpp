@@ -34,6 +34,7 @@ class request
         std::string method;
         std::string URI;
         std::string body;
+        std::string query;
         std::string correct_loc_name;
         int         stat_code;
         bool        add_slash;
@@ -54,6 +55,7 @@ class request
         bool    is_dir_has_index_path();
         bool    if_location_has_cgi();
         int     req_arch();
+        bool    is_valid_URI();
 
         int     GET();
         int     POST();
@@ -64,6 +66,7 @@ class request
 
         //POST
         int if_loc_support_upload();
+        bool unchunk_body();
 
         //DELETE
         bool has_write_access_on_folder();

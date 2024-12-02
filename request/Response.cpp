@@ -56,9 +56,8 @@ std::string response::get_response()
 
 void response::set_content_length()
 {
-    //specifies the content of the response BODY
-    //unless using transfer-encoding : chunked
-    this->_content_length = _body.size();
+    if (_content_length != -1)
+        _content_length = _body.size();
 }
 
 void response::set_server()
@@ -111,13 +110,11 @@ void response::set_content_type()
         this->_content_type = it->second;
 }
 
-// void response::set_transfer_encoding()
-// {
-    //TODO if there a content-length, you MUST NOT USE TRANSF_ENC
-    // this->_transfer_encoding = "";
-    // if (this->_content_length == -1)
-    //     this->_transfer_encoding = "chunked";
-// }
+void response::set_transfer_encoding()
+{
+    if (this->_content_length == -1)
+        this->_transfer_encoding = "chunked";
+}
 
 void response::set_location()
 {
@@ -164,29 +161,62 @@ bool response::prepare_autoindex()
     return (true);
 }
 
-void response::set_body()
+inline void     err_(const std::string &err) //TODO dup in request.cpp
 {
-    std::stringstream ss;
-    std::ifstream infile;
-    _body = "";
-    if (this->stat_code / 400)
+    std::cerr << "[-] " << err << std::endl;
+}
+
+void response::fill_body(const std::string &path)
+{
+    std::ifstream infile(path, std::ios::binary);
+
+    if (!infile)
     {
-        infile.open(ERR_DIR + std::to_string(this->stat_code) + ".html");
-        if (!infile)
+        this->stat_code = 501;
+        std::cerr << "Error opening error_page.html" << std::endl;
+        return;
+    }
+    std::stringstream ss;
+
+    infile.seekg(0, ios::end);
+    size_t file_size = infile.tellg();
+    infile.seekg(0);
+
+    if (file_size > CHUNK_SIZE)
+    {
+        _content_length = -1;
+        while(1)
         {
-            this->stat_code = 501;
-            std::cerr << "Error opening error_page.html" << std::endl;
-            return;
+            char buff[CHUNK_SIZE + 1] = {0};
+            infile.read(buff, CHUNK_SIZE);
+            std::streamsize file_len = infile.gcount();
+            if (!file_len)
+                break;
+            ss.clear();
+            ss.str("");
+
+            ss << std::hex << file_len << "\r\n";
+            ss << buff << "\r\n";
+
+            _body += ss.str();
         }
+        _body += "0\r\n\r\n";
+    }
+    else
+    {   
         ss << infile.rdbuf();
         _body = ss.str();
     }
-    else if (this->stat_code / 300)
-    {
-        _body = "Redirecting to another location. Status Code: " + std::to_string(this->stat_code);
-        _content_length = _body.size();     
-        return ;
-    }
+}
+
+//TODO chunked body with indexed
+
+
+void response::set_body()
+{
+    _body = "";
+    if (this->stat_code / 300)
+        fill_body(ERR_DIR + std::to_string(this->stat_code) + ".html");
     else if (this->stat_code == 204)
         _body = "Content Uploaded Successfully";
     else if (this->stat_code == 200)
@@ -199,41 +229,9 @@ void response::set_body()
                 this->stat_code = 501;
         }
         else
-        {
-            infile.open(this->resource_path);
-            if (!infile)
-            {
-                this->stat_code = 501;
-                std::cerr << "Error opening 200" << std::endl;
-                return;
-            }
-            ss << infile.rdbuf();
-            _body = ss.str();
-        }
+            fill_body(this->resource_path);
     }
-    _content_length = _body.size();     
 }
-
-// SERVER_NAME				Done
-// GATEWAY_INTERFACE		Done
-// SERVER_PROTOCOL			Done
-// SERVER_PORT				Done
-// REQUEST_METHOD			Done
-// HTTP_USER_AGENT			Done
-// SCRIPT_NAME				Done
-// REMOTE_ADDR				Done
-// CONTENT_TYPE				Done
-// HTTP_ACCEPT				Done
-// SERVER_SOFTWARE			Done
-// REMOTE_HOST				Done
-// CONTENT_LENGTH			Done
-// PATH_TRANSLATED info: the virtual path translated , ex : location /non-exist -> virtual path
-// AUTH_TYPE : If the server supports user authentication
-// REMOTE_USER : If the server supports user authentication
-// PATH_INFO
-// QUERY_STRING
-
-
 
 std::map<std::string, std::string>    response::prepare_cgi(Server &server)
 {
@@ -252,7 +250,7 @@ std::map<std::string, std::string>    response::prepare_cgi(Server &server)
 	environ_vars["SERVER_PROTOCOL"] =  "HTTP/1.1";
 	environ_vars["REMOTE_ADDR"] = hostToString(server.host);
 	environ_vars["REMOTE_HOST"] = server.server_name;
-	// TODO add QUERY_STRING
+    environ_vars["QUERY_STRING"] = this->query;
 
 
     return (environ_vars);
@@ -267,4 +265,5 @@ response::response(std::string req, std::map<string, loc_details> locations) : r
     set_cookies();
     set_body();
     set_content_length();
+    set_transfer_encoding();
 }

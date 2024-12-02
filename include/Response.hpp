@@ -1,9 +1,8 @@
 #pragma once
 
 #include "request.hpp"
-#define CHUNK_SIZE 2048
-// #define ERR_DIR "/Users/bel-oirg/Desktop/CGICGI/Error_pages/"
-#define ERR_DIR "/Users/abennar/Desktop/Webserv/Error_pages"
+#define CHUNK_SIZE 4444
+#define ERR_DIR "/Users/bel-oirg/Desktop/CGICGI/Error_pages/"
 //TODO change the err pages based on config file
 
 using std::string; 
@@ -29,12 +28,16 @@ class response : public request
         void set_server();
         void set_location();
         void set_cookies();
-        // void set_transfer_encoding();
+        void set_transfer_encoding();
         void set_connection();
         void set_content_type();
-		std::string get_body();
-		string get_script_path();
+        // bool unchunk_body(string chunked);
+
         void set_body();
+		std::string get_body();
+        void fill_body(const std::string &path);
+
+		string get_script_path();
         std::string get_response();
         bool prepare_autoindex();
         std::map<std::string, std::string>    prepare_cgi(Server &server);

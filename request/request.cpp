@@ -61,13 +61,19 @@ bool    request::valid_elem(std::string elem)
     return (true);
 }
 
-bool    is_valid_URI(std::string URI)
+bool    request::is_valid_URI()
 {
-    std::string allowed_URI = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789- ._~:/?#[]@!$&'()*+,;=%";
+    std::string allowed_URI = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-._~:/?#[]@!$&'()*+,;=%";
     for (size_t index = 0; index < URI.size() ; index++)
     {
         if (allowed_URI.find(URI[index]) == std::string::npos)
             return (false);
+    }
+    size_t query_pos = URI.find("?");
+    if (query_pos != std::string::npos)
+    {
+        this->query = URI.substr(query_pos + 1);
+        this->URI = URI.substr(0, query_pos);
     }
     return (true);
 }
@@ -95,7 +101,7 @@ int request::is_req_well_formed() //REQ
         return (err_("METHOD NOT VALID"), 400);
 
     std::getline(l1, this->URI, ' ');
-    if (!is_valid_URI(this->URI))
+    if (!is_valid_URI())
         return (err_("invalid URI"), 400);
     if (this->URI.size() > MAX_URI_SIZE)
         return (414);
@@ -392,6 +398,44 @@ bool process_multipart(std::string body, std::string _boundary)
     return (true);
 }
 
+bool request::unchunk_body()
+{
+    std::stringstream test;
+    size_t part_size, next(0);
+    string unchunked_body(""), new_part, unchunked(this->body);
+
+    while(1)
+    {
+        size_t beg_hex = next;
+        size_t end_hex = unchunked.find("\r\n", beg_hex);
+
+        if (beg_hex == std::string::npos || end_hex == std::string::npos)
+            return (err_("Error on beg_hex || end_hex on chunked npos"), false);
+        string size_str = unchunked.substr(beg_hex, end_hex - beg_hex);
+        test.clear();
+        test.str("");
+        test << size_str;
+        test >> std::hex >> part_size;
+        size_t end_part = unchunked.find("\r\n", end_hex + 2);
+        if (end_part == std::string::npos)
+            return (err_("Error end_part on chunked npos"), false);
+        new_part = unchunked.substr(end_hex + 2, end_part - end_hex - 2);
+        if (!part_size)
+        {
+            if (!new_part.empty())
+                return (err_("Bad ending of chunked data"), false);
+            break;
+        }
+        if (new_part.size() != part_size)
+            return (err_("Invalid unchunked size"), false);
+
+        unchunked_body += new_part;
+        next = end_part + 2;
+    }
+    body = unchunked_body;
+    return (true);
+}
+
 //POST
 int request::if_loc_support_upload()
 {
@@ -401,6 +445,10 @@ int request::if_loc_support_upload()
     if (headers["Content-Type"].rfind("multipart/form-data") == std::string::npos)
         return (err_("multipart/form not found on loc_support_upload"), 415);
     
+    if (headers["Transfer-Encoding"] == "chunked")
+        if (!unchunk_body())
+            return (400);
+
     size_t bound_beg = headers["Content-Type"].find("boundary=");
     size_t bound_end = headers["Content-Type"].find_first_of(" \r\n", bound_beg);
     std::string _boundary = headers["Content-Type"].substr(bound_beg + 9, bound_end - bound_beg - 9);
