@@ -1,8 +1,8 @@
 #pragma once
 
 #include "request.hpp"
-#define CHUNK_SIZE 4444
-#define ERR_DIR "/Users/bel-oirg/Desktop/CGICGI/Error_pages/"
+#define CHUNK_SIZE 999999
+#define ERR_DIR "/Users/bel-oirg/Desktop/Webserv/Error_pages/"
 //TODO change the err pages based on config file
 
 using std::string; 

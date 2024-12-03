@@ -3,6 +3,7 @@
 
 request::request(std::string raw_req, std::map<std::string, loc_details> locations) : locations(locations), req(raw_req)
 {
+    p "REQ---- " << raw_req << "----REQ" << endl;
     this->stat_code = req_arch();
 }
 
@@ -40,7 +41,7 @@ bool    request::valid_elem(std::string elem)
     std::stringstream line(elem);
     std::getline(line, field, ':');
 
-    if (isdigit(field.front()))
+    if (isdigit(field[0]))
         return (false);
     for (size_t index = 0; index < field.size() ; index++)
     {
@@ -50,7 +51,7 @@ bool    request::valid_elem(std::string elem)
     std::getline(line, value);
 
     value = trim_line(value);
-    if (value.empty() || value.back() != '\r')
+    if (value.empty() || value[value.size() - 1] != '\r')
         return (false);
     
     for (size_t index = 0; index < value.size() - 1 ; index++)
@@ -63,6 +64,7 @@ bool    request::valid_elem(std::string elem)
 
 bool    request::is_valid_URI()
 {
+    //BUG maybe string str = "data" CPP11
     std::string allowed_URI = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-._~:/?#[]@!$&'()*+,;=%";
     for (size_t index = 0; index < URI.size() ; index++)
     {
@@ -82,7 +84,6 @@ int request::is_req_well_formed() //REQ
 {
     //LINE 1
     std::string l1_s, tmp_line, field, value;
-    this->has_body = false;
 
     if (req == "Internal_err")
         return(err_("CGI_ERR"), 500);
@@ -129,9 +130,7 @@ int request::is_req_well_formed() //REQ
         
         if (this->method != "POST")
             return (err_("there is body but non-POST method is used"), 400);
-        if (this->body.size() > current_loc.client_max_body_size)
-            return (err_("Big BODY"), 413);
-        this->has_body = true;
+
     }
 
     if (this->headers.find("Transfer-Encoding") != this->headers.end()
@@ -173,9 +172,33 @@ bool request::get_matched_loc_for_req_uri() //REQ
     return (true);
 }
 
+bool is_valid_int(const string &str_num, int &num)
+{
+    std::stringstream ss(str_num);
+    char c;
+
+    if (!(ss >> num))
+        return (false);
+    if (ss >> c)
+        return (false);
+    return (true);
+}
+
 bool request::is_location_have_redir() //REQ
 {
-    return (!current_loc.status_code);
+    if (current_loc.redir_to.empty())
+        return (false);
+
+    //XXX mini-parsing 
+    size_t space_pos = current_loc.redir_to.find(" ");
+    if (space_pos == string::npos || space_pos == current_loc.redir_to.size())
+        return (err_("invalid redir_to"), false);
+    string str_stat_code = current_loc.redir_to.substr(0, space_pos);
+    if (!is_valid_int(str_stat_code, current_loc.status_code))
+        return (err_("invalid int in redir_to"), false);
+    current_loc.redir_to = current_loc.redir_to.substr(space_pos + 1, current_loc.redir_to.size() - space_pos - 1);
+
+    return (current_loc.status_code == 301);
 }
 
 bool request::is_method_allowed_in_loc() //REQ
@@ -208,7 +231,7 @@ int request::get_request_resource() //get_resource_type()
 
 inline bool request::is_uri_has_slash_in_end()
 {
-    return (this->URI.back() == '/');
+    return (this->URI[URI.size() - 1] == '/');
 }
 
 bool request::is_dir_has_index_path()
@@ -264,6 +287,8 @@ int     request::GET()
 
 int     request::POST()
 {
+    if (body.size() > current_loc.client_max_body_size)
+        return (err_("BODY > CLIENT_MAX_BODY _SIZE"), 413);
     if (current_loc.client_max_body_size > 0)
         return (if_loc_support_upload()); //upload the POST req body
 
@@ -318,7 +343,11 @@ int     request::DELETE()
     }
     //file
     if (!if_location_has_cgi())
+    {
+        p "LOC HAS CGI" << this->resource_path << endl;
+        remove(this->resource_path.c_str());
         return (204);
+    }
     return (-1);
 }
 
@@ -329,8 +358,13 @@ int    request::req_arch()
         return (stat_code);
     if (!get_matched_loc_for_req_uri())
         return (404);
-    if (!is_location_have_redir())
+
+    if (is_location_have_redir())
+    {
+        p "301" << endl;
         return (301);
+    }
+        
     if (!is_method_allowed_in_loc())
         return (405);
     
@@ -338,9 +372,7 @@ int    request::req_arch()
         return (GET());
     else if (this->method == "POST")
         return (POST());
-    else if (this->method == "DELETE")
-        return (DELETE());
-    return (501);
+    return (DELETE());
 }
 
 //GET
@@ -351,15 +383,6 @@ bool    request::get_auto_index()
         return (false);
     respond_with_autoindex = true;
     return (true);
-}
-
-std::string get_file_name(const std::string &raw)
-{
-    size_t beg = raw.find("name=\"");
-    size_t end = raw.find("\"", beg + 6);
-    if (beg == std::string::npos || end == std::string::npos)
-        return ("");
-    return (raw.substr(beg + 6, end - beg - 6));
 }
 
 bool process_multipart(std::string body, std::string _boundary)
@@ -436,12 +459,10 @@ bool request::unchunk_body()
     return (true);
 }
 
+//XXX UPLOADING A PNG DOES NOT WORK, I DO NOT RECEIVE A COMPLETE REQ
 //POST
 int request::if_loc_support_upload()
 {
-    if (body.size() > current_loc.client_max_body_size)
-        return (err_("body_size on loc_support_upload"), 413);
-
     if (headers["Content-Type"].rfind("multipart/form-data") == std::string::npos)
         return (err_("multipart/form not found on loc_support_upload"), 415);
     
@@ -504,3 +525,10 @@ bool request::has_write_access_on_folder()
     stat(resource_path.c_str(), &s);
     return (s.st_mode & S_IWUSR);
 }
+
+/*
+    TODO maybe you should encode the URL
+    If the data contain characters that are not allowed in URLs, these characters are URL-encoded.
+    This basically means that the character (say ~) is replaced with a % followed by its two-digit ASCII number (say %7E).
+    The details are available in RFC 1738 about URLs, which is linked to in the references.
+*/

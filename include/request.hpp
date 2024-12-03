@@ -11,7 +11,7 @@
 #include <vector>
 #include "server.hpp"
 
-#define UPLOAD_DIR "/Users/bel-oirg/Desktop/CGICGI/Upload/"
+#define UPLOAD_DIR "/Users/bel-oirg/Desktop/Webserv/Upload/"
 //TODO change UPLOAD_DIR based on config file
 
 #define MAX_URI_SIZE 2048
@@ -38,7 +38,6 @@ class request
         std::string correct_loc_name;
         int         stat_code;
         bool        add_slash;
-        bool        has_body;
         bool respond_with_autoindex;
 
     public:

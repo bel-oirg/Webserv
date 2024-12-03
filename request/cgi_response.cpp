@@ -25,7 +25,7 @@ void cgi_response::set_body()
     if (cgi_stat_code != 200)
     {
         std::ifstream infile;
-        infile.open(CGI_ERR_DIR + std::to_string(cgi_stat_code) + ".html");
+        infile.open(CGI_ERR_DIR + std::to_string(cgi_stat_code) + ".html"); //BUG CPP11
         if (!infile)
         {
             std::cerr << "Error opening error_file on CGI" << std::endl;

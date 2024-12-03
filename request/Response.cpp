@@ -13,20 +13,20 @@ string response::get_body()
 void response::set_status()
 {
     static std::map<int, std::string> status_map;
-    status_map[200] = std::string("OK");
-    status_map[201] = std::string("Created");
-    status_map[204] = std::string("No Content");
-    status_map[301] = std::string("Moved Permanently");
-    status_map[400] = std::string("Bad Request");
-    status_map[403] = std::string("Forbidden");
-    status_map[404] = std::string("Not Found");
-    status_map[405] = std::string("Method Not Allowed");
-    status_map[409] = std::string("Conflict");
-    status_map[413] = std::string("Content Too Large");
-    status_map[414] = std::string("URI Too Long");
-    status_map[500] = std::string("Internal Server Error");
-    status_map[501] = std::string("Not Implemented");
-    status_map[504] = std::string("Gateway Timeout");
+    status_map[200] = std::string("200 OK");
+    status_map[201] = std::string("201 Created");
+    status_map[204] = std::string("204 No Content");
+    status_map[301] = std::string("301 Moved Permanently");
+    status_map[400] = std::string("400 Bad Request");
+    status_map[403] = std::string("403 Forbidden");
+    status_map[404] = std::string("404 Not Found");
+    status_map[405] = std::string("405 Method Not Allowed");
+    status_map[409] = std::string("409 Conflict");
+    status_map[413] = std::string("413 Content Too Large");
+    status_map[414] = std::string("414 URI Too Long");
+    status_map[500] = std::string("500 Internal Server Error");
+    status_map[501] = std::string("501 Not Implemented");
+    status_map[504] = std::string("504 Gateway Timeout");
     _status = status_map[stat_code];
 }
 
@@ -36,21 +36,25 @@ std::string response::get_response()
         return (p "GOTO CGI\n", "CGI");
     std::stringstream   line;
     line << "HTTP/1.1 " << _status << "\r\n";
+    if (!this->_location.empty())
+        line << "Location: " << this->_location << "\r\n";
+
     line << "Connection: " << this->_connection << "\r\n";
     line << "Server: " << this->_server << "\r\n";
-    line << "Content-Type: " << this->_content_type << "\r\n";
+    if (!this->_content_type.empty())
+        line << "Content-Type: " << this->_content_type << "\r\n";
+    // if (!_cookies.empty())
+    //     line << "Set-Cookie: " << _cookies << "\r\n";
+        
     if (this->_content_length == -1)
         line << "Transfer-Encoding: " << this->_transfer_encoding << "\r\n";
     else
         line << "Content-Length: " << this->_content_length << "\r\n";
 
-    if (!_cookies.empty())
-        line << "Set-Cookie: " << _cookies << "\r\n";
-        
     line << "\r\n";
     line << _body;
 
-    // p "------RESP-----\n" << line.str() << std::endl;
+    p "------RESP-----\n" << line.str() << std::endl;
     return (line.str());
 }
 
@@ -78,7 +82,7 @@ void response::set_connection()
 void response::set_content_type()
 {
     this->_content_type = "";
-    if (this->stat_code == 304)
+    if (!this->_body.size())
         return ;
     static std::map<std::string, std::string> mime;
 
@@ -118,6 +122,7 @@ void response::set_transfer_encoding()
 
 void response::set_location()
 {
+    this->_location = "";
     if (this->stat_code == 301)
     {
         if (add_slash)
@@ -211,12 +216,14 @@ void response::fill_body(const std::string &path)
 
 //TODO chunked body with indexed
 
-
 void response::set_body()
 {
     _body = "";
+    if (this->stat_code == 301) //TODO maybe add 304
+        return;
+
     if (this->stat_code / 300)
-        fill_body(ERR_DIR + std::to_string(this->stat_code) + ".html");
+        fill_body(ERR_DIR + std::to_string(this->stat_code) + ".html"); //BUG CPP11
     else if (this->stat_code == 204)
         _body = "Content Uploaded Successfully";
     else if (this->stat_code == 200)
@@ -240,7 +247,7 @@ std::map<std::string, std::string>    response::prepare_cgi(Server &server)
     environ_vars["SERVER_NAME"] = this->_server;
     environ_vars["SCRIPT_NAME"] = this->URI ;
     environ_vars["CONTENT_TYPE"] = this->_content_type;
-    environ_vars["CONTENT_LENGTH"] = this->_content_length;
+    environ_vars["CONTENT_LENGTH"] = to_string(this->_content_length); //BUG CPP11 TODO THIS IS WRONG
     environ_vars["SCRIPT_FILENAME"] = this->resource_path;
     environ_vars["HTTP_USER_AGENT"] = this->headers["User-Agent"];
     environ_vars["HTTP_COOKIE"] = this->_cookies;
@@ -252,18 +259,22 @@ std::map<std::string, std::string>    response::prepare_cgi(Server &server)
 	environ_vars["REMOTE_HOST"] = server.server_name;
     environ_vars["QUERY_STRING"] = this->query;
 
-
     return (environ_vars);
 }
 
 response::response(std::string req, std::map<string, loc_details> locations) : request(req, locations)
 {
+    // p st
     set_status();
     set_connection();
-    set_content_type();
     set_server();
     set_cookies();
+    set_location();
     set_body();
+    set_content_type();
     set_content_length();
     set_transfer_encoding();
 }
+
+//TODO test DELTE
+//TODO test redirection/location

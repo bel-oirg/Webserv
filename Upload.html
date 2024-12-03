@@ -14,12 +14,12 @@
         Show a file-select field which allows
         multiple files to be chosen:
     </h3>
-    <form action="http://localhost:8321/Upload.html" method="post" enctype="multipart/form-data">
+    <form action="/Upload.html" method="post" enctype="multipart/form-data">
         <label for="myfile">Select a file:</label>
         <input type="file" 
                id="myfile" 
                name="myfile" 
-               multiple="multiple" />
+               required />
         <br /><br />
         <input type="submit" />
     </form>
