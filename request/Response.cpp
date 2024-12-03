@@ -43,13 +43,13 @@ std::string response::get_response()
     line << "Server: " << this->_server << "\r\n";
     if (!this->_content_type.empty())
         line << "Content-Type: " << this->_content_type << "\r\n";
-    // if (!_cookies.empty())
-    //     line << "Set-Cookie: " << _cookies << "\r\n";
         
     if (this->_content_length == -1)
         line << "Transfer-Encoding: " << this->_transfer_encoding << "\r\n";
     else
         line << "Content-Length: " << this->_content_length << "\r\n";
+    if (!_cookies.empty())
+        line << "Set-Cookie: " << _cookies << "\r\n";
 
     line << "\r\n";
     line << _body;
@@ -219,13 +219,18 @@ void response::fill_body(const std::string &path)
 void response::set_body()
 {
     _body = "";
-    if (this->stat_code == 301) //TODO maybe add 304
+    if (this->stat_code == 301)
         return;
 
-    if (this->stat_code / 300)
-        fill_body(ERR_DIR + std::to_string(this->stat_code) + ".html"); //BUG CPP11
+    if (this->stat_code / 400)
+    {
+        if (current_loc.error_pages.find(this->stat_code) != current_loc.error_pages.end())
+            fill_body(current_loc.root + current_loc.error_pages[this->stat_code]); //BUG CPP11
+        else
+            fill_body(ERR_DIR + std::to_string(this->stat_code) + ".html"); //BUG CPP11
+    }
     else if (this->stat_code == 204)
-        _body = "Content Uploaded Successfully";
+        _body = "Content Uploaded Successfully"; //TODO 204 returns nothing
     else if (this->stat_code == 200)
     {
         int res = get_request_resource();
@@ -264,7 +269,6 @@ std::map<std::string, std::string>    response::prepare_cgi(Server &server)
 
 response::response(std::string req, std::map<string, loc_details> locations) : request(req, locations)
 {
-    // p st
     set_status();
     set_connection();
     set_server();

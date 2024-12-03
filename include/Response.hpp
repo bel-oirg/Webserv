@@ -31,7 +31,6 @@ class response : public request
         void set_transfer_encoding();
         void set_connection();
         void set_content_type();
-        // bool unchunk_body(string chunked);
 
         void set_body();
 		std::string get_body();

@@ -70,7 +70,7 @@ struct loc_details
 {
     map<int, string>		error_pages;
     vector<string>			allowed_methods;
-	string					index_path; // index_path
+	string					index_path; //XXX index_path should be a vector ```index index.html index.htm```
     string					root;
     string					redir_to; // redir_to
 	string					upload_path;

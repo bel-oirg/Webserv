@@ -189,7 +189,6 @@ bool request::is_location_have_redir() //REQ
     if (current_loc.redir_to.empty())
         return (false);
 
-    //XXX mini-parsing 
     size_t space_pos = current_loc.redir_to.find(" ");
     if (space_pos == string::npos || space_pos == current_loc.redir_to.size())
         return (err_("invalid redir_to"), false);
@@ -242,6 +241,7 @@ bool request::is_dir_has_index_path()
     for (size_t index = 0; index < current_loc.index_path.size() ; index++)
     {
         to_check = current_loc.root + "/" + current_loc.index_path[index];
+        p "TO CHECK " << to_check << endl;
         if (!stat(to_check.c_str(), &s) && S_ISREG(s.st_mode))
         {
             resource_path = to_check;
@@ -289,8 +289,8 @@ int     request::POST()
 {
     if (body.size() > current_loc.client_max_body_size)
         return (err_("BODY > CLIENT_MAX_BODY _SIZE"), 413);
-    if (current_loc.client_max_body_size > 0)
-        return (if_loc_support_upload()); //upload the POST req body
+    if (current_loc.enable_upload)
+        return (if_loc_support_upload());
 
     int resource_type = get_request_resource();
     if (resource_type <= 0)
@@ -462,7 +462,7 @@ bool request::unchunk_body()
 //XXX UPLOADING A PNG DOES NOT WORK, I DO NOT RECEIVE A COMPLETE REQ
 //POST
 int request::if_loc_support_upload()
-{
+{        
     if (headers["Content-Type"].rfind("multipart/form-data") == std::string::npos)
         return (err_("multipart/form not found on loc_support_upload"), 415);
     
