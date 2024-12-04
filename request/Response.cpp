@@ -1,4 +1,6 @@
 #include "response.hpp"
+ 
+ 
 
 string response::get_script_path()
 {
@@ -14,7 +16,7 @@ void response::set_status()
 {
     static std::map<int, std::string> status_map;
     status_map[200] = std::string("200 OK");
-    status_map[201] = std::string("201 Created");
+    status_map[201] = std::string("201 Created"); //mainly it returns json of the uploaded data
     status_map[204] = std::string("204 No Content");
     status_map[301] = std::string("301 Moved Permanently");
     status_map[400] = std::string("400 Bad Request");
@@ -126,7 +128,9 @@ void response::set_location()
     if (this->stat_code == 301)
     {
         if (add_slash)
-            this->_location = this->resource_path + "/";
+        {
+            this->_location = this->URI + "/";
+        }
         else
             this->_location = current_loc.redir_to;
     }
@@ -234,7 +238,6 @@ void response::set_body()
     else if (this->stat_code == 200)
     {
         int res = get_request_resource();
-
         if (res == 1 && get_auto_index())
         {
             if (!prepare_autoindex())
@@ -282,3 +285,8 @@ response::response(std::string req, std::map<string, loc_details> locations) : r
 
 //TODO test DELTE
 //TODO test redirection/location
+
+/*
+TODO Set a default file to answer if the request is a directory.
+TODO configure where they should be saved.
+*/

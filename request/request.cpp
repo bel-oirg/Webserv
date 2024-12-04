@@ -7,11 +7,6 @@ request::request(std::string raw_req, std::map<std::string, loc_details> locatio
     this->stat_code = req_arch();
 }
 
-inline void    stat_(int status_code)
-{
-    std::cout << status_code << std::endl;
-}
-
 inline void     err_(const std::string &err)
 {
     std::cerr << "[-] " << err << std::endl;
@@ -209,7 +204,7 @@ bool request::is_method_allowed_in_loc() //REQ
 int request::get_request_resource() //get_resource_type()
 {
     if (correct_loc_name != "default")
-        this->resource_path = current_loc.root + this->URI.erase(0, correct_loc_name.size());
+        this->resource_path = current_loc.root + this->URI.substr(correct_loc_name.size(), URI.size() - correct_loc_name.size());
     else
         this->resource_path = current_loc.root + this->URI;
 
@@ -241,7 +236,6 @@ bool request::is_dir_has_index_path()
     for (size_t index = 0; index < current_loc.index_path.size() ; index++)
     {
         to_check = current_loc.root + "/" + current_loc.index_path[index];
-        p "TO CHECK " << to_check << endl;
         if (!stat(to_check.c_str(), &s) && S_ISREG(s.st_mode))
         {
             resource_path = to_check;
@@ -344,7 +338,6 @@ int     request::DELETE()
     //file
     if (!if_location_has_cgi())
     {
-        p "LOC HAS CGI" << this->resource_path << endl;
         remove(this->resource_path.c_str());
         return (204);
     }
@@ -360,11 +353,8 @@ int    request::req_arch()
         return (404);
 
     if (is_location_have_redir())
-    {
-        p "301" << endl;
         return (301);
-    }
-        
+
     if (!is_method_allowed_in_loc())
         return (405);
     
