@@ -1,2 +1,10 @@
-das
-2003
+CHANGES:
+
+    REQUEST:
+    POST -->
+
+uploading a huge file -- POST
+
+
+download a huge file -- GET
+

@@ -1,6 +1,4 @@
 #include "response.hpp"
- 
- 
 
 string response::get_script_path()
 {
@@ -32,17 +30,23 @@ void response::set_status()
     _status = status_map[stat_code];
 }
 
-std::string response::get_response()
+std::string response::get_response_header()
 {
     if (this->stat_code == -1)
         return (p "GOTO CGI\n", "CGI");
+    
     std::stringstream   line;
+    
     line << "HTTP/1.1 " << _status << "\r\n";
+
     if (!this->_location.empty())
         line << "Location: " << this->_location << "\r\n";
 
-    line << "Connection: " << this->_connection << "\r\n";
+    if (!this->_connection.empty())
+        line << "Connection: " << this->_connection << "\r\n";
+
     line << "Server: " << this->_server << "\r\n";
+    
     if (!this->_content_type.empty())
         line << "Content-Type: " << this->_content_type << "\r\n";
         
@@ -50,20 +54,21 @@ std::string response::get_response()
         line << "Transfer-Encoding: " << this->_transfer_encoding << "\r\n";
     else
         line << "Content-Length: " << this->_content_length << "\r\n";
+
     if (!_cookies.empty())
         line << "Set-Cookie: " << _cookies << "\r\n";
 
     line << "\r\n";
-    line << _body;
 
-    p "------RESP-----\n" << line.str() << std::endl;
+    // line << _body;
+
     return (line.str());
 }
 
 void response::set_content_length()
 {
     if (_content_length != -1)
-        _content_length = _body.size();
+        _content_length = file_size + 4;
 }
 
 void response::set_server()
@@ -175,47 +180,44 @@ inline void     err_(const std::string &err) //TODO dup in request.cpp
     std::cerr << "[-] " << err << std::endl;
 }
 
-void response::fill_body(const std::string &path)
+bool response::prep_body(const std::string &path)
 {
-    std::ifstream infile(path, std::ios::binary);
+    infile.open(path, std::ios::binary);
 
     if (!infile)
     {
         this->stat_code = 501;
-        std::cerr << "Error opening error_page.html" << std::endl;
-        return;
+        std::cerr << "Error opening " << path << std::endl;
+        return (false);
     }
-    std::stringstream ss;
 
     infile.seekg(0, ios::end);
-    size_t file_size = infile.tellg();
+    file_size = infile.tellg();
     infile.seekg(0);
+    return (true);
+}
 
-    if (file_size > CHUNK_SIZE)
-    {
-        _content_length = -1;
-        while(1)
-        {
-            char buff[CHUNK_SIZE + 1] = {0};
-            infile.read(buff, CHUNK_SIZE);
-            std::streamsize file_len = infile.gcount();
-            if (!file_len)
-                break;
-            ss.clear();
-            ss.str("");
+string response::get_to_send()
+{
+    std::stringstream ss;
 
-            ss << std::hex << file_len << "\r\n";
-            ss << buff << "\r\n";
+    char buff[CHUNK_SIZE + 1] = {0};
+    infile.read(buff, CHUNK_SIZE);
 
-            _body += ss.str();
-        }
-        _body += "0\r\n\r\n";
-    }
-    else
-    {   
-        ss << infile.rdbuf();
-        _body = ss.str();
-    }
+    // if (file_size > CHUNK_SIZE) //in this case we will use always CHUNKED
+    // {
+    //     _content_length = -1;
+    //     std::streamsize file_len = infile.gcount();
+    //     if (!file_len)
+    //         return(infile.close(), "0\r\n\r\n");
+
+    //     ss << std::hex << file_len << "\r\n";
+    // }
+    if (!infile.gcount()) // else if
+        return(infile.close(), "\r\n\r\n");
+    
+    ss << buff << "\r\n";
+    return(ss.str());
 }
 
 //TODO chunked body with indexed
@@ -229,9 +231,9 @@ void response::set_body()
     if (this->stat_code / 400)
     {
         if (current_loc.error_pages.find(this->stat_code) != current_loc.error_pages.end())
-            fill_body(current_loc.root + current_loc.error_pages[this->stat_code]); //BUG CPP11
+            prep_body(current_loc.root + current_loc.error_pages[this->stat_code]); //BUG CPP11
         else
-            fill_body(ERR_DIR + std::to_string(this->stat_code) + ".html"); //BUG CPP11
+            prep_body(ERR_DIR + std::to_string(this->stat_code) + ".html"); //BUG CPP11
     }
     else if (this->stat_code == 204)
         _body = "Content Uploaded Successfully"; //TODO 204 returns nothing
@@ -244,7 +246,7 @@ void response::set_body()
                 this->stat_code = 501;
         }
         else
-            fill_body(this->resource_path);
+            prep_body(this->resource_path);
     }
 }
 
@@ -272,11 +274,11 @@ std::map<std::string, std::string>    response::prepare_cgi(Server &server)
 
 response::response(std::string req, std::map<string, loc_details> locations) : request(req, locations)
 {
-    set_status();
-    set_connection();
-    set_server();
-    set_cookies();
-    set_location();
+    set_status(); //JUST REP
+    set_connection(); //JUST REP
+    set_server(); //JUST REP
+    set_cookies(); //JUST REP
+    set_location(); //JUST REP
     set_body();
     set_content_type();
     set_content_length();

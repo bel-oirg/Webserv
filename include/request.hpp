@@ -22,6 +22,9 @@
 class request
 {
     private:
+        string boundary;
+        string file_name;
+        std::fstream outfile;
         std::string HTTP;
         std::string req;
         std::map<std::string, loc_details> locations;
@@ -50,6 +53,8 @@ class request
         bool    is_location_have_redir();
         bool    is_method_allowed_in_loc();
         int     get_request_resource();
+        int     init_parse_req();
+        int     set_to_get(string buffer, int seq);
         bool    is_uri_has_slash_in_end();
         bool    is_dir_has_index_path();
         bool    if_location_has_cgi();
@@ -65,7 +70,9 @@ class request
 
         //POST
         int if_loc_support_upload();
+        bool prep_body_post();
         bool unchunk_body();
+        bool process_multipart(std::string body);
 
         //DELETE
         bool has_write_access_on_folder();

@@ -12,17 +12,19 @@ class response : public request
     private:
         int _content_length;
 
-        std::string _status;
-        std::string _location; 
-        std::string _content_type; 
-        std::string _server; 
-        std::string _cookies; 
-        std::string _connection;
-        std::string _transfer_encoding;
-        std::string _body;
+        string     _status;
+        string     _location; 
+        string     _content_type; 
+        string     _server; 
+        string     _cookies; 
+        string     _connection;
+        string     _transfer_encoding;
+        string     _body;
+        std::ifstream   infile;
+        size_t          file_size;
     
     public:
-        response(std::string req, std::map<std::string, loc_details> locations);
+        response(string req, std::map<string, loc_details> locations);
         void set_status();
         void set_content_length();
         void set_server();
@@ -32,12 +34,13 @@ class response : public request
         void set_connection();
         void set_content_type();
 
+        bool prep_body(const string &path);
         void set_body();
-		std::string get_body();
-        void fill_body(const std::string &path);
+		string get_body();
+        string get_to_send();
 
 		string get_script_path();
-        std::string get_response();
+        string get_response_header();
         bool prepare_autoindex();
-        std::map<std::string, std::string>    prepare_cgi(Server &server);
+        std::map<string, string>    prepare_cgi(Server &server);
 };

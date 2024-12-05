@@ -344,7 +344,7 @@ int     request::DELETE()
     return (-1);
 }
 
-int    request::req_arch()
+int     request::init_parse_req()
 {
     int stat_code = is_req_well_formed();
     if (stat_code)
@@ -357,7 +357,11 @@ int    request::req_arch()
 
     if (!is_method_allowed_in_loc())
         return (405);
-    
+    return (0);
+}
+
+int    request::req_arch()
+{
     if (this->method == "GET")
         return (GET());
     else if (this->method == "POST")
@@ -375,39 +379,55 @@ bool    request::get_auto_index()
     return (true);
 }
 
-bool process_multipart(std::string body, std::string _boundary)
+bool    request::prep_body_post()
+{
+
+}
+
+bool request::process_multipart(std::string current_part)
 {
     std::string line;
     size_t pos = 0;
 
-    while((pos = body.find("--" + _boundary, pos)) != std::string::npos)
+    if (file_name.empty())
     {
-        size_t next = body.find("--" + _boundary, pos + 2 + _boundary.size());
-        std::string current_part = body.substr(pos + 2 + _boundary.size(), next - pos - 2 - _boundary.size());
-
         size_t file_beg = current_part.find("filename=\"");
         size_t file_end = current_part.find("\"", file_beg + 10);
 
         if (file_beg == std::string::npos || file_end == std::string::npos)
             return (err_("Cannot find name") ,false);
 
-        std::string file_name = current_part.substr(file_beg + 10, file_end - file_beg - 10);
+        file_name = current_part.substr(file_beg + 10, file_end - file_beg - 10);
+        outfile.open(UPLOAD_DIR + file_name, std::ios::binary);
+        if (!outfile)
+            return (err_("Failed to open the upload_file"), false);
 
         size_t cont_beg = current_part.find("\r\n\r\n");
         size_t cont_end = current_part.size();
-        if (cont_beg == std::string::npos || cont_end == std::string::npos)
+        if (cont_beg == std::string::npos)
             return (err_("No body found to upload"), false);
 
-        //Prevent corruption of binary files that why used ios::binary
-        std::ofstream outfile(UPLOAD_DIR + file_name, std::ios::binary);
-        if (!outfile)
-            return (err_("Failed to open the upload_file"), false);
-        outfile << current_part.substr(cont_beg + 4, cont_end - cont_beg - 4);
-
-        if (body.find("--" + _boundary + "--", next) == next)
-            break;
-        pos = next;
+        outfile << current_part.substr(cont_beg + 4);
     }
+    else
+        outfile << current_part;
+
+    //2
+    {
+        outfile.seekp(-20, std::ios::end); //seekp
+        if (!outfile)
+            return (err_("file has no boundary"), false);
+
+        char check_boundary[21] = {0};
+        outfile.read(check_boundary, 20);
+        if (std::string(check_boundary) == boundary + "--\r\n")
+        {
+            //TODO you should remove the boundary in the end of file
+            outfile.close();
+
+        }
+    }
+
     return (true);
 }
 
@@ -455,16 +475,16 @@ int request::if_loc_support_upload()
 {        
     if (headers["Content-Type"].rfind("multipart/form-data") == std::string::npos)
         return (err_("multipart/form not found on loc_support_upload"), 415);
-    
+
     if (headers["Transfer-Encoding"] == "chunked")
         if (!unchunk_body())
             return (400);
 
     size_t bound_beg = headers["Content-Type"].find("boundary=");
     size_t bound_end = headers["Content-Type"].find_first_of(" \r\n", bound_beg);
-    std::string _boundary = headers["Content-Type"].substr(bound_beg + 9, bound_end - bound_beg - 9);
+    this->boundary = headers["Content-Type"].substr(bound_beg + 9, bound_end - bound_beg - 9);
 
-    if (!process_multipart(body, _boundary))
+    if (!process_multipart(body))
         return (err_("process_multipart err"), 400);
     return (204);
 }
