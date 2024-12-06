@@ -1,4 +1,5 @@
-#pragma once
+#ifndef CGI_RESPONSE_HPP
+#define CGI_RESPONSE_HPP
 
 #include <map>
 #include <iostream>
@@ -7,7 +8,8 @@
 #include <fstream>
 #include <string>
 
-#define CGI_ERR_DIR "/Users/bel-oirg/Desktop/Webserv/Error_pages/"
+// #define CGI_ERR_DIR "/Users/bel-oirg/Desktop/Webserv/Error_pages/"
+#define CGI_ERR_DIR "/Users/abennar/Desktop/mergin/Error_pages/"
 
 class cgi_response
 {
@@ -30,3 +32,6 @@ class cgi_response
 
         cgi_response(std::string body, int cgi_stat_code);
 };
+
+
+#endif /* CGI_RESPONSE_HPP */

@@ -1,4 +1,8 @@
 #include "response.hpp"
+#include "webserv.hpp"
+#include "server.hpp"
+
+using namespace std;
 
 string response::get_script_path()
 {
@@ -13,43 +17,32 @@ string response::get_body()
 void response::set_status()
 {
     static std::map<int, std::string> status_map;
-    status_map[200] = std::string("200 OK");
-    status_map[201] = std::string("201 Created"); //mainly it returns json of the uploaded data
-    status_map[204] = std::string("204 No Content");
-    status_map[301] = std::string("301 Moved Permanently");
-    status_map[400] = std::string("400 Bad Request");
-    status_map[403] = std::string("403 Forbidden");
-    status_map[404] = std::string("404 Not Found");
-    status_map[405] = std::string("405 Method Not Allowed");
-    status_map[409] = std::string("409 Conflict");
-    status_map[413] = std::string("413 Content Too Large");
-    status_map[414] = std::string("414 URI Too Long");
-    status_map[500] = std::string("500 Internal Server Error");
-    status_map[501] = std::string("501 Not Implemented");
-    status_map[504] = std::string("504 Gateway Timeout");
+    status_map[200] = std::string("OK");
+    status_map[201] = std::string("Created");
+    status_map[204] = std::string("No Content");
+    status_map[301] = std::string("Moved Permanently");
+    status_map[400] = std::string("Bad Request");
+    status_map[403] = std::string("Forbidden");
+    status_map[404] = std::string("Not Found");
+    status_map[405] = std::string("Method Not Allowed");
+    status_map[409] = std::string("Conflict");
+    status_map[413] = std::string("Content Too Large");
+    status_map[414] = std::string("URI Too Long");
+    status_map[500] = std::string("Internal Server Error");
+    status_map[501] = std::string("Not Implemented");
+    status_map[504] = std::string("Gateway Timeout");
     _status = status_map[stat_code];
 }
 
-std::string response::get_response_header()
+std::string response::get_response()
 {
     if (this->stat_code == -1)
-        return (p "GOTO CGI\n", "CGI");
-    
+        return ("CGI");
     std::stringstream   line;
-    
     line << "HTTP/1.1 " << _status << "\r\n";
-
-    if (!this->_location.empty())
-        line << "Location: " << this->_location << "\r\n";
-
-    if (!this->_connection.empty())
-        line << "Connection: " << this->_connection << "\r\n";
-
+    line << "Connection: " << this->_connection << "\r\n";
     line << "Server: " << this->_server << "\r\n";
-    
-    if (!this->_content_type.empty())
-        line << "Content-Type: " << this->_content_type << "\r\n";
-        
+    line << "Content-Type: " << this->_content_type << "\r\n";
     if (this->_content_length == -1)
         line << "Transfer-Encoding: " << this->_transfer_encoding << "\r\n";
     else
@@ -57,18 +50,19 @@ std::string response::get_response_header()
 
     if (!_cookies.empty())
         line << "Set-Cookie: " << _cookies << "\r\n";
-
+        
     line << "\r\n";
+    line << _body;
 
-    // line << _body;
-
+    // p "------RESP-----\n" << line.str() << std::endl;
     return (line.str());
 }
 
 void response::set_content_length()
 {
-    if (_content_length != -1)
-        _content_length = file_size + 4;
+    //specifies the content of the response BODY
+    //unless using transfer-encoding : chunked
+    this->_content_length = _body.size();
 }
 
 void response::set_server()
@@ -89,7 +83,7 @@ void response::set_connection()
 void response::set_content_type()
 {
     this->_content_type = "";
-    if (!this->_body.size())
+    if (this->stat_code == 304)
         return ;
     static std::map<std::string, std::string> mime;
 
@@ -121,21 +115,20 @@ void response::set_content_type()
         this->_content_type = it->second;
 }
 
-void response::set_transfer_encoding()
-{
-    if (this->_content_length == -1)
-        this->_transfer_encoding = "chunked";
-}
+// void response::set_transfer_encoding()
+// {
+    //TODO if there a content-length, you MUST NOT USE TRANSF_ENC
+    // this->_transfer_encoding = "";
+    // if (this->_content_length == -1)
+    //     this->_transfer_encoding = "chunked";
+// }
 
 void response::set_location()
 {
-    this->_location = "";
     if (this->stat_code == 301)
     {
         if (add_slash)
-        {
-            this->_location = this->URI + "/";
-        }
+            this->_location = this->resource_path + "/";
         else
             this->_location = current_loc.redir_to;
     }
@@ -175,80 +168,76 @@ bool response::prepare_autoindex()
     return (true);
 }
 
-inline void     err_(const std::string &err) //TODO dup in request.cpp
-{
-    std::cerr << "[-] " << err << std::endl;
-}
-
-bool response::prep_body(const std::string &path)
-{
-    infile.open(path, std::ios::binary);
-
-    if (!infile)
-    {
-        this->stat_code = 501;
-        std::cerr << "Error opening " << path << std::endl;
-        return (false);
-    }
-
-    infile.seekg(0, ios::end);
-    file_size = infile.tellg();
-    infile.seekg(0);
-    return (true);
-}
-
-string response::get_to_send()
-{
-    std::stringstream ss;
-
-    char buff[CHUNK_SIZE + 1] = {0};
-    infile.read(buff, CHUNK_SIZE);
-
-    // if (file_size > CHUNK_SIZE) //in this case we will use always CHUNKED
-    // {
-    //     _content_length = -1;
-    //     std::streamsize file_len = infile.gcount();
-    //     if (!file_len)
-    //         return(infile.close(), "0\r\n\r\n");
-
-    //     ss << std::hex << file_len << "\r\n";
-    // }
-    if (!infile.gcount()) // else if
-        return(infile.close(), "\r\n\r\n");
-    
-    ss << buff << "\r\n";
-    return(ss.str());
-}
-
-//TODO chunked body with indexed
-
 void response::set_body()
 {
+    std::stringstream ss;
+    std::ifstream infile;
     _body = "";
-    if (this->stat_code == 301)
-        return;
-
     if (this->stat_code / 400)
     {
-        if (current_loc.error_pages.find(this->stat_code) != current_loc.error_pages.end())
-            prep_body(current_loc.root + current_loc.error_pages[this->stat_code]); //BUG CPP11
-        else
-            prep_body(ERR_DIR + std::to_string(this->stat_code) + ".html"); //BUG CPP11
+        infile.open(ERR_DIR "/" + std::to_string(this->stat_code) + ".html");
+        if (!infile)
+        {
+            this->stat_code = 501;
+            std::cerr << "Error opening error_page.html" << std::endl;
+            return;
+        }
+        ss << infile.rdbuf();
+        _body = ss.str();
+    }
+    else if (this->stat_code / 300)
+    {
+        _body = "Redirecting to another location. Status Code: " + std::to_string(this->stat_code);
+        _content_length = _body.size();     
+        return ;
     }
     else if (this->stat_code == 204)
-        _body = "Content Uploaded Successfully"; //TODO 204 returns nothing
+        _body = "Content Uploaded Successfully";
     else if (this->stat_code == 200)
     {
         int res = get_request_resource();
+
         if (res == 1 && get_auto_index())
         {
             if (!prepare_autoindex())
                 this->stat_code = 501;
         }
         else
-            prep_body(this->resource_path);
+        {
+            infile.open(this->resource_path);
+            if (!infile)
+            {
+                this->stat_code = 501;
+                std::cerr << "Error opening 200" << std::endl;
+                return;
+            }
+            ss << infile.rdbuf();
+            _body = ss.str();
+        }
     }
+    _content_length = _body.size();     
 }
+
+// SERVER_NAME				Done
+// GATEWAY_INTERFACE		Done
+// SERVER_PROTOCOL			Done
+// SERVER_PORT				Done
+// REQUEST_METHOD			Done
+// HTTP_USER_AGENT			Done
+// SCRIPT_NAME				Done
+// REMOTE_ADDR				Done
+// CONTENT_TYPE				Done
+// HTTP_ACCEPT				Done
+// SERVER_SOFTWARE			Done
+// REMOTE_HOST				Done
+// CONTENT_LENGTH			Done
+// PATH_TRANSLATED info: the virtual path translated , ex : location /non-exist -> virtual path
+// AUTH_TYPE : If the server supports user authentication
+// REMOTE_USER : If the server supports user authentication
+// PATH_INFO
+// QUERY_STRING
+
+
 
 std::map<std::string, std::string>    response::prepare_cgi(Server &server)
 {
@@ -257,7 +246,7 @@ std::map<std::string, std::string>    response::prepare_cgi(Server &server)
     environ_vars["SERVER_NAME"] = this->_server;
     environ_vars["SCRIPT_NAME"] = this->URI ;
     environ_vars["CONTENT_TYPE"] = this->_content_type;
-    environ_vars["CONTENT_LENGTH"] = to_string(this->_content_length); //BUG CPP11 TODO THIS IS WRONG
+    environ_vars["CONTENT_LENGTH"] = this->_content_length;
     environ_vars["SCRIPT_FILENAME"] = this->resource_path;
     environ_vars["HTTP_USER_AGENT"] = this->headers["User-Agent"];
     environ_vars["HTTP_COOKIE"] = this->_cookies;
@@ -267,28 +256,19 @@ std::map<std::string, std::string>    response::prepare_cgi(Server &server)
 	environ_vars["SERVER_PROTOCOL"] =  "HTTP/1.1";
 	environ_vars["REMOTE_ADDR"] = hostToString(server.host);
 	environ_vars["REMOTE_HOST"] = server.server_name;
-    environ_vars["QUERY_STRING"] = this->query;
+	// TODO add QUERY_STRING
+
 
     return (environ_vars);
 }
 
 response::response(std::string req, std::map<string, loc_details> locations) : request(req, locations)
 {
-    set_status(); //JUST REP
-    set_connection(); //JUST REP
-    set_server(); //JUST REP
-    set_cookies(); //JUST REP
-    set_location(); //JUST REP
-    set_body();
+    set_status();
+    set_connection();
     set_content_type();
+    set_server();
+    set_cookies();
+    set_body();
     set_content_length();
-    set_transfer_encoding();
 }
-
-//TODO test DELTE
-//TODO test redirection/location
-
-/*
-TODO Set a default file to answer if the request is a directory.
-TODO configure where they should be saved.
-*/

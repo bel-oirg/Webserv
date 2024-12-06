@@ -12,7 +12,7 @@ void cgi_response::set_status()
 
 cgi_response::cgi_response(std::string cgi_body, int cgi_stat_code) : cgi_stat_code(cgi_stat_code), _body(cgi_body)
 {
-    std::cout <<  "RAW_RESPO--------###" << cgi_body << "ENDHERE-----\n";
+    // std::cout <<  "RAW_RESPO--------###" << cgi_body << "ENDHERE-----\n";
     set_status();
     set_server();
     set_body();
@@ -25,7 +25,7 @@ void cgi_response::set_body()
     if (cgi_stat_code != 200)
     {
         std::ifstream infile;
-        infile.open(CGI_ERR_DIR + std::to_string(cgi_stat_code) + ".html"); //BUG CPP11
+        infile.open(CGI_ERR_DIR + std::to_string(cgi_stat_code) + ".html");
         if (!infile)
         {
             std::cerr << "Error opening error_file on CGI" << std::endl;

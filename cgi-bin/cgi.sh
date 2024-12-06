@@ -1,4 +1,6 @@
 
+
+sleep 6;
 cat <<EOF
 <html>
 <head>

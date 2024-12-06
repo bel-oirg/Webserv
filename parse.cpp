@@ -1,19 +1,21 @@
+// #include "parse.hpp"
+#include "webserv.hpp"
+#include "locations.hpp"
+#include "server.hpp"
 #include "parse.hpp"
-#include <iostream>
-#include <fstream>
-#include <sstream>
-#include <string>
-#include <map>
-#include <vector>
-#include <arpa/inet.h>
+#include "clients.hpp"
 
-std::string hostToString(in_addr_t host) {
+using namespace std;
+
+std::string hostToString(in_addr_t host)
+{
     struct in_addr addr;
     addr.s_addr = host;
     return inet_ntoa(addr);
 }
 
-std::string trim(const std::string& str) {
+std::string trim(const std::string& str)
+{
     size_t start = str.find_first_not_of(" \t");
     size_t end = str.find_last_not_of(" \t");
     return (start == std::string::npos) ? "" : str.substr(start, end - start + 1);
@@ -37,7 +39,8 @@ bool is_server(const std::string& line)
 }
 
 // Function to check if a line starts with "location" and ends with "{"
-bool is_location(const std::string& line, string &path) {
+bool is_location(const std::string& line, string &path)
+{
     size_t pos = line.find("location");
     if (pos != std::string::npos) 
 	{

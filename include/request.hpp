@@ -1,17 +1,13 @@
-#pragma once
+#ifndef REQUEST_HPP
+#define REQUEST_HPP
 
-#include <map>
-#include <sys/stat.h>
-#include <dirent.h>
-#include <iostream>
-#include <unistd.h>
-#include <sstream>
-#include <fstream>
-#include <string>
-#include <vector>
-#include "server.hpp"
 
-#define UPLOAD_DIR "/Users/bel-oirg/Desktop/Webserv/Upload/"
+#include "webserv.hpp"
+// #include "server.hpp"
+#include "locations.hpp"
+
+// #define UPLOAD_DIR "/Users/bel-oirg/Desktop/CGICGI/Upload/"
+#define UPLOAD_DIR "/Users/abennar/Desktop/Webserv/Error_pages"
 //TODO change UPLOAD_DIR based on config file
 
 #define MAX_URI_SIZE 2048
@@ -19,12 +15,10 @@
 
 #define p std::cout << 
 
+
 class request
 {
     private:
-        string boundary;
-        string file_name;
-        std::fstream outfile;
         std::string HTTP;
         std::string req;
         std::map<std::string, loc_details> locations;
@@ -37,10 +31,10 @@ class request
         std::string method;
         std::string URI;
         std::string body;
-        std::string query;
         std::string correct_loc_name;
         int         stat_code;
         bool        add_slash;
+        bool        has_body;
         bool respond_with_autoindex;
 
     public:
@@ -53,13 +47,10 @@ class request
         bool    is_location_have_redir();
         bool    is_method_allowed_in_loc();
         int     get_request_resource();
-        int     init_parse_req();
-        int     set_to_get(string buffer, int seq);
         bool    is_uri_has_slash_in_end();
         bool    is_dir_has_index_path();
         bool    if_location_has_cgi();
         int     req_arch();
-        bool    is_valid_URI();
 
         int     GET();
         int     POST();
@@ -70,11 +61,11 @@ class request
 
         //POST
         int if_loc_support_upload();
-        bool prep_body_post();
-        bool unchunk_body();
-        bool process_multipart(std::string body);
 
         //DELETE
         bool has_write_access_on_folder();
         bool delete_all_folder_content(std::string ress_path);
 };
+
+
+#endif /* REQUEST_HPP */

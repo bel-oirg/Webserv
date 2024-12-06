@@ -37,12 +37,8 @@ void Cgi::get_script_type()
 
 void Cgi::cgi_run()
 {
-
+	if (child_stat == 0)
 	{
-		int fdout;
-		int fdin;
-		int status;
-
 		char *args[3];
 		switch (this->type)
 		{
@@ -74,7 +70,7 @@ void Cgi::cgi_run()
 		lseek(fdin, 0, SEEK_SET);
 
 		child_stat = 1;
-		int forked = fork();
+		forked = fork();
 		if (forked == -1)
 		{
 			perror("fork() faild");
@@ -93,10 +89,16 @@ void Cgi::cgi_run()
 			perror("execve() faild");
 			exit(1);
 		}
+		cout << GREEN << "cgi is running" << RESET << endl;
+	}
+	else if (child_stat == 1)
+	{
+		int status;
 
-		else if (forked > 0)
+		// cout << MAGENTA << "checking the child again" << RESET << endl;
+		if (waitpid(forked, &status, WNOHANG) != 0)
 		{
-			waitpid(forked, &status, 0);
+			cout << YELLOW << "cgi is DONE" << RESET << endl;
 			if (WIFSIGNALED(status))
 			{
 				if (WTERMSIG(status) == SIGALRM)
@@ -109,6 +111,9 @@ void Cgi::cgi_run()
 					this->code = 500;
 					clog << "Cgi killed by deleverd signal [" << WTERMSIG(status) << "]" << endl;
 				}
+				close(fdin);
+				close(fdout);
+				child_stat = 2;
 				return;
 			}
 			else if (WIFEXITED(status))
@@ -137,13 +142,28 @@ void Cgi::cgi_run()
 					clog << "CGI error : exit stat => [" << WEXITSTATUS(status) << "]" << endl;
 					code = 500;
 				}
+				close(fdin);
+				close(fdout);
+				child_stat = 2;
+				return;
 			}
 		}
 	}
 }
 
+bool	Cgi::is_cgi_ready()
+{
+	cgi_run();
+	if (child_stat == 2)
+	{
+		close(fdin);
+		close(fdout);
+		return (true);
+	}
+	return (false);
+}
 
-Cgi::Cgi(string scriptpath, string _request_body, std::map<string ,string> env_map)
+void	Cgi::cgi_init(string scriptpath, string _request_body, std::map<string ,string> env_map)
 {
 	this->child_stat = 0;
 	this->env = new char*[env_map.size() + 1];
@@ -170,25 +190,14 @@ Cgi::Cgi(string scriptpath, string _request_body, std::map<string ,string> env_m
 	// BUG  free the env 
 }
 
-// Cgi::Cgi()
-// {
-// 	this->script_path = "./py.py";
-// 	this->request_body = " Server is running ";
-// 	get_script_type();
-// 	cgi_run();
-// }
 
-// int main(int argc, char **argv, char **env)
-// {
-// 	int count_env;
-// 	try
-// 	{
-// 		Cgi cgi("py.py", " Hello World ", std::vector<string>(env, env + count_env));
-
-// 		// Cgi cgi;
-// 	}
-// 	catch (std::exception &e)
-// 	{
-// 		std::cerr << e.what() << endl;
-// 	}
+// Cgi::~Cgi() {
+//     if (env) {
+//         for (int i = 0; env[i]; ++i) {
+//             delete[] env[i];
+//         }
+//         delete[] env;
+//     }
+//     // close(fdout);
+//     // close(fdin);
 // }
