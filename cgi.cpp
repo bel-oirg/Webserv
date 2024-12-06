@@ -1,4 +1,7 @@
 #include "cgi.hpp"
+#include <sys/types.h>
+#include <sys/wait.h>
+
 
 int Cgi::cgi_get_code()
 {

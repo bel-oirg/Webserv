@@ -1,7 +1,5 @@
 #!/usr/bin/env python3
 
-sleep(2)
-
 print("""
 <!DOCTYPE html>
 <html lang="en">

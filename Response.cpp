@@ -1,6 +1,7 @@
 #include "response.hpp"
 #include "webserv.hpp"
 #include "server.hpp"
+#include <algorithm>
 
 using namespace std;
 
@@ -175,7 +176,7 @@ void response::set_body()
     _body = "";
     if (this->stat_code / 400)
     {
-        infile.open(ERR_DIR "/" + std::to_string(this->stat_code) + ".html");
+        infile.open(ERR_DIR "/" + std::to_string(this->stat_code) + ".html"); // C++ 11
         if (!infile)
         {
             this->stat_code = 501;

@@ -4,6 +4,7 @@
 #include "server.hpp"
 #include "parse.hpp"
 #include "clients.hpp"
+#include <algorithm>
 
 using namespace std;
 

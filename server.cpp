@@ -184,7 +184,10 @@ void Server::setup()
 		perror("listen() failed");
 		exit(EXIT_FAILURE);
 	}
-	pollfd tmp = {.events = POLLIN, .fd = this->socket_fd, .revents = 0};
+	pollfd tmp;
+	tmp.fd = this->socket_fd;
+	tmp.events = POLLIN;
+	tmp.revents = 0;
 	
 	this->_pfd.events = POLLIN;
 	this->_pfd.revents = 0;

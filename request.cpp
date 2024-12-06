@@ -1,4 +1,5 @@
 #include "response.hpp"
+#include <algorithm>
 
 request::request(std::string raw_req, std::map<std::string, loc_details> locations) : locations(locations), req(raw_req)
 {
