@@ -22,30 +22,35 @@ void Client::save_request(string request)
 		{
 			cout << RED <<  "IS CGI" << RESET << endl;
 			this->_is_cgi = true;
+			_response.clear();
 			_cgi.cgi_init(resp.get_script_path(), resp.get_body(), resp.prepare_cgi(this->_server));
 		}
 	}
-	// if (_is_cgi)
-	// {
-	// 	if (_cgi.is_cgi_ready())
-	// 	{
-	// 		cgi_exit_code = _cgi.cgi_get_code();
-	// 		if (cgi_exit_code != 200)
-	// 		{
-	// 			cgi_response cgi_resp("", cgi_exit_code);
-	// 			_response = cgi_resp.get_cgi_response();
-	// 		}
-	// 		else
-	// 		{
-	// 			cgi_response cgi_resp(_cgi.cgi_get_response(), cgi_exit_code);
-	// 			_response = cgi_resp.get_cgi_response();
-	// 			_is_cgi = false;
-	// 		}
-	// 	}
-	// }
+	if (_is_cgi)
+	{
+		if (_cgi.is_cgi_ready())
+		{
+			cgi_exit_code = _cgi.cgi_get_code();
+			if (cgi_exit_code != 200)
+			{
+				cgi_response cgi_resp("", cgi_exit_code);
+				_response = cgi_resp.get_cgi_response();
+			}
+			else
+			{
+				cgi_response cgi_resp(_cgi.cgi_get_response(), cgi_exit_code);
+				_response = cgi_resp.get_cgi_response();
+				_is_cgi = false;
+			}
+		}
+	}
+
+	// this->_request = request;
+	// response resp(_request, _server.get_locations());
+	// this->_response = resp.get_response();
 }
 
-pollfd Client::get_fd()
+pollfd& Client::get_fd()
 {
 	return (this->_pfd);
 }

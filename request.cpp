@@ -186,7 +186,7 @@ int request::get_request_resource() //get_resource_type()
         this->resource_path = current_loc.root + this->URI;
 
 
-		cout << RED << resource_path << endl;
+		cout << MAGENTA << resource_path << RESET << endl;
 
     struct stat s;
     if (!stat(this->resource_path.c_str(), &s))

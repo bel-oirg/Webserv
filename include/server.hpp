@@ -15,11 +15,12 @@ std::string hostToString(in_addr_t host);
 using namespace std;
 
 class Client;
+class ServersManager;
 
 class	Server
 {
 	public :
-		std::vector<Client>				clients;
+		// std::vector<Client>				clients;
 		std::vector<pollfd>				server_fds;
 		std::map<string, loc_details>	locations;
 		// uint16_t						port;
@@ -36,7 +37,8 @@ class	Server
 		std::map<string, loc_details> &get_locations(); 
 		void setup();
 		static void run(std::vector<Server> &servers);
-		void accept_connections();
+		void	accept_connections(ServersManager &manager);
+		// void accept_connections();
 		Server& operator= (const Server &cpy);
 		Server(const Server &cpy);
 		void print() const;
@@ -51,6 +53,9 @@ class ServersManager
 	private :
 		std::vector<Server> servers;
 		std::vector<pollfd>	manager_fds;
+	public:
+		std::map<int, std::pair<Server*, Client* > >	client_pool;
+		std::vector<pollfd>		servers_pollfds;
 
 	public :
 		void init_servers(Server server);

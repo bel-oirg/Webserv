@@ -7,7 +7,6 @@
 
 using namespace std;
 
-
 std::map<string, loc_details> &Server::get_locations()
 {
 	return (this->locations);
@@ -45,36 +44,6 @@ void Server::print() const
 	}
 }
 
-// pollfd &Server::get_poll()
-// {
-// 	_pfd.fd = socket_fd;
-// 	_pfd.events = POLLIN;
-// 	_pfd.revents = 0;
-// 	return (_pfd);
-// }
-
-std::vector<pollfd> Server::get_fds()
-{
-	server_fds.clear();
-	server_fds.reserve(clients.size() + 1);
-	for (int i = 0; i < clients.size(); i++)
-	{
-		server_fds.push_back(clients[i].get_fd());
-	}
-	server_fds.push_back(this->_pfd);
-	return (server_fds);
-}
-
-Client *Server::get_client_by_fd(int fd)
-{
-	for (int i = 0; i < clients.size(); i++)
-	{
-		if (clients[i].get_fd().fd == fd)
-			return (&clients[i]);
-	}
-	return NULL;
-}
-
 void ServersManager::init_servers(Server server)
 {
 	servers.push_back(server);
@@ -93,6 +62,8 @@ void ServersManager::setup()
 	for (int i = 0; i < servers.size(); i++)
 	{
 		servers[i].setup();
+		pollfd tmp = {.fd = servers[i].socket_fd, .events = POLLIN, .revents = 0};
+		servers_pollfds.push_back(tmp);
 	}
 }
 
@@ -104,45 +75,25 @@ void ServersManager::print()
 	}
 }
 
-vector<pollfd> &ServersManager::get_fds()
+std::vector<pollfd> &ServersManager::get_fds()
 {
 	manager_fds.clear();
-	for (int i = 0; i < servers.size(); i++)
+	for (auto it = client_pool.begin(); it != client_pool.end(); it++)
 	{
-		vector<pollfd> tmp;
-		tmp = servers[i].get_fds();
-		manager_fds.insert(manager_fds.end(), tmp.begin(), tmp.end());
+		manager_fds.push_back(it->second.second->get_fd());
 	}
-	return (manager_fds);
+	manager_fds.insert(manager_fds.end(), servers_pollfds.begin(), servers_pollfds.end());
+	return manager_fds;
 }
 
 bool ServersManager::is_server(int fd)
 {
 	for (int i = 0; i < servers.size(); i++)
 	{
-		if (servers[i].socket_fd == fd)
+		if (servers_pollfds[i].fd == fd)
 			return true;
 	}
 	return false;
-}
-
-void ServersManager::accept_connections()
-{
-	for (int i = 0; i < servers.size(); i++)
-	{
-		servers[i].accept_connections();
-	}
-}
-
-Client &ServersManager::get_client(int fd)
-{
-	for (int i = 0; i < servers.size(); i++)
-	{
-		Client *cur_client = servers[i].get_client_by_fd(fd);
-		if (cur_client)
-			return (*cur_client);
-	}
-	throw runtime_error(" the servers dont have that client");
 }
 
 void Server::setup()
@@ -154,18 +105,12 @@ void Server::setup()
 		exit(EXIT_FAILURE);
 	}
 
-	int fd_flags = fcntl(this->socket_fd, F_GETFL, 0);
+	// int fd_flags = fcntl(this->socket_fd, F_GETFL, 0);
+	// if (fd_flags == -1)
+	// 	perror("fcntl( F_GETFL ) failed");
+	int fd_flags = fcntl(this->socket_fd, F_SETFL, O_NONBLOCK);
 	if (fd_flags == -1)
-	{
-		perror("fcntl( F_GETFL ) failed");
-		exit(EXIT_FAILURE);
-	}
-	fd_flags = fcntl(this->socket_fd, F_SETFL, fd_flags | O_NONBLOCK);
-	if (fd_flags == -1)
-	{
-		perror("fcntl( F_SETFL ) failed");
-		exit(EXIT_FAILURE);
-	}
+		perror("fcntl( F_SETFL ) failed"); // TODO maybe skip creating the server
 
 	this->address.sin_family = AF_INET;
 	this->address.sin_port = htons(this->port);
@@ -178,80 +123,59 @@ void Server::setup()
 		exit(EXIT_FAILURE);
 	}
 
-	int listen_t = listen(this->socket_fd, 1000);
+	int listen_t = listen(this->socket_fd, SOMAXCONN);
 	if (listen_t == -1)
 	{
 		perror("listen() failed");
 		exit(EXIT_FAILURE);
 	}
-	pollfd tmp;
-	tmp.fd = this->socket_fd;
-	tmp.events = POLLIN;
-	tmp.revents = 0;
-	
+
 	this->_pfd.events = POLLIN;
 	this->_pfd.revents = 0;
 	this->_pfd.fd = this->socket_fd;
 }
 
-void Server::accept_connections()
+#define NUM_CLIENTS 100
+
+void Server::accept_connections(ServersManager &manager)
 {
-	for (;;)
+	socklen_t address_size = sizeof(this->address);
+	for (int i = 0; i < NUM_CLIENTS ; i++)
 	{
-		struct pollfd tmp = {0};
-		socklen_t address_size = sizeof(this->address);
-		int ret = accept(this->socket_fd, (sockaddr *)&(this->address), &address_size);
-		if (ret < 0)
+		int client_fd = accept(this->socket_fd, (sockaddr *)&(this->address), &address_size);
+		if (client_fd < 0)
 		{
 			if (errno == EAGAIN || errno == EWOULDBLOCK)
-			{
-				std::clog << "no more clients" << endl;
-				break;
-			}
-			else
-			{
-				perror("accept() failed");
-				exit(EXIT_FAILURE);
-			}
+				break; // No more clients
+			perror("accept() failed");
+				return;
 		}
-		cout << "new client with fd : " << ret << endl;
-		Client client(*this, ret);
-		this->clients.push_back(client);
+
+		std::cout << "New client accepted with fd: " << client_fd << std::endl;
+		Client *client = new Client(*this, client_fd);
+
+		manager.client_pool[client_fd] = std::make_pair(this, client);
 	}
 }
 
-#define REQUEST_MAX_SIZE 300000
+#define REQUEST_MAX_SIZE 3000000
 
-
-bool	Server::erase(int fd)
+void ServersManager::remove_client(int fd)
 {
-	for (std::vector<Client>::iterator it = clients.begin(); it != clients.end(); it++)
+	std::map<int, std::pair<Server *, Client *>>::iterator it = client_pool.find(fd);
+	if (it != client_pool.end())
 	{
-		if (it->_pfd.fd == fd)
-		{
-			close(fd);
-			clients.erase(it);
-			return (true);
-		}
+		delete it->second.second;
+		client_pool.erase(it);
 	}
-	return (false);
+	close(fd);
+	cout << MAGENTA << "connection closed with : " << fd << endl;
 }
-
-void	ServersManager::remove_client(int fd)
-{
-	for (int i = 0; i < servers.size(); i++)
-	{
-		if (servers[i].erase(fd))
-		{
-			cout << " Client removerd from fd : " << i << endl;
-			break;
-		}
-	}
-}
-
 
 void ServersManager::get_request(pollfd &pfd)
 {
+	if (!(pfd.revents & POLLIN))
+		return;
 	char buffer[REQUEST_MAX_SIZE] = {0};
 
 	int valread;
@@ -264,43 +188,52 @@ void ServersManager::get_request(pollfd &pfd)
 	else if (valread >= REQUEST_MAX_SIZE)
 	{
 		std::cout << "request lenght too large : action => discarding" << std::endl;
-
 		return;
 	}
 	if (valread == 0)
 	{
 		std::cout << "Client disconnected" << std::endl;
 		this->remove_client(pfd.fd);
+		return;
 	}
 
-	// search for the client that with the evented fd
+	buffer[valread] = '\0';
+	cout << YELLOW << buffer << RESET << endl;
+	Client *cur_client = client_pool[pfd.fd].second;
 
-	Client &cur_client = get_client(pfd.fd);
+	try
+    {
+        cur_client->save_request(std::string(buffer));
+        cur_client->change_event();
+    }
+    catch (const std::exception &e)
+    {
+        std::cerr << "Error in save_request: " << e.what() << std::endl;
+        remove_client(pfd.fd); // Clean up if save_request fails
+    }
 
-	cout << "\n\n" << "read " << buffer << "\n\n" << endl;
-
-	cur_client.save_request(buffer);
-	cur_client.change_event();
+	// cur_client->save_request(buffer);
+	// cur_client->change_event();
 }
 
 void ServersManager::send_response(pollfd &pfd)
 {
-	Client &cur_client = get_client(pfd.fd);
+	Client *cur_client = client_pool[pfd.fd].second;
 	string response;
 
-	if (cur_client._is_cgi)
+	if (cur_client->_is_cgi)
 	{
-		if (cur_client._cgi.is_cgi_ready())
+		if (cur_client->_cgi.is_cgi_ready())
 		{
-			cur_client.cgi_exit_code = cur_client._cgi.cgi_get_code();
-			if (cur_client.cgi_exit_code != 200)
+			cur_client->cgi_exit_code = cur_client->_cgi.cgi_get_code();
+			if (cur_client->cgi_exit_code != 200)
 			{
-				cgi_response cgi_resp("", cur_client.cgi_exit_code);
+				cgi_response cgi_resp("", cur_client->cgi_exit_code);
 				response = cgi_resp.get_cgi_response();
 			}
 			else
 			{
-				cgi_response cgi_resp(cur_client._cgi.cgi_get_response(), cur_client.cgi_exit_code);
+				cgi_response cgi_resp(cur_client->_cgi.cgi_get_response(), cur_client->cgi_exit_code);
 				response = cgi_resp.get_cgi_response();
 			}
 		}
@@ -309,14 +242,14 @@ void ServersManager::send_response(pollfd &pfd)
 	}
 	else
 	{
-		response = cur_client.get_response();
+		response = cur_client->get_response();
 	}
 
 	// cout << RED <<  response  << RESET << endl;
 	send(pfd.fd, (void *)response.c_str(), response.size(), 0);
 	remove_client(pfd.fd);
 
-	// need to close the connections 
+	// need to close the connections
 }
 
 // server core
@@ -326,12 +259,7 @@ void ServersManager::run()
 	while (true)
 	{
 		std::vector<pollfd> &fds = this->get_fds();
-		// for (int i = 0; i < fds.size() ; i++)
-		// {
-		// 	cout << "fd [" << i << "] :" << fds[i].fd << endl;
-		// } 
-
-		int ret = poll(fds.data(), fds.size(), -1);
+		int ret = poll(fds.data(), fds.size(), -1); // TODO check the timeout and remove all of the clients
 		if (ret == -1)
 		{
 			perror("poll() failed");
@@ -340,24 +268,24 @@ void ServersManager::run()
 
 		for (int i = 0; i < fds.size(); i++)
 		{
-			if (fds[i].revents & POLLIN)
+			if (fds[i].revents & POLLOUT)
+			{
+				send_response(fds[i]);
+			}
+			else if (fds[i].revents & POLLIN)
 			{
 				if (is_server(fds[i].fd)) // TODO may remove this
 				{
 					for (int j = 0; j < servers.size(); j++)
 					{
 						if (servers[j].socket_fd == fds[i].fd)
-							servers[j].accept_connections();
+							servers[j].accept_connections(*this);
 					}
 				}
 				else
 				{
 					get_request(fds[i]);
 				}
-			}
-			else if (fds[i].revents & POLLOUT)
-			{
-				send_response(fds[i]);
 			}
 		}
 	}

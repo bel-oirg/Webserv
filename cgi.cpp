@@ -2,7 +2,6 @@
 #include <sys/types.h>
 #include <sys/wait.h>
 
-
 int Cgi::cgi_get_code()
 {
 	return this->code;
@@ -46,7 +45,7 @@ void Cgi::cgi_run()
 		switch (this->type)
 		{
 		case python:
-			args[0] = (char *)"/usr/bin/python";
+			args[0] = (char *)"/usr/bin/python3";
 			break;
 		case shell:
 			args[0] = (char *)"/bin/sh";
@@ -61,13 +60,13 @@ void Cgi::cgi_run()
 			args[0] = (char *)script_path.c_str();
 			break;
 		default:
-			throw 1; 
+			throw std::runtime_error("Unsupported script type.");
 		}
 		args[1] = (char *)script_path.c_str();
 		args[2] = NULL;
 
 		fdout = fileno(tmpfile());
-		fdin = fileno(tmpfile());
+		fdin = fileno(tmpfile()); // BUG handle errors 
 
 		write(fdin, request_body.c_str(), request_body.size());
 		lseek(fdin, 0, SEEK_SET);
@@ -76,43 +75,43 @@ void Cgi::cgi_run()
 		forked = fork();
 		if (forked == -1)
 		{
-			perror("fork() faild");
+			perror("fork() failed");
 			code = 500;
 			return;
 		}
 
+		cout << BLUE << "CGI PATH : "  << args[0] << RESET << endl;
 		if (forked == 0)
 		{
-			alarm(4); // TODO get time from configfile
+			alarm(10); // Set timeout for CGI execution
 			dup2(fdin, STDIN_FILENO);
 			dup2(fdout, STDOUT_FILENO);
 			close(fdin);
 			close(fdout);
 			execve(args[0], args, env);
-			perror("execve() faild");
+			perror("execve() failed");
 			exit(1);
 		}
-		cout << GREEN << "cgi is running" << RESET << endl;
+		std::cout << "CGI is running" << std::endl;
 	}
 	else if (child_stat == 1)
 	{
 		int status;
-
-		// cout << MAGENTA << "checking the child again" << RESET << endl;
 		if (waitpid(forked, &status, WNOHANG) != 0)
 		{
-			cout << YELLOW << "cgi is DONE" << RESET << endl;
+			std::cout << "CGI is DONE" << std::endl;
+
 			if (WIFSIGNALED(status))
 			{
 				if (WTERMSIG(status) == SIGALRM)
 				{
 					this->code = 504;
-					clog << "Cgi timeout " << endl;
+					std::cerr << "CGI timeout" << std::endl;
 				}
 				else
 				{
 					this->code = 500;
-					clog << "Cgi killed by deleverd signal [" << WTERMSIG(status) << "]" << endl;
+					std::cerr << "CGI killed by signal [" << WTERMSIG(status) << "]" << std::endl;
 				}
 				close(fdin);
 				close(fdout);
@@ -142,7 +141,7 @@ void Cgi::cgi_run()
 				}
 				else
 				{
-					clog << "CGI error : exit stat => [" << WEXITSTATUS(status) << "]" << endl;
+					std::cerr << "CGI error : exit status => [" << WEXITSTATUS(status) << "]" << std::endl;
 					code = 500;
 				}
 				close(fdin);
@@ -154,7 +153,7 @@ void Cgi::cgi_run()
 	}
 }
 
-bool	Cgi::is_cgi_ready()
+bool Cgi::is_cgi_ready()
 {
 	cgi_run();
 	if (child_stat == 2)
@@ -166,10 +165,10 @@ bool	Cgi::is_cgi_ready()
 	return (false);
 }
 
-void	Cgi::cgi_init(string scriptpath, string _request_body, std::map<string ,string> env_map)
+void Cgi::cgi_init(string scriptpath, string _request_body, std::map<string, string> env_map)
 {
 	this->child_stat = 0;
-	this->env = new char*[env_map.size() + 1];
+	this->env = new char *[env_map.size() + 1];
 
 	int i = 0;
 	for (map<string, string>::iterator it = env_map.begin(); it != env_map.end(); it++)
@@ -184,15 +183,19 @@ void	Cgi::cgi_init(string scriptpath, string _request_body, std::map<string ,str
 
 	this->env[i] = NULL;
 
-
 	this->script_path = scriptpath;
 	this->request_body = _request_body;
 	get_script_type();
 	cgi_run();
 
-	// BUG  free the env 
+	for (int i = 0; env[i]; ++i)
+	{
+		delete[] env[i];
+	}
+	delete[] env;
+	// close(fdin);
+	// close(fdout);
 }
-
 
 // Cgi::~Cgi() {
 //     if (env) {

@@ -54,31 +54,37 @@ class response;
 class Client
 {
 	public:
-		Server &_server;
-		string _request;
-		pollfd _pfd;
-		string	_response;
-		Cgi		_cgi;
-		bool	_is_cgi;
-		int		cgi_exit_code;
+		Server		&_server;
+		string		_request;
+		pollfd		_pfd;
+		string		_response;
+		Cgi			_cgi;
+		bool		_is_cgi;
+		int			cgi_exit_code;
 
 	public:
 		Client(Server &server, int fd);
-		void save_request(string request);
-		pollfd get_fd();
-		void change_event();
-		string get_response();
 		Client(const Client &other)	;
-		Client&	operator=(const Client &other);
-		bool	is_cgi_ready()
+		void		save_request(string request);
+		pollfd&		get_fd();
+		void		change_event();
+		string		get_response();
+		Client&		operator=(const Client &other);
+		bool		is_cgi_ready()
 		{
 			return (is_cgi_ready());
 		}
 
-		bool	is_cgi()
+		bool		is_cgi()
 		{
 			return (_is_cgi);
 		}
+
+		// ~Client()
+		// {
+		// 	close(this->_pfd.fd);
+		// 	// TODO may add kill cgi;
+		// }
 
 };
 
