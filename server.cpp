@@ -51,7 +51,7 @@ void ServersManager::init_servers(Server server)
 
 void ServersManager::init_servers(std::vector<Server> &new_servers)
 {
-	for (int i = 0; i < new_servers.size(); i++)
+	for (size_t i = 0; i < new_servers.size(); i++)
 	{
 		servers.push_back(new_servers[i]);
 	}
@@ -59,7 +59,7 @@ void ServersManager::init_servers(std::vector<Server> &new_servers)
 
 void ServersManager::setup()
 {
-	for (int i = 0; i < servers.size(); i++)
+	for (size_t i = 0; i < servers.size(); i++)
 	{
 		servers[i].setup();
 		pollfd tmp = {.fd = servers[i].socket_fd, .events = POLLIN, .revents = 0};
@@ -69,7 +69,7 @@ void ServersManager::setup()
 
 void ServersManager::print()
 {
-	for (int i = 0; i < servers.size(); i++)
+	for (size_t i = 0; i < servers.size(); i++)
 	{
 		servers[i].print();
 	}
@@ -88,7 +88,7 @@ std::vector<pollfd> &ServersManager::get_fds()
 
 bool ServersManager::is_server(int fd)
 {
-	for (int i = 0; i < servers.size(); i++)
+	for (size_t i = 0; i < servers.size(); i++)
 	{
 		if (servers_pollfds[i].fd == fd)
 			return true;
@@ -105,10 +105,10 @@ void Server::setup()
 		exit(EXIT_FAILURE);
 	}
 
-	// int fd_flags = fcntl(this->socket_fd, F_GETFL, 0);
-	// if (fd_flags == -1)
-	// 	perror("fcntl( F_GETFL ) failed");
-	int fd_flags = fcntl(this->socket_fd, F_SETFL, O_NONBLOCK);
+	int fd_flags = fcntl(this->socket_fd, F_GETFL, 0);
+	if (fd_flags == -1)
+		perror("fcntl( F_GETFL ) failed");
+	 fd_flags = fcntl(this->socket_fd, F_SETFL, O_NONBLOCK);
 	if (fd_flags == -1)
 		perror("fcntl( F_SETFL ) failed"); // TODO maybe skip creating the server
 
@@ -140,13 +140,13 @@ void Server::setup()
 void Server::accept_connections(ServersManager &manager)
 {
 	socklen_t address_size = sizeof(this->address);
-	for (int i = 0; i < NUM_CLIENTS ; i++)
-	{
+	// for (int i = 0; i < NUM_CLIENTS ; i++)
+	// {
 		int client_fd = accept(this->socket_fd, (sockaddr *)&(this->address), &address_size);
 		if (client_fd < 0)
 		{
 			if (errno == EAGAIN || errno == EWOULDBLOCK)
-				break; // No more clients
+				return ;// break; // No more clients 
 			perror("accept() failed");
 				return;
 		}
@@ -155,7 +155,7 @@ void Server::accept_connections(ServersManager &manager)
 		Client *client = new Client(*this, client_fd);
 
 		manager.client_pool[client_fd] = std::make_pair(this, client);
-	}
+	// }
 }
 
 #define REQUEST_MAX_SIZE 3000000
@@ -209,11 +209,8 @@ void ServersManager::get_request(pollfd &pfd)
     catch (const std::exception &e)
     {
         std::cerr << "Error in save_request: " << e.what() << std::endl;
-        remove_client(pfd.fd); // Clean up if save_request fails
+		this->remove_client(pfd.fd); // Clean up if save_request fails
     }
-
-	// cur_client->save_request(buffer);
-	// cur_client->change_event();
 }
 
 void ServersManager::send_response(pollfd &pfd)
@@ -266,26 +263,29 @@ void ServersManager::run()
 			exit(EXIT_FAILURE);
 		}
 
-		for (int i = 0; i < fds.size(); i++)
+		for (size_t i = 0; i < fds.size(); i++)
 		{
-			if (fds[i].revents & POLLOUT)
-			{
-				send_response(fds[i]);
-			}
-			else if (fds[i].revents & POLLIN)
+			if (fds[i].revents & POLLIN)
 			{
 				if (is_server(fds[i].fd)) // TODO may remove this
 				{
-					for (int j = 0; j < servers.size(); j++)
+					for (size_t j = 0; j < servers.size(); j++)
 					{
 						if (servers[j].socket_fd == fds[i].fd)
+						{
 							servers[j].accept_connections(*this);
+							break;
+						}
 					}
 				}
 				else
 				{
 					get_request(fds[i]);
 				}
+			}
+			else if (fds[i].revents & POLLOUT)
+			{
+				send_response(fds[i]);
 			}
 		}
 	}

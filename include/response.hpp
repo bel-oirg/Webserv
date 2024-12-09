@@ -7,7 +7,7 @@
 
 #define CHUNK_SIZE 2048
 // #define ERR_DIR "/Users/bel-oirg/Desktop/CGICGI/Error_pages/"
-#define ERR_DIR "/Users/abennar/Desktop/Webserv/Error_pages"
+#define ERR_DIR "/Users/abennar/Desktop/push/Error_pages"
 //TODO change the err pages based on config file
 
 class	Server;

@@ -19,9 +19,9 @@
 class request
 {
     private:
+        std::map<std::string, loc_details> locations;
         std::string HTTP;
         std::string req;
-        std::map<std::string, loc_details> locations;
 
     protected:
         std::map<std::string, std::string> headers;

@@ -56,7 +56,7 @@ bool is_location(const std::string& line, string &path)
 
 std::vector<std::string> split(const std::string& str, string delimiters)
 {
-	int start = 0, end = 0;
+	size_t start = 0, end = 0;
 	std::vector<string> splited;
 
 
@@ -111,7 +111,7 @@ void	defaults(std::map<string, string>::iterator iter, Server &server, loc_detai
 	{
 		in_addr_t host;
 		host = inet_addr(value.c_str());
-		if (host == -1)
+		if (host == 0)
 			throw runtime_error("invalid host");
 		server.host = host;
 	}
@@ -128,7 +128,7 @@ void	defaults(std::map<string, string>::iterator iter, Server &server, loc_detai
 		int code ;
 		string page;
 		std::vector<string> pages = split(value, ",\127"); // TODO maybe check multipple delemeters ,,,
-		for (int i = 0; i < pages.size(); i++)
+		for (size_t i = 0; i < pages.size(); i++)
 		{
 			std::istringstream stream(pages[i]);
 			if (!(stream >> code >> page))
@@ -154,7 +154,7 @@ void	defaults(std::map<string, string>::iterator iter, Server &server, loc_detai
 	else if (key == "allowed_methods")
 	{
 		loc.allowed_methods = split(value, " /t");
-		for (int i = 0; i < loc.allowed_methods.size(); i++)
+		for (size_t i = 0; i < loc.allowed_methods.size(); i++)
 		{
 			if (!	(loc.allowed_methods[i] == "GET" ||
 					loc.allowed_methods[i] == "POST" ||
@@ -187,7 +187,7 @@ void	locations(map<string, string>::iterator loc, loc_details &dest)
 	if (key == "allowed_methods")
 	{
 		dest.allowed_methods = split(value, " /t");
-		for (int i = 0; i < dest.allowed_methods.size(); i++)
+		for (size_t i = 0; i < dest.allowed_methods.size(); i++)
 		{
 			if (!	(dest.allowed_methods[i] == "GET" ||
 					dest.allowed_methods[i] == "POST" ||
@@ -282,7 +282,7 @@ std::vector<Server> Parse::config2server(std::vector<Config> configs)
 								locations(keys_iterator, tmp);
 							}
 					std::vector<string> paths = split(iter->first, " ");
-					for (int i = 0; i < paths.size(); i++)
+					for (size_t i = 0; i < paths.size(); i++)
 					{
 						cur_server.locations[paths[i]] = tmp;
 					}

@@ -1,7 +1,7 @@
-NAME = Req
+NAME = webserve
 RM = rm -rf
 CC = c++
-CFLAGS = -std=c++11 -pedantic  -fsanitize=address -g #-Wall -Wextra -Werror #-std=c++98# 
+CFLAGS = -std=c++11 -pedantic  -fsanitize=undefined -g -Wall -Wextra -Werror #-std=c++98# 
 
 SRCS = $(shell find ./ -name "*.cpp")
 
@@ -22,6 +22,7 @@ $(NAME) : $(OBJS)
 $(OBJ_DIR)/%.o : %.cpp $(HEADERS)
 	@mkdir -p $(dir $@)
 	$(CC) $(CFLAGS) $(INCLUDE) -c $< -o $@
+
 
 fclean : clean
 	$(RM) $(NAME)

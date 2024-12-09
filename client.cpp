@@ -45,9 +45,9 @@ void Client::save_request(string request)
 		}
 	}
 
-	// this->_request = request;
-	// response resp(_request, _server.get_locations());
-	// this->_response = resp.get_response();
+	this->_request = request;
+	response resp(_request, _server.get_locations());
+	this->_response = resp.get_response();
 }
 
 pollfd& Client::get_fd()

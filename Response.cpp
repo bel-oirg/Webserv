@@ -103,7 +103,8 @@ void response::set_content_type()
     mime["png"] = "image/png";
     mime["json"] = "application/json";
 
-    _content_type = "text/html";
+    _content_type = "text/html"; // BUG content type most be depending on the file type,
+					// Chrome checks it automatically , execpt for vidios
     size_t dot_p = this->URI.find_last_of('.');
     if (dot_p == std::string::npos)
         return ;

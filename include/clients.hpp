@@ -59,7 +59,7 @@ class Client
 		pollfd		_pfd;
 		string		_response;
 		Cgi			_cgi;
-		bool		_is_cgi;
+		bool		_is_cgi:1;
 		int			cgi_exit_code;
 
 	public:
@@ -72,7 +72,7 @@ class Client
 		Client&		operator=(const Client &other);
 		bool		is_cgi_ready()
 		{
-			return (is_cgi_ready());
+			return (_cgi.is_cgi_ready());
 		}
 
 		bool		is_cgi()
