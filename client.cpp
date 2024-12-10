@@ -61,6 +61,11 @@ void Client::change_event()
 	this->_pfd.events = POLLOUT;
 }
 
+void Client::change_event(int)
+{
+	this->_pfd.events = POLLIN;
+}
+
 // string Client::get_response()
 // {
 // 	return (_response);

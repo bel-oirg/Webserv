@@ -218,41 +218,49 @@ void ServersManager::send_response(pollfd &pfd)
 	Client *cur_client = client_pool[pfd.fd].second;
 	string response;
 
-	if (cur_client->_is_cgi)
-	{
-		if (cur_client->_cgi.is_cgi_ready())
-		{
-			cur_client->cgi_exit_code = cur_client->_cgi.cgi_get_code();
-			if (cur_client->cgi_exit_code != 200)
-			{
-				cgi_response cgi_resp("", cur_client->cgi_exit_code);
-				response = cgi_resp.get_cgi_response();
-			}
-			else
-			{
-				cgi_response cgi_resp(cur_client->_cgi.cgi_get_response(), cur_client->cgi_exit_code);
-				response = cgi_resp.get_cgi_response();
-			}
-		}
-		else
-			return;
-	}
-	else
-	{
+	// if (cur_client->_is_cgi)
+	// {
+	// 	if (cur_client->_cgi.is_cgi_ready())
+	// 	{
+	// 		cur_client->cgi_exit_code = cur_client->_cgi.cgi_get_code();
+	// 		if (cur_client->cgi_exit_code != 200)
+	// 		{
+	// 			cgi_response cgi_resp("", cur_client->cgi_exit_code);
+	// 			response = cgi_resp.get_cgi_response();
+	// 		}
+	// 		else
+	// 		{
+	// 			cgi_response cgi_resp(cur_client->_cgi.cgi_get_response(), cur_client->cgi_exit_code);
+	// 			response = cgi_resp.get_cgi_response();
+	// 		}
+	// 	}
+	// 	else
+	// 		return;
+	// }
+	// else
+	// {
 		if (!cur_client->_headers_sended)
 		{
 			response = cur_client->_response->get_response_header();
+			cout << GREEN << response << RESET << endl;
 			cur_client->_headers_sended = true;
 		}
 		else
 		{
 			response = cur_client->_response->get_to_send();
+			cout << CYAN << response << RESET << endl;
 		}
-	}
+	// }
 
 		send(pfd.fd, (void *)response.c_str(), response.size(), 0);
 		if (cur_client->_response->_eof || cur_client->_is_cgi)
+		{
+			cout << "eof: " << std::boolalpha << cur_client->_response->_eof  << std::endl;
+			cout << "is cgi: " << std::boolalpha << cur_client->_is_cgi << std::endl;
+
 			remove_client(pfd.fd);
+
+		}
 
 	// need to close the connections
 }

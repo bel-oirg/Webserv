@@ -138,7 +138,7 @@ void response::set_content_type()
 
     _content_type = "text/html";
     size_t dot_p = this->URI.find_last_of('.');
-    if (dot_p == std::string::npos)
+    if (dot_p == std::string::npos || this->stat_code != 200)
         return ;
 
     std::string ext = this->URI.substr(dot_p + 1);
@@ -230,7 +230,6 @@ string response::get_to_send() //_____RESP_BODY_SEND__
 {
     if (!_body.empty()) //in this case i am sure that the body is small (indexing a dir / ..)
         return (this->_eof = true, _body);
-    std::stringstream ss;
 
     char buff[CHUNK_SIZE + 1] = {0};
     infile.read(buff, CHUNK_SIZE);
@@ -244,11 +243,11 @@ string response::get_to_send() //_____RESP_BODY_SEND__
 
     //     ss << std::hex << file_len << "\r\n";
     // }
-    if (!infile.gcount()) // else if
-        return(this->_eof = true, infile.close(), "\r\n\r\n");
+   size_t readden = infile.gcount(); // else if
+   if (!readden)
+        return(this->_eof = true, infile.close(), "");
     
-    ss << buff << "\r\n";
-    return(ss.str());
+    return(std::string(buff, readden));
 }
 
 //TODO chunked body with indexed

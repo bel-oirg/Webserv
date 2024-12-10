@@ -72,6 +72,7 @@ class Client
 		void		change_event();
 		string		get_response();
 		Client&		operator=(const Client &other);
+        void        change_event(int);
 		bool		is_cgi_ready()
 		{
 			return (_cgi.is_cgi_ready());

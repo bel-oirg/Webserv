@@ -60,7 +60,9 @@ void Cgi::cgi_run()
 			args[0] = (char *)script_path.c_str();
 			break;
 		default:
-			throw std::runtime_error("Unsupported script type.");
+			code = 500;
+			child_stat = 2;
+			return;
 		}
 		args[1] = (char *)script_path.c_str();
 		args[2] = NULL;
