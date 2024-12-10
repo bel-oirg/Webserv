@@ -239,12 +239,20 @@ void ServersManager::send_response(pollfd &pfd)
 	}
 	else
 	{
-		response = cur_client->get_response();
+		if (!cur_client->_headers_sended)
+		{
+			response = cur_client->_response->get_response_header();
+			cur_client->_headers_sended = true;
+		}
+		else
+		{
+			response = cur_client->_response->get_to_send();
+		}
 	}
 
-	// cout << RED <<  response  << RESET << endl;
-	send(pfd.fd, (void *)response.c_str(), response.size(), 0);
-	remove_client(pfd.fd);
+		send(pfd.fd, (void *)response.c_str(), response.size(), 0);
+		if (cur_client->_response->_eof || cur_client->_is_cgi)
+			remove_client(pfd.fd);
 
 	// need to close the connections
 }

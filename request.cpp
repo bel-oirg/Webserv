@@ -1,14 +1,12 @@
 #include "response.hpp"
-#include <algorithm>
+#include "server.hpp"
 
-request::request(std::string raw_req, std::map<std::string, loc_details> locations) : locations(locations), req(raw_req)
+request::request(std::string raw_req, std::map<std::string, loc_details> locations) : req(raw_req), locations(locations)
 {
-    this->stat_code = req_arch();
-}
-
-inline void    stat_(int status_code)
-{
-    std::cout << status_code << std::endl;
+    p "REQ---- " << raw_req << "----REQ" << endl;
+    this->stat_code = init_parse_req();
+    if (!this->stat_code)
+        this->stat_code = req_arch();
 }
 
 inline void     err_(const std::string &err)
@@ -40,7 +38,7 @@ bool    request::valid_elem(std::string elem)
     std::stringstream line(elem);
     std::getline(line, field, ':');
 
-    if (isdigit(field.front()))
+    if (isdigit(field[0]))
         return (false);
     for (size_t index = 0; index < field.size() ; index++)
     {
@@ -50,7 +48,7 @@ bool    request::valid_elem(std::string elem)
     std::getline(line, value);
 
     value = trim_line(value);
-    if (value.empty() || value.back() != '\r')
+    if (value.empty() || value[value.size() - 1] != '\r')
         return (false);
     
     for (size_t index = 0; index < value.size() - 1 ; index++)
@@ -61,13 +59,20 @@ bool    request::valid_elem(std::string elem)
     return (true);
 }
 
-bool    is_valid_URI(std::string URI)
+bool    request::is_valid_URI()
 {
-    std::string allowed_URI = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789- ._~:/?#[]@!$&'()*+,;=%";
+    //BUG maybe string str = "data" CPP11
+    std::string allowed_URI = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-._~:/?#[]@!$&'()*+,;=%";
     for (size_t index = 0; index < URI.size() ; index++)
     {
         if (allowed_URI.find(URI[index]) == std::string::npos)
             return (false);
+    }
+    size_t query_pos = URI.find("?");
+    if (query_pos != std::string::npos)
+    {
+        this->query = URI.substr(query_pos + 1);
+        this->URI = URI.substr(0, query_pos);
     }
     return (true);
 }
@@ -76,7 +81,6 @@ int request::is_req_well_formed() //REQ
 {
     //LINE 1
     std::string l1_s, tmp_line, field, value;
-    this->has_body = false;
 
     if (req == "Internal_err")
         return(err_("CGI_ERR"), 500);
@@ -95,7 +99,7 @@ int request::is_req_well_formed() //REQ
         return (err_("METHOD NOT VALID"), 400);
 
     std::getline(l1, this->URI, ' ');
-    if (!is_valid_URI(this->URI))
+    if (!is_valid_URI())
         return (err_("invalid URI"), 400);
     if (this->URI.size() > MAX_URI_SIZE)
         return (414);
@@ -123,9 +127,7 @@ int request::is_req_well_formed() //REQ
         
         if (this->method != "POST")
             return (err_("there is body but non-POST method is used"), 400);
-        if (this->body.size() > current_loc.client_max_body_size)
-            return (err_("Big BODY"), 413);
-        this->has_body = true;
+
     }
 
     if (this->headers.find("Transfer-Encoding") != this->headers.end()
@@ -167,9 +169,32 @@ bool request::get_matched_loc_for_req_uri() //REQ
     return (true);
 }
 
+bool is_valid_int(const string &str_num, int &num)
+{
+    std::stringstream ss(str_num);
+    char c;
+
+    if (!(ss >> num))
+        return (false);
+    if (ss >> c)
+        return (false);
+    return (true);
+}
+
 bool request::is_location_have_redir() //REQ
 {
-    return (!current_loc.status_code);
+    if (current_loc.redir_to.empty())
+        return (false);
+
+    size_t space_pos = current_loc.redir_to.find(" ");
+    if (space_pos == string::npos || space_pos == current_loc.redir_to.size())
+        return (err_("invalid redir_to"), false);
+    string str_stat_code = current_loc.redir_to.substr(0, space_pos);
+    if (!is_valid_int(str_stat_code, current_loc.status_code))
+        return (err_("invalid int in redir_to"), false);
+    current_loc.redir_to = current_loc.redir_to.substr(space_pos + 1, current_loc.redir_to.size() - space_pos - 1);
+
+    return (current_loc.status_code == 301);
 }
 
 bool request::is_method_allowed_in_loc() //REQ
@@ -181,12 +206,9 @@ bool request::is_method_allowed_in_loc() //REQ
 int request::get_request_resource() //get_resource_type()
 {
     if (correct_loc_name != "default")
-        this->resource_path = current_loc.root + this->URI.erase(0, correct_loc_name.size());
+        this->resource_path = current_loc.root + this->URI.substr(correct_loc_name.size(), URI.size() - correct_loc_name.size());
     else
         this->resource_path = current_loc.root + this->URI;
-
-
-		cout << MAGENTA << resource_path << RESET << endl;
 
     struct stat s;
     if (!stat(this->resource_path.c_str(), &s))
@@ -205,7 +227,7 @@ int request::get_request_resource() //get_resource_type()
 
 inline bool request::is_uri_has_slash_in_end()
 {
-    return (this->URI.back() == '/');
+    return (this->URI[URI.size() - 1] == '/');
 }
 
 bool request::is_dir_has_index_path()
@@ -261,8 +283,10 @@ int     request::GET()
 
 int     request::POST()
 {
-    if (current_loc.client_max_body_size > 0)
-        return (if_loc_support_upload()); //upload the POST req body
+    if (body.size() > current_loc.client_max_body_size)
+        return (err_("BODY > CLIENT_MAX_BODY _SIZE"), 413);
+    if (current_loc.enable_upload)
+        return (if_loc_support_upload());
 
     int resource_type = get_request_resource();
     if (resource_type <= 0)
@@ -315,29 +339,36 @@ int     request::DELETE()
     }
     //file
     if (!if_location_has_cgi())
+    {
+        remove(this->resource_path.c_str());
         return (204);
+    }
     return (-1);
 }
 
-int    request::req_arch()
+int     request::init_parse_req()
 {
     int stat_code = is_req_well_formed();
     if (stat_code)
         return (stat_code);
     if (!get_matched_loc_for_req_uri())
         return (404);
-    if (!is_location_have_redir())
+
+    if (is_location_have_redir())
         return (301);
+
     if (!is_method_allowed_in_loc())
         return (405);
-    
+    return (0);
+}
+
+int    request::req_arch()
+{
     if (this->method == "GET")
         return (GET());
     else if (this->method == "POST")
         return (POST());
-    else if (this->method == "DELETE")
-        return (DELETE());
-    return (501);
+    return (DELETE());
 }
 
 //GET
@@ -350,65 +381,108 @@ bool    request::get_auto_index()
     return (true);
 }
 
-std::string get_file_name(const std::string &raw)
-{
-    size_t beg = raw.find("name=\"");
-    size_t end = raw.find("\"", beg + 6);
-    if (beg == std::string::npos || end == std::string::npos)
-        return ("");
-    return (raw.substr(beg + 6, end - beg - 6));
-}
-
-bool process_multipart(std::string body, std::string _boundary)
+int request::process_multipart(std::string current_part) //____UPLOAD_REQ_
 {
     std::string line;
-    size_t pos = 0;
 
-    while((pos = body.find("--" + _boundary, pos)) != std::string::npos)
+    if (file_name.empty())
     {
-        size_t next = body.find("--" + _boundary, pos + 2 + _boundary.size());
-        std::string current_part = body.substr(pos + 2 + _boundary.size(), next - pos - 2 - _boundary.size());
-
+        uploaded_size = 0;
         size_t file_beg = current_part.find("filename=\"");
         size_t file_end = current_part.find("\"", file_beg + 10);
 
         if (file_beg == std::string::npos || file_end == std::string::npos)
-            return (err_("Cannot find name") ,false);
+            return (this->eof = true, err_("Cannot find name") ,0);
 
-        std::string file_name = current_part.substr(file_beg + 10, file_end - file_beg - 10);
+        file_name = current_part.substr(file_beg + 10, file_end - file_beg - 10);
+        if (file_name.find("/") == std::string::npos)
+            return (this->eof = true, err_("Invalid file name") ,0);
+
+        outfile.open(UPLOAD_DIR + file_name, std::ios::binary);
+        if (!outfile)
+            return (this->eof = true, err_("Failed to open the upload_file"), 0);
 
         size_t cont_beg = current_part.find("\r\n\r\n");
-        size_t cont_end = current_part.size();
-        if (cont_beg == std::string::npos || cont_end == std::string::npos)
-            return (err_("No body found to upload"), false);
+        if (cont_beg == std::string::npos)
+            return (this->eof = true, err_("No body found to upload"), 0);
 
-        //Prevent corruption of binary files that why used ios::binary
-        std::ofstream outfile(UPLOAD_DIR + file_name, std::ios::binary);
-        if (!outfile)
-            return (err_("Failed to open the upload_file"), false);
-        outfile << current_part.substr(cont_beg + 4, cont_end - cont_beg - 4);
-
-        if (body.find("--" + _boundary + "--", next) == next)
-            break;
-        pos = next;
+        current_part =  current_part.substr(cont_beg + 4);
     }
+
+    size_t last_bound_beg = current_part.find(this->boundary);
+    if (last_bound_beg != std::string::npos)
+    {
+        outfile << current_part.substr(0, last_bound_beg);
+        uploaded_size += last_bound_beg;
+        if (current_part.substr(last_bound_beg, this->boundary.size() + 2) == this->boundary + "--")
+        {
+            this->eof = true;
+            outfile.close();
+            return (p "file uploaded successfuly\n", 2); //2 means the file upload is done
+        }
+    }
+    else
+    {
+        outfile << current_part;
+        uploaded_size += current_part.size();
+    }
+    return (1);
+}
+
+bool request::unchunk_body()
+{
+    std::stringstream test;
+    size_t part_size, next(0);
+    string unchunked_body(""), new_part, unchunked(this->body);
+
+    while(1)
+    {
+        size_t beg_hex = next;
+        size_t end_hex = unchunked.find("\r\n", beg_hex);
+
+        if (beg_hex == std::string::npos || end_hex == std::string::npos)
+            return (err_("Error on beg_hex || end_hex on chunked npos"), false);
+        string size_str = unchunked.substr(beg_hex, end_hex - beg_hex);
+        test.clear();
+        test.str("");
+        test << size_str;
+        test >> std::hex >> part_size;
+        size_t end_part = unchunked.find("\r\n", end_hex + 2);
+        if (end_part == std::string::npos)
+            return (err_("Error end_part on chunked npos"), false);
+        new_part = unchunked.substr(end_hex + 2, end_part - end_hex - 2);
+        if (!part_size)
+        {
+            if (!new_part.empty())
+                return (err_("Bad ending of chunked data"), false);
+            break;
+        }
+        if (new_part.size() != part_size)
+            return (err_("Invalid unchunked size"), false);
+
+        unchunked_body += new_part;
+        next = end_part + 2;
+    }
+    body = unchunked_body;
     return (true);
 }
 
+//XXX UPLOADING A PNG DOES NOT WORK, I DO NOT RECEIVE A COMPLETE REQ
 //POST
 int request::if_loc_support_upload()
-{
-    if (body.size() > current_loc.client_max_body_size)
-        return (err_("body_size on loc_support_upload"), 413);
-
+{        
     if (headers["Content-Type"].rfind("multipart/form-data") == std::string::npos)
         return (err_("multipart/form not found on loc_support_upload"), 415);
-    
+
+    if (headers["Transfer-Encoding"] == "chunked")
+        if (!unchunk_body())
+            return (400);
+
     size_t bound_beg = headers["Content-Type"].find("boundary=");
     size_t bound_end = headers["Content-Type"].find_first_of(" \r\n", bound_beg);
-    std::string _boundary = headers["Content-Type"].substr(bound_beg + 9, bound_end - bound_beg - 9);
+    this->boundary = headers["Content-Type"].substr(bound_beg + 9, bound_end - bound_beg - 9);
 
-    if (!process_multipart(body, _boundary))
+    if (!process_multipart(body))
         return (err_("process_multipart err"), 400);
     return (204);
 }
@@ -447,10 +521,10 @@ bool request::delete_all_folder_content(std::string ress_path)
                 return (err_("Cannot delete file"), closedir(dir), false);
         }
     }
-    closedir(dir);
+    
     if (rmdir(ress_path.c_str()))
-        return (err_("Cannot delete dir"), false);
-    return (true);
+        return (err_("Cannot delete dir"), closedir(dir), false);
+    return (closedir(dir), true);
 }
 
 bool request::has_write_access_on_folder()
@@ -459,3 +533,10 @@ bool request::has_write_access_on_folder()
     stat(resource_path.c_str(), &s);
     return (s.st_mode & S_IWUSR);
 }
+
+/*
+    TODO maybe you should encode the URL
+    If the data contain characters that are not allowed in URLs, these characters are URL-encoded.
+    This basically means that the character (say ~) is replaced with a % followed by its two-digit ASCII number (say %7E).
+    The details are available in RFC 1738 about URLs, which is linked to in the references.
+*/

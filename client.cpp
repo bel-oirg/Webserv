@@ -15,39 +15,40 @@ void Client::save_request(string request)
 {
 	if (!_is_cgi)
 	{
-		this->_request = request;
-		response resp(_request, _server.get_locations());
-		this->_response = resp.get_response();
-		if (_response == "CGI")
+		this->_response = new response(request, this->_server.get_locations());
+		std::string check_cgi = this->_response->get_response_header();
+		if (check_cgi == "CGI")
 		{
 			cout << RED <<  "IS CGI" << RESET << endl;
 			this->_is_cgi = true;
-			_response.clear();
-			_cgi.cgi_init(resp.get_script_path(), resp.get_body(), resp.prepare_cgi(this->_server));
+			_cgi.cgi_init(_response->get_script_path(), _response->get_body(), _response->prepare_cgi(this->_server));
 		}
 	}
-	if (_is_cgi)
-	{
-		if (_cgi.is_cgi_ready())
-		{
-			cgi_exit_code = _cgi.cgi_get_code();
-			if (cgi_exit_code != 200)
-			{
-				cgi_response cgi_resp("", cgi_exit_code);
-				_response = cgi_resp.get_cgi_response();
-			}
-			else
-			{
-				cgi_response cgi_resp(_cgi.cgi_get_response(), cgi_exit_code);
-				_response = cgi_resp.get_cgi_response();
-				_is_cgi = false;
-			}
-		}
-	}
+	// if (_is_cgi)
+	// {
+	// 	if (_cgi.is_cgi_ready())
+	// 	{
+	// 		cgi_exit_code = _cgi.cgi_get_code();
+	// 		if (cgi_exit_code != 200)
+	// 		{
+	// 			cgi_response cgi_resp("", cgi_exit_code);
+	// 			_cgi_resp = cgi_resp.get_cgi_response();
+	// 		}
+	// 		else
+	// 		{
+	// 			cgi_response cgi_resp(_cgi.cgi_get_response(), cgi_exit_code);
+	// 			_cgi_resp = cgi_resp.get_cgi_response();
+	// 			_is_cgi = false;
+	// 		}
+	// 	}
+	// }
+	// else
+	// {
+	// 	this->_response = new response(request, this->_server.get_locations());
+	// }
 
-	this->_request = request;
-	response resp(_request, _server.get_locations());
-	this->_response = resp.get_response();
+	// std::string check_cgi = this->_response->get_response_header();
+
 }
 
 pollfd& Client::get_fd()
@@ -60,13 +61,13 @@ void Client::change_event()
 	this->_pfd.events = POLLOUT;
 }
 
-string Client::get_response()
-{
-	return (_response);
-}
+// string Client::get_response()
+// {
+// 	return (_response);
+// }
 
 Client::Client(const Client &other)	
-: _server(other._server), _request(other._request), _pfd(other._pfd) ,_is_cgi(false)
+: _server(other._server), _request(other._request), _pfd(other._pfd) ,_is_cgi(false), _headers_sended(false)
 {
 
 }

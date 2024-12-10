@@ -1,47 +1,52 @@
 #ifndef RESPONSE_HPP
 #define RESPONSE_HPP
 
-
-// #include "server.hpp"
 #include "request.hpp"
-
-#define CHUNK_SIZE 2048
-// #define ERR_DIR "/Users/bel-oirg/Desktop/CGICGI/Error_pages/"
-#define ERR_DIR "/Users/abennar/Desktop/push/Error_pages"
+#define CHUNK_SIZE 999999
+#define ERR_DIR "/Users/bel-oirg/Desktop/CHANGE_WEBSERV/Error_pages/"
 //TODO change the err pages based on config file
 
-class	Server;
+using std::string; 
 
 class response : public request
 {
     private:
         int _content_length;
 
-        std::string _status;
-        std::string _location; 
-        std::string _content_type; 
-        std::string _server; 
-        std::string _cookies; 
-        std::string _connection;
-        std::string _transfer_encoding;
-        std::string _body;
+        string          _status;
+        string          _location; 
+        string          _content_type; 
+        string          _server; 
+        string          _cookies; 
+        string          _connection;
+        string          _transfer_encoding;
+        string          _body;
+        std::ifstream   infile;
+        size_t          file_size;
     
     public:
-        response(std::string req, std::map<std::string, loc_details> locations);
+        bool            _eof;
+        response(string req, std::map<string, loc_details> locations);
+		response();
+		// void init(string req, std::map<string, loc_details> locations);
         void set_status();
         void set_content_length();
         void set_server();
         void set_location();
         void set_cookies();
-        // void set_transfer_encoding();
+        void set_transfer_encoding();
         void set_connection();
         void set_content_type();
-		std::string get_body();
-		string get_script_path();
+
+        bool prep_body(const string &path);
         void set_body();
-        std::string get_response();
+		string get_body();
+        string get_to_send();
+
+		string get_script_path();
+        string get_response_header();
         bool prepare_autoindex();
-        std::map<std::string, std::string>    prepare_cgi(Server &server);
+        std::map<string, string>    prepare_cgi(Server &server);
 };
 
 

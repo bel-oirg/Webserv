@@ -4,7 +4,7 @@
 #include "server.hpp"
 #include "cgi.hpp"
 // #include "locations.hpp"
-// #include "response.hpp"
+#include "response.hpp"
 
 
  const char http_response[] =
@@ -49,7 +49,7 @@
 
 
 class Server;
-class response;
+// class response;
 
 class Client
 {
@@ -57,10 +57,12 @@ class Client
 		Server		&_server;
 		string		_request;
 		pollfd		_pfd;
-		string		_response;
 		Cgi			_cgi;
 		bool		_is_cgi:1;
 		int			cgi_exit_code;
+		response	*_response;
+		string		_cgi_resp;
+		bool		_headers_sended;
 
 	public:
 		Client(Server &server, int fd);
