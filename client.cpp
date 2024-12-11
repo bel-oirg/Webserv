@@ -9,21 +9,31 @@ Client::Client(Server &server, int fd) : _server(server)
 	_pfd.fd = fd;
 	_pfd.events = POLLIN;
 	_pfd.revents = 0;
+	first_response_read = true;
 }
 
 void Client::save_request(string request)
 {
-	if (!_is_cgi)
-	{
-		this->_response = new response(request, this->_server.get_locations());
-		std::string check_cgi = this->_response->get_response_header();
-		if (check_cgi == "CGI")
-		{
-			cout << RED <<  "IS CGI" << RESET << endl;
-			this->_is_cgi = true;
-			_cgi.cgi_init(_response->get_script_path(), _response->get_body(), _response->prepare_cgi(this->_server));
-		}
-	}
+		// TODO buffered requesting here
+		// if (first_response_read)
+		// {
+			this->_response = new response(request, this->_server.get_locations());
+			// first_response_read = false;
+		// }
+		// else 
+		// {
+		// 	_response->process_multipart(request);
+		// }
+
+
+
+		// if (check_cgi == "CGI")
+		// {
+		// 	cout << RED <<  "IS CGI" << RESET << endl;
+		// 	this->_is_cgi = true;
+		// 	_cgi.cgi_init(_response->get_script_path(), _response->get_body(), _response->prepare_cgi(this->_server));
+		// }
+	// }
 	// if (_is_cgi)
 	// {
 	// 	if (_cgi.is_cgi_ready())

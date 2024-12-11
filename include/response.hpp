@@ -2,8 +2,8 @@
 #define RESPONSE_HPP
 
 #include "request.hpp"
-#define CHUNK_SIZE 999999
-#define ERR_DIR "/Users/bel-oirg/Desktop/CHANGE_WEBSERV/Error_pages/"
+#define CHUNK_SIZE 1024
+#define ERR_DIR "/Users/abennar/Desktop/push/Error_pages"
 //TODO change the err pages based on config file
 
 using std::string; 

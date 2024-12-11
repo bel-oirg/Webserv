@@ -3,11 +3,13 @@
 
 request::request(std::string raw_req, std::map<std::string, loc_details> locations) : req(raw_req), locations(locations)
 {
+	upload_eof = false;
     p "REQ---- " << raw_req << "----REQ" << endl;
     this->stat_code = init_parse_req();
     if (!this->stat_code)
         this->stat_code = req_arch();
 }
+
 
 inline void     err_(const std::string &err)
 {
@@ -384,6 +386,7 @@ bool    request::get_auto_index()
 int request::process_multipart(std::string current_part) //____UPLOAD_REQ_
 {
     std::string line;
+	this->upload_eof = true;
 
     if (file_name.empty())
     {
@@ -407,6 +410,7 @@ int request::process_multipart(std::string current_part) //____UPLOAD_REQ_
             return (this->eof = true, err_("No body found to upload"), 0);
 
         current_part =  current_part.substr(cont_beg + 4);
+		cout << "IN THE STATMENT" << endl;
     }
 
     size_t last_bound_beg = current_part.find(this->boundary);
@@ -414,12 +418,14 @@ int request::process_multipart(std::string current_part) //____UPLOAD_REQ_
     {
         outfile << current_part.substr(0, last_bound_beg);
         uploaded_size += last_bound_beg;
-        if (current_part.substr(last_bound_beg, this->boundary.size() + 2) == this->boundary + "--")
+        if (current_part.substr(last_bound_beg, this->boundary.size() + 2) == this->boundary + "--" )
         {
             this->eof = true;
             outfile.close();
-            return (p "file uploaded successfuly\n", 2); //2 means the file upload is done
+            return (p "file uploaded successfuly\n", upload_eof = true); //2 means the file upload is done
         }
+		else
+			cout << YELLOW << this->boundary + "--" << RESET << endl;
     }
     else
     {

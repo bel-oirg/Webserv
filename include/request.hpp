@@ -12,7 +12,7 @@
 #include <vector>
 #include "server.hpp"
 
-#define UPLOAD_DIR "/Users/bel-oirg/Desktop/CHANGE_WEBSERV/Upload/"
+#define UPLOAD_DIR "/Users/abennar/Desktop/push/Upload"
 //TODO change UPLOAD_DIR based on config file
 
 #define MAX_URI_SIZE 2048
@@ -47,6 +47,7 @@ class request
         bool respond_with_autoindex;
 
     public:
+		bool		upload_eof;
         request(std::string raw_req, std::map<std::string, loc_details> locations);
         void    display_req();
         bool    valid_method();

@@ -108,7 +108,7 @@ void Server::setup()
 	int fd_flags = fcntl(this->socket_fd, F_GETFL, 0);
 	if (fd_flags == -1)
 		perror("fcntl( F_GETFL ) failed");
-	 fd_flags = fcntl(this->socket_fd, F_SETFL, O_NONBLOCK);
+	 fd_flags = fcntl(this->socket_fd, F_SETFL, fd_flags | O_NONBLOCK);
 	if (fd_flags == -1)
 		perror("fcntl( F_SETFL ) failed"); // TODO maybe skip creating the server
 
@@ -158,7 +158,6 @@ void Server::accept_connections(ServersManager &manager)
 	// }
 }
 
-#define REQUEST_MAX_SIZE 3000000
 
 void ServersManager::remove_client(int fd)
 {
@@ -171,6 +170,8 @@ void ServersManager::remove_client(int fd)
 	close(fd);
 	cout << MAGENTA << "connection closed with : " << fd << endl;
 }
+
+#define REQUEST_MAX_SIZE 3000000
 
 void ServersManager::get_request(pollfd &pfd)
 {
@@ -203,8 +204,10 @@ void ServersManager::get_request(pollfd &pfd)
 
 	try
     {
+		cerr << YELLOW << buffer << RESET << endl;
         cur_client->save_request(std::string(buffer));
-        cur_client->change_event();
+		// TODO the check for eof should be here, 
+		cur_client->change_event();
     }
     catch (const std::exception &e)
     {
@@ -252,7 +255,12 @@ void ServersManager::send_response(pollfd &pfd)
 		}
 	// }
 
-		send(pfd.fd, (void *)response.c_str(), response.size(), 0);
+		int wr_ret = send(pfd.fd, (void *)response.c_str(), response.size(), 0);
+		cerr << "resp size " << YELLOW << response.size() << RESET << endl;
+		if (wr_ret < 0)
+		{
+			perror ("send() ");
+		}
 		if (cur_client->_response->_eof || cur_client->_is_cgi)
 		{
 			cout << "eof: " << std::boolalpha << cur_client->_response->_eof  << std::endl;

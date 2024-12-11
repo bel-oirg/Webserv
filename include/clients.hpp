@@ -63,6 +63,7 @@ class Client
 		response	*_response;
 		string		_cgi_resp;
 		bool		_headers_sended;
+		bool	first_response_read;
 
 	public:
 		Client(Server &server, int fd);
@@ -81,6 +82,11 @@ class Client
 		bool		is_cgi()
 		{
 			return (_is_cgi);
+		}
+		
+		~Client()
+		{
+			// delete _response;
 		}
 
 		// ~Client()
