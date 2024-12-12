@@ -33,13 +33,13 @@ Server::Server(const Server &cpy)
 
 void Server::print() const
 {
-	std::cout << "Server Name: " << server_name << std::endl;
-	std::cout << "Port: " << port << std::endl;
-	std::cout << "Host: " << hostToString(host) << std::endl;
-	std::cout << "Locations:" << std::endl;
+	cout << "Server Name: " << server_name << std::endl;
+	cout << "Port: " << port << std::endl;
+	cout << "Host: " << hostToString(host) << std::endl;
+	cout << "Locations:" << std::endl;
 	for (std::map<std::string, loc_details>::const_iterator it = locations.begin(); it != locations.end(); ++it)
 	{
-		std::cout << "  Location: " << it->first << std::endl;
+		cout << "  Location: " << it->first << std::endl;
 		it->second.print();
 	}
 }
@@ -80,7 +80,7 @@ std::vector<pollfd> &ServersManager::get_fds()
 	manager_fds.clear();
 	for (auto it = client_pool.begin(); it != client_pool.end(); it++)
 	{
-		manager_fds.push_back(it->second.second->get_fd());
+		manager_fds.push_back(it->second->get_fd());
 	}
 	manager_fds.insert(manager_fds.end(), servers_pollfds.begin(), servers_pollfds.end());
 	return manager_fds;
@@ -151,24 +151,23 @@ void Server::accept_connections(ServersManager &manager)
 				return;
 		}
 
-		std::cout << "New client accepted with fd: " << client_fd << std::endl;
+		cout << "New client accepted with fd: " << client_fd << std::endl;
 		Client *client = new Client(*this, client_fd);
 
-		manager.client_pool[client_fd] = std::make_pair(this, client);
+		manager.client_pool[client_fd] = client;
 	// }
 }
 
 
 void ServersManager::remove_client(int fd)
 {
-	std::map<int, std::pair<Server *, Client *>>::iterator it = client_pool.find(fd);
+	std::map<int, Client * >::iterator it = client_pool.find(fd);
 	if (it != client_pool.end())
 	{
-		delete it->second.second;
+		delete it->second;
 		client_pool.erase(it);
 	}
 	close(fd);
-	cout << MAGENTA << "connection closed with : " << fd << endl;
 }
 
 #define REQUEST_MAX_SIZE 3000000
@@ -188,23 +187,21 @@ void ServersManager::get_request(pollfd &pfd)
 	}
 	else if (valread >= REQUEST_MAX_SIZE)
 	{
-		std::cout << "request lenght too large : action => discarding" << std::endl;
+		cout << "request lenght too large : action => discarding" << std::endl;
 		return;
 	}
 	if (valread == 0)
 	{
-		std::cout << "Client disconnected" << std::endl;
+		cout << "Client disconnected" << std::endl;
 		this->remove_client(pfd.fd);
 		return;
 	}
 
 	buffer[valread] = '\0';
-	cout << YELLOW << buffer << RESET << endl;
-	Client *cur_client = client_pool[pfd.fd].second;
+	Client *cur_client = client_pool[pfd.fd];
 
 	try
     {
-		cerr << YELLOW << buffer << RESET << endl;
         cur_client->save_request(std::string(buffer));
 		// TODO the check for eof should be here, 
 		cur_client->change_event();
@@ -218,7 +215,7 @@ void ServersManager::get_request(pollfd &pfd)
 
 void ServersManager::send_response(pollfd &pfd)
 {
-	Client *cur_client = client_pool[pfd.fd].second;
+	Client *cur_client = client_pool[pfd.fd];
 	string response;
 
 	// if (cur_client->_is_cgi)
@@ -242,17 +239,15 @@ void ServersManager::send_response(pollfd &pfd)
 	// }
 	// else
 	// {
-		if (!cur_client->_headers_sended)
-		{
-			response = cur_client->_response->get_response_header();
-			cout << GREEN << response << RESET << endl;
-			cur_client->_headers_sended = true;
-		}
-		else
-		{
-			response = cur_client->_response->get_to_send();
-			cout << CYAN << response << RESET << endl;
-		}
+	if (!cur_client->_headers_sended)
+	{
+		response = cur_client->_response->get_response_header();
+		cur_client->_headers_sended = true;
+	}
+	else
+	{
+		response = cur_client->_response->get_to_send();
+	}
 	// }
 
 		int wr_ret = send(pfd.fd, (void *)response.c_str(), response.size(), 0);

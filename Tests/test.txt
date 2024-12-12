@@ -256,9 +256,9 @@ bool request::if_location_has_cgi()
 
 void    request::display_req()
 {
-    std::cout << this->method << " " << this->URI << " " << this->HTTP << std::endl;
+    cout << this->method << " " << this->URI << " " << this->HTTP << std::endl;
     for (std::map<std::string, std::string>::iterator it = headers.begin() ; it != headers.end() ; it++)
-        std::cout << it->first << ": " << it->second << std::endl;
+        cout << it->first << ": " << it->second << std::endl;
 }
 
 int     request::GET()

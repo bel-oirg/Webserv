@@ -82,7 +82,6 @@ void Cgi::cgi_run()
 			return;
 		}
 
-		cout << BLUE << "CGI PATH : "  << args[0] << RESET << endl;
 		if (forked == 0)
 		{
 			alarm(10); // Set timeout for CGI execution
@@ -94,14 +93,12 @@ void Cgi::cgi_run()
 			perror("execve() failed");
 			exit(1);
 		}
-		std::cout << "CGI is running" << std::endl;
 	}
 	else if (child_stat == 1)
 	{
 		int status;
 		if (waitpid(forked, &status, WNOHANG) != 0)
 		{
-			std::cout << "CGI is DONE" << std::endl;
 
 			if (WIFSIGNALED(status))
 			{

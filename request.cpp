@@ -256,9 +256,9 @@ bool request::if_location_has_cgi()
 
 void    request::display_req()
 {
-    std::cout << this->method << " " << this->URI << " " << this->HTTP << std::endl;
+    cout << this->method << " " << this->URI << " " << this->HTTP << std::endl;
     for (std::map<std::string, std::string>::iterator it = headers.begin() ; it != headers.end() ; it++)
-        std::cout << it->first << ": " << it->second << std::endl;
+        cout << it->first << ": " << it->second << std::endl;
 }
 
 int     request::GET()
@@ -410,7 +410,7 @@ int request::process_multipart(std::string current_part) //____UPLOAD_REQ_
             return (this->eof = true, err_("No body found to upload"), 0);
 
         current_part =  current_part.substr(cont_beg + 4);
-		cout << "IN THE STATMENT" << endl;
+		// cout << "IN THE STATMENT" << endl;
     }
 
     size_t last_bound_beg = current_part.find(this->boundary);
@@ -425,7 +425,7 @@ int request::process_multipart(std::string current_part) //____UPLOAD_REQ_
             return (p "file uploaded successfuly\n", upload_eof = true); //2 means the file upload is done
         }
 		else
-			cout << YELLOW << this->boundary + "--" << RESET << endl;
+			cout << YELLOW << this->boundary + "--" << RESET << endl; // TODO i added that
     }
     else
     {

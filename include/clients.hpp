@@ -58,7 +58,7 @@ class Client
 		string		_request;
 		pollfd		_pfd;
 		Cgi			_cgi;
-		bool		_is_cgi:1;
+		bool		_is_cgi;
 		int			cgi_exit_code;
 		response	*_response;
 		string		_cgi_resp;
@@ -79,6 +79,7 @@ class Client
 			return (_cgi.is_cgi_ready());
 		}
 
+
 		bool		is_cgi()
 		{
 			return (_is_cgi);
@@ -86,7 +87,7 @@ class Client
 		
 		~Client()
 		{
-			// delete _response;
+			delete _response;
 		}
 
 		// ~Client()

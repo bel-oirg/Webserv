@@ -20,6 +20,7 @@
 #define MAGENTA "\033[35m"
 #define CYAN    "\033[36m"
 
+
 #include <string>
 #include <limits>
 #include <stdint.h>
@@ -49,7 +50,7 @@
 
 
 // using std::string;
-// using std::cout;
+// using cout;
 // using std::endl;
 // using std::cerr;
 // using std::vector;

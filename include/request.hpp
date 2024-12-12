@@ -18,7 +18,7 @@
 #define MAX_URI_SIZE 2048
 #define GLOBAL_CLIENT_MAX_BODY_SIZE 4000
 
-#define p std::cout << 
+#define p cout << 
 
 class request
 {

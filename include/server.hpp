@@ -35,6 +35,7 @@ class	Server
 	public :
 		Server();
 		std::map<string, loc_details> &get_locations(); 
+		void add_client(int fd, ServersManager &manager);
 		void setup();
 		static void run(std::vector<Server> &servers);
 		void	accept_connections(ServersManager &manager);
@@ -54,8 +55,9 @@ class ServersManager
 		std::vector<Server> servers;
 		std::vector<pollfd>	manager_fds;
 	public:
-		std::map<int, std::pair<Server*, Client* > >	client_pool;
+		std::map< int, Client* >	client_pool;
 		std::vector<pollfd>		servers_pollfds;
+		// std::vector<pollfd>		clients_pollfds;
 
 	public :
 		void init_servers(Server server);

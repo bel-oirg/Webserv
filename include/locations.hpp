@@ -28,40 +28,40 @@ struct loc_details
 
 
    void print() const {
-    std::cout << "----------------------------------------------------------------------" << std::endl;
-    std::cout << "Location Details:" << std::endl;
-    std::cout << "    Status Code: " << status_code << std::endl;
-    std::cout << "    Index Path: " << index_path << std::endl;
+    cout << "----------------------------------------------------------------------" << std::endl;
+    cout << "Location Details:" << std::endl;
+    cout << "    Status Code: " << status_code << std::endl;
+    cout << "    Index Path: " << index_path << std::endl;
 
-    std::cout << "    Allowed Methods: ";
+    cout << "    Allowed Methods: ";
     if (allowed_methods.empty()) {
-        std::cout << "None" << std::endl;
+        cout << "None" << std::endl;
     } else {
         for (size_t i = 0; i < allowed_methods.size(); ++i) {
-            std::cout << allowed_methods[i];
+            cout << allowed_methods[i];
             if (i != allowed_methods.size() - 1)
-                std::cout << ", ";
+                cout << ", ";
         }
-        std::cout << std::endl;
+        cout << std::endl;
     }
 
-    std::cout << "    Autoindex: " << (auto_index ? "true" : "false") << std::endl;
-    std::cout << "    Has CGI: " << (has_cgi ? "true" : "false") << std::endl;
-    std::cout << "    Root: " << root << std::endl;
-    std::cout << "    Redirection Path: " << (redir_to.empty() ? "None" : redir_to) << std::endl;
-    std::cout << "    Client Max Body Size: " << client_max_body_size << " bytes" << std::endl;
+    cout << "    Autoindex: " << (auto_index ? "true" : "false") << std::endl;
+    cout << "    Has CGI: " << (has_cgi ? "true" : "false") << std::endl;
+    cout << "    Root: " << root << std::endl;
+    cout << "    Redirection Path: " << (redir_to.empty() ? "None" : redir_to) << std::endl;
+    cout << "    Client Max Body Size: " << client_max_body_size << " bytes" << std::endl;
 
-    std::cout << "    Error Pages:" << std::endl;
+    cout << "    Error Pages:" << std::endl;
     if (error_pages.empty()) {
-        std::cout << "        None" << std::endl;
+        cout << "        None" << std::endl;
     } else {
         for (std::map<int, std::string>::const_iterator it = error_pages.begin(); it != error_pages.end(); ++it) {
-            std::cout << "        " << it->first << ": " << it->second << std::endl;
+            cout << "        " << it->first << ": " << it->second << std::endl;
         }
     }
 
-    std::cout << "    Has Slash: " << (has_slash ? "true" : "false") << std::endl;
-    // std::cout << "----------------------------------------------------------------------" << std::endl;
+    cout << "    Has Slash: " << (has_slash ? "true" : "false") << std::endl;
+    // cout << "----------------------------------------------------------------------" << std::endl;
 }
 
 };

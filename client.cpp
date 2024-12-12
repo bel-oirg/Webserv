@@ -4,13 +4,18 @@
 #include "cgi_response.hpp"
 
 
-Client::Client(Server &server, int fd) : _server(server)
+Client::Client(Server &server, int fd)
+    : _server(server),
+	 _is_cgi(false),
+	 _response(NULL),
+	 _headers_sended(false),
+	 first_response_read(true)
 {
-	_pfd.fd = fd;
-	_pfd.events = POLLIN;
-	_pfd.revents = 0;
-	first_response_read = true;
+    _pfd.fd = fd;
+    _pfd.events = POLLIN;
+    _pfd.revents = 0;
 }
+
 
 void Client::save_request(string request)
 {

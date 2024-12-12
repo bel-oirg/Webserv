@@ -12,7 +12,7 @@ void cgi_response::set_status()
 
 cgi_response::cgi_response(std::string cgi_body, int cgi_stat_code) : cgi_stat_code(cgi_stat_code), _body(cgi_body)
 {
-    // std::cout <<  "RAW_RESPO--------###" << cgi_body << "ENDHERE-----\n";
+    // cout <<  "RAW_RESPO--------###" << cgi_body << "ENDHERE-----\n";
     set_status();
     set_server();
     set_body();

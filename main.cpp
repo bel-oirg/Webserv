@@ -10,6 +10,7 @@ using namespace std;
 
 int	main(/*int argc, char **argv*/)
 {
+		// signal(SIGPIPE, SIG_IGN);
 		std::string		filename("./test.conf");
 		std::vector<Server>	servers;
 		ServersManager		manager;

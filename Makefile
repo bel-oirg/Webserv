@@ -1,7 +1,8 @@
 NAME = webserve
 RM = rm -rf
 CC = c++
-CFLAGS = -std=c++11 -pedantic -fsanitize=address -g -Wall -Wextra -Werror #-std=c++98# 
+CFLAGS = -std=c++11 -pedantic  -Wall -Wextra -Werror -Wuninitialized -Wuninitialized  -fno-omit-frame-pointer
+
 
 SRCS = $(shell find ./ -name "*.cpp")
 
@@ -19,7 +20,7 @@ all : $(NAME)
 $(NAME) : $(OBJS)
 	$(CC) $(CFLAGS) $(OBJS) -o $(NAME)
 
-$(OBJ_DIR)/%.o : %.cpp $(HEADERS)
+$(OBJ_DIR)/%.o : %.cpp $(HEADERS) Makefile
 	@mkdir -p $(dir $@)
 	$(CC) $(CFLAGS) $(INCLUDE) -c $< -o $@
 
