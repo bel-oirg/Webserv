@@ -54,25 +54,30 @@ class Server;
 class Client
 {
 	public:
-		Server		&_server;
+		Server&		_server;
 		string		_request;
 		pollfd		_pfd;
 		Cgi			_cgi;
 		bool		_is_cgi;
 		int			cgi_exit_code;
-		response	*_response;
+		response*	_response;
 		string		_cgi_resp;
 		bool		_headers_sended;
-		bool	first_response_read;
+		bool		first_response_read;
+		clock_t		_last_interaction;
 
 	public:
 		Client(Server &server, int fd);
 		Client(const Client &other)	;
+
+
 		void		save_request(string request);
 		pollfd&		get_fd();
 		void		change_event();
 		string		get_response();
 		Client&		operator=(const Client &other);
+		void		register_interaction();
+		clock_t		get_last_interaction();
         void        change_event(int);
 		bool		is_cgi_ready()
 		{

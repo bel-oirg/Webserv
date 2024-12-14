@@ -31,6 +31,7 @@ class	Server
 		struct sockaddr_in				address;
 		int								index;
 		pollfd							_pfd;
+		uint64_t						_timeout;
 
 	public :
 		Server();
@@ -60,18 +61,22 @@ class ServersManager
 		// std::vector<pollfd>		clients_pollfds;
 
 	public :
-		void init_servers(Server server);
-		void init_servers(std::vector<Server> &new_servers);
-		void setup();
-		void print();
-		void run();
 		vector<pollfd>& get_fds();
-		bool is_server(int fd);
-		void accept_connections();
 		Client& get_client(int fd);
-		void get_request(pollfd &pfd);
-		void send_response(pollfd &pfd);
-		void	remove_client(int fd);
+
+
+
+		void		init_servers(Server server);
+		void		init_servers(std::vector<Server> &new_servers);
+		void		check_timeout(pollfd& fd);
+		void		setup();
+		void		print();
+		void		run();
+		bool		is_server(int fd);
+		void		accept_connections();
+		void		get_request(pollfd &pfd);
+		void		send_response(pollfd &pfd);
+		void		remove_client(int fd);
 };
 
 #endif /* SERVER_HPP */

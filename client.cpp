@@ -9,7 +9,8 @@ Client::Client(Server &server, int fd)
 	 _is_cgi(false),
 	 _response(NULL),
 	 _headers_sended(false),
-	 first_response_read(true)
+	 first_response_read(true),
+	 _last_interaction(0)
 {
     _pfd.fd = fd;
     _pfd.events = POLLIN;
@@ -86,8 +87,21 @@ void Client::change_event(int)
 // 	return (_response);
 // }
 
+
+void	Client::register_interaction()
+{
+	this->_last_interaction = clock();
+}
+
+
+clock_t	Client::get_last_interaction()
+{
+	return (this->_last_interaction);
+}
+
 Client::Client(const Client &other)	
-: _server(other._server), _request(other._request), _pfd(other._pfd) ,_is_cgi(false), _headers_sended(false)
+: _server(other._server), _request(other._request), _pfd(other._pfd) ,_is_cgi(other._is_cgi)
+, _headers_sended(other._headers_sended), _last_interaction(other._last_interaction)
 {
 
 }

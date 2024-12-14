@@ -8,6 +8,8 @@
 
 using namespace std;
 
+// POS checking the syntax of locations 
+
 std::string hostToString(in_addr_t host)
 {
     struct in_addr addr;
@@ -85,6 +87,15 @@ std::vector<std::string> split(const std::string& str, string delimiters)
     return splited;
 }
 
+
+// void	locations_syntax(loc_details &loc)
+// {
+// 	if (loc.root.empty())
+// 	{
+
+// 	}
+// }
+
 void	defaults(std::map<string, string>::iterator iter, Server &server, loc_details &loc)
 {
 	string key = iter->first;
@@ -96,11 +107,11 @@ void	defaults(std::map<string, string>::iterator iter, Server &server, loc_detai
 	{
 		int port;
 		if (!for_each(value.begin(), value.end(), ::isdigit))
-			throw runtime_error("invalid port");
+			throw runtime_error("[Error] Invalid port value: '" + value + "'. Port must be a numeric value.");
 		else
 			port = atoi(value.c_str());
 		if (port > 65535 || port < 0)
-			throw runtime_error("port richded limit");
+			throw runtime_error("[Error] Port value '" + value + "' is out of range. Valid range is 0 to 65535.");
 		server.port = port;
 	}
 	else if (key == "server_name")
@@ -112,14 +123,14 @@ void	defaults(std::map<string, string>::iterator iter, Server &server, loc_detai
 		in_addr_t host;
 		host = inet_addr(value.c_str());
 		if (host == 0)
-			throw runtime_error("invalid host");
+			throw runtime_error("[Error] Invalid host address: '" + value + "'. Provide a valid IPv4 address.");
 		server.host = host;
 	}
 
 	else if (key == "index")
 	{
 		if (value.empty())
-			throw runtime_error("index can't be empty");
+			throw runtime_error("[Error] The 'index' directive cannot be empty. Provide a valid file name.");
 		else
 			loc.index_path = value;
 	}
@@ -131,8 +142,9 @@ void	defaults(std::map<string, string>::iterator iter, Server &server, loc_detai
 		for (size_t i = 0; i < pages.size(); i++)
 		{
 			std::istringstream stream(pages[i]);
-			if (!(stream >> code >> page))
-				throw runtime_error("syntax error for `error_page'");
+			stream >> std::skipws;
+			if (!(stream >> code >> page && stream.eof()))
+				throw runtime_error("[Error] Syntax error in 'error_page' directive. Expected format: '<error_code> <page_path>'.");
 			loc.error_pages.insert(make_pair(code, page));
 		}
 	}
@@ -145,7 +157,7 @@ void	defaults(std::map<string, string>::iterator iter, Server &server, loc_detai
 			loc.client_max_body_size = cmbs_value;
 		}
 		else 
-			throw runtime_error("invalid value for client_max_body_size");
+			throw runtime_error("[Error] Invalid value for 'client_max_body_size': '" + value + "'. Expected a numeric value.");
 	}
 	else if (key == "root")
 	{
@@ -159,7 +171,8 @@ void	defaults(std::map<string, string>::iterator iter, Server &server, loc_detai
 			if (!	(loc.allowed_methods[i] == "GET" ||
 					loc.allowed_methods[i] == "POST" ||
 					loc.allowed_methods[i] == "DELETE" ))
-				throw runtime_error("Invalid expression for allowd_methodes");
+				throw runtime_error("[Error] Invalid method: '" + loc.allowed_methods[i] + "'. Allowed methods are: GET, POST, DELETE.");
+
 		}
 	}
 	else if (key == "autoindex")
@@ -169,11 +182,11 @@ void	defaults(std::map<string, string>::iterator iter, Server &server, loc_detai
 		else if (value == "off")
 			loc.auto_index = false;
 		else
-			throw runtime_error ("invalid format for autoindex");
+			throw runtime_error("[Error] Invalid value for 'autoindex': '" + value + "'. Valid options are: 'on' or 'off'.");
 	}
 	else
 	{
-		throw runtime_error("Syntax Error : unknown args : `" + key + "' !!! see webserv -h");
+		throw runtime_error("[Error] Unknown argument: '" + key + "'. Check 'webserv -h' for valid options.");
 	}
 }
 
@@ -192,7 +205,7 @@ void	locations(map<string, string>::iterator loc, loc_details &dest)
 			if (!	(dest.allowed_methods[i] == "GET" ||
 					dest.allowed_methods[i] == "POST" ||
 					dest.allowed_methods[i] == "DELETE" ))
-				throw runtime_error("Invalid expression for allowd_methodes");
+				throw runtime_error("[Error] Invalid method: '" + dest.allowed_methods[i] + "'. Allowed methods are: GET, POST, DELETE.");
 		}
 	}
 	else if (key == "autoindex")
@@ -202,25 +215,37 @@ void	locations(map<string, string>::iterator loc, loc_details &dest)
 		else if (value == "off")
 			dest.auto_index = false;
 		else
-			throw runtime_error ("invalid format for autoindex");
+			throw runtime_error("[Error] Invalid value for 'autoindex': '" + value + "'. Valid options are: 'on' or 'off'.");
 	}
 	else if (key == "root")
 	{
+		if (value.empty())
+			throw runtime_error("[Error] The 'root' directive cannot be empty. Provide a valid file name.");
 		dest.root = value;
-		// else throw "Root is  invalid\n"; //TODO
 	}
 	else if (key == "index")
 	{
+		if (value.empty())
+			throw runtime_error("[Error] The 'index' directive cannot be empty. Provide a valid file name.");
 		dest.index_path = value;
 		// TODO
 	}
 	else if (key == "return")
 	{
+		if (value.empty())
+			throw runtime_error("[Error] The 'return' directive cannot be empty. Provide a valid file name.");
 		dest.redir_to = value;
 	}
-	else if (key == "client_max_body_size")
+	else if (key == "client_max_body_size") // FIXME may this nor allowed here
 	{
-		dest.client_max_body_size = atoi(value.c_str());
+		if (all_of(value.begin(), value.end(), ::isdigit))
+		{
+			uint32_t cmbs_value;
+			cmbs_value = atoll(value.c_str());
+			dest.client_max_body_size = cmbs_value;
+		}
+		else 
+			throw runtime_error("[Error] Invalid value for 'client_max_body_size': '" + value + "'. Expected a numeric value.");
 	}
 	else if (key == "cgi_pass")
 	{
@@ -229,10 +254,12 @@ void	locations(map<string, string>::iterator loc, loc_details &dest)
 		else if (value == "off")
 			dest.has_cgi = false;
 		else
-			throw runtime_error ("invalid format for cgi_pass");
+			throw runtime_error("[Error] Invalid value for 'cgi_pass': '" + value + "'. Valid options are: 'on' or 'off'.");
 	}
 	else if (key == "upload_path")
 	{
+		if (value.empty())
+			throw runtime_error("[Error] The 'upload_path' directive cannot be empty. Provide a valid file name.");
 		dest.upload_path = value;
 	}
 	else if (key == "upload_enable")
@@ -242,11 +269,11 @@ void	locations(map<string, string>::iterator loc, loc_details &dest)
 		else if (value == "off")
 			dest.enable_upload = false;
 		else
-			throw runtime_error("Invalid value for `upload_enable' : " + key);
+			throw runtime_error("[Error] Invalid value for 'upload_enable': '" + value + "'. Valid options are: 'on' or 'off'.");
 	}
 	else
 	{
-		throw runtime_error("Syntax Error Locations : unknown args : `" + key + "' !!! see webserv -h");
+			throw runtime_error("[Error] Unknown argument for location directive: '" + key + "'. Check 'webserv -h'");
 	}
 }
 
@@ -297,9 +324,6 @@ std::vector<Server> Parse::config2server(std::vector<Config> configs)
 	}
 	return servers;
 }
-
-// HACK remove this
-
 
 std::vector<Server> Parse::get_servers(std::string file_name)
 {
