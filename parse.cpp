@@ -458,6 +458,7 @@ try{
 	{
 		cerr << "webserv : `" << configFile.name() << "' " << e.what() << endl;
 		configFile.close();
+		std::exit(1);
 	}
 
 	return (servers);
