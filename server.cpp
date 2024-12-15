@@ -38,11 +38,11 @@ void Server::print() const
 	cout << "Port: " << port << std::endl;
 	cout << "Host: " << hostToString(host) << std::endl;
 	cout << "Locations:" << std::endl;
-	// for (std::map<std::string, loc_details>::const_iterator it = locations.begin(); it != locations.end(); ++it)
-	// {
-	// 	cout << "  Location: " << it->first << std::endl;
-	// 	it->second.print();
-	// }
+	for (std::map<std::string, loc_details>::const_iterator it = locations.begin(); it != locations.end(); ++it)
+	{
+		cout << "  Location: " << it->first << std::endl;
+		it->second.print();
+	}
 }
 
 void ServersManager::init_servers(Server server)
@@ -329,10 +329,10 @@ void ServersManager::run()
 			{
 				send_response(fds[i]);
 			}
-			// else
-			// {
-			// 	check_timeout(fds[i]);
-			// }
+			else
+			{
+				check_timeout(fds[i]);
+			}
 		}
 	}
 }

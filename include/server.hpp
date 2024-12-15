@@ -64,6 +64,9 @@ class ServersManager
 		vector<pollfd>& get_fds();
 		Client& get_client(int fd);
 
+		ServersManager(ServersManager& ) = delete;
+		ServersManager() = default;
+
 
 
 		void		init_servers(Server server);
