@@ -1,4 +1,5 @@
-#pragma once
+#ifndef REQUEST_HPP
+#define REQUEST_HPP
 
 #include <map>
 #include <sys/stat.h>
@@ -11,13 +12,13 @@
 #include <vector>
 #include "server.hpp"
 
-#define UPLOAD_DIR "/Users/bel-oirg/Desktop/Webserv/Upload/"
+#define UPLOAD_DIR "/Users/bel-oirg/Desktop/tmptmp/Upload/"
 //TODO change UPLOAD_DIR based on config file
 
 #define MAX_URI_SIZE 2048
 #define GLOBAL_CLIENT_MAX_BODY_SIZE 4000
 
-#define p std::cout << 
+#define p cout << 
 
 class request
 {
@@ -28,6 +29,7 @@ class request
         std::string HTTP;
         std::string req;
         std::map<std::string, loc_details> locations;
+        size_t uploaded_size;
 
     protected:
         std::map<std::string, std::string> headers;
@@ -41,9 +43,11 @@ class request
         std::string correct_loc_name;
         int         stat_code;
         bool        add_slash;
+        bool        eof;
         bool respond_with_autoindex;
 
     public:
+		bool		upload_eof;
         request(std::string raw_req, std::map<std::string, loc_details> locations);
         void    display_req();
         bool    valid_method();
@@ -70,11 +74,13 @@ class request
 
         //POST
         int if_loc_support_upload();
-        bool prep_body_post();
         bool unchunk_body();
-        bool process_multipart(std::string body);
+        int process_multipart(std::string &body);
 
         //DELETE
         bool has_write_access_on_folder();
         bool delete_all_folder_content(std::string ress_path);
 };
+
+
+#endif /* REQUEST_HPP */

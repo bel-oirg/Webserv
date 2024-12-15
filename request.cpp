@@ -1,11 +1,16 @@
 #include "response.hpp"
 #include "server.hpp"
 
-request::request(std::string raw_req, std::map<std::string, loc_details> locations) : locations(locations), req(raw_req)
+request::request(std::string raw_req, std::map<std::string, loc_details> locations) : req(raw_req), locations(locations)
 {
-    p "REQ---- " << raw_req << "----REQ" << endl;
-    this->stat_code = req_arch();
+	upload_eof = false;
+
+    this->stat_code = init_parse_req();
+    if (!this->stat_code)
+        this->stat_code = req_arch();
+    
 }
+
 
 inline void     err_(const std::string &err)
 {
@@ -136,6 +141,7 @@ int request::is_req_well_formed() //REQ
         && this->headers.find("Content-Length") == this->headers.end()
         && this->method == "POST")
         return (err_("no Trans/Cont length and the method is POST"), 400);
+    
     return (0);
 }
 
@@ -252,9 +258,9 @@ bool request::if_location_has_cgi()
 
 void    request::display_req()
 {
-    std::cout << this->method << " " << this->URI << " " << this->HTTP << std::endl;
+    cout << this->method << " " << this->URI << " " << this->HTTP << std::endl;
     for (std::map<std::string, std::string>::iterator it = headers.begin() ; it != headers.end() ; it++)
-        std::cout << it->first << ": " << it->second << std::endl;
+        cout << it->first << ": " << it->second << std::endl;
 }
 
 int     request::GET()
@@ -281,8 +287,8 @@ int     request::GET()
 
 int     request::POST()
 {
-    if (body.size() > current_loc.client_max_body_size)
-        return (err_("BODY > CLIENT_MAX_BODY _SIZE"), 413);
+    // if (body.size() > current_loc.client_max_body_size)
+    //     return (err_("BODY > CLIENT_MAX_BODY _SIZE"), 413);
     if (current_loc.enable_upload)
         return (if_loc_support_upload());
 
@@ -379,56 +385,50 @@ bool    request::get_auto_index()
     return (true);
 }
 
-bool    request::prep_body_post()
-{
-
-}
-
-bool request::process_multipart(std::string current_part)
+int request::process_multipart(std::string &current_part) //____UPLOAD_REQ_
 {
     std::string line;
-    size_t pos = 0;
+
+    p RED << "PPPLL" << current_part << RESET << endl;
 
     if (file_name.empty())
     {
+        uploaded_size = 0;
         size_t file_beg = current_part.find("filename=\"");
-        size_t file_end = current_part.find("\"", file_beg + 10);
-
+        size_t file_end = current_part.find("\"\r\n", file_beg + 10);
         if (file_beg == std::string::npos || file_end == std::string::npos)
-            return (err_("Cannot find name") ,false);
+            return (this->eof = true, err_("Cannot find name") ,0);
 
         file_name = current_part.substr(file_beg + 10, file_end - file_beg - 10);
-        outfile.open(UPLOAD_DIR + file_name, std::ios::binary);
+        if (file_name.find("/") != std::string::npos)
+            return (this->eof = true, err_("Invalid file name") ,0);
+
+        outfile.open(UPLOAD_DIR + file_name, std::ios::out | std::ios::binary);
         if (!outfile)
-            return (err_("Failed to open the upload_file"), false);
+            return (this->eof = true, err_("Failed to open the upload_file"), 0);
 
         size_t cont_beg = current_part.find("\r\n\r\n");
-        size_t cont_end = current_part.size();
         if (cont_beg == std::string::npos)
-            return (err_("No body found to upload"), false);
+            return (this->eof = true, err_("No body found to upload"), 0);
 
-        outfile << current_part.substr(cont_beg + 4);
+        current_part =  current_part.substr(cont_beg + 4);
+		// cout << "IN THE STATMENT" << endl;
+    }
+    size_t last_bound_beg = current_part.find("\r\n--");
+    if (last_bound_beg != std::string::npos)
+    {
+        outfile << current_part.substr(0, last_bound_beg);
+        uploaded_size += last_bound_beg;
+        this->eof = true;
+        outfile.close();
+        return (p "file uploaded successfuly\n", upload_eof = true);
     }
     else
-        outfile << current_part;
-
-    //2
     {
-        outfile.seekp(-20, std::ios::end); //seekp
-        if (!outfile)
-            return (err_("file has no boundary"), false);
-
-        char check_boundary[21] = {0};
-        outfile.read(check_boundary, 20);
-        if (std::string(check_boundary) == boundary + "--\r\n")
-        {
-            //TODO you should remove the boundary in the end of file
-            outfile.close();
-
-        }
+        outfile << current_part;
+        uploaded_size += current_part.size();
     }
-
-    return (true);
+    return (1);
 }
 
 bool request::unchunk_body()
@@ -469,7 +469,6 @@ bool request::unchunk_body()
     return (true);
 }
 
-//XXX UPLOADING A PNG DOES NOT WORK, I DO NOT RECEIVE A COMPLETE REQ
 //POST
 int request::if_loc_support_upload()
 {        
@@ -481,7 +480,12 @@ int request::if_loc_support_upload()
             return (400);
 
     size_t bound_beg = headers["Content-Type"].find("boundary=");
-    size_t bound_end = headers["Content-Type"].find_first_of(" \r\n", bound_beg);
+    if (bound_beg == string::npos)
+        return (err_("boundary beg not found"), 400);
+    size_t bound_end = headers["Content-Type"].size();
+    p YELLOW << headers["Content-Type"] << RESET << endl;
+    if (bound_end == string::npos)
+        return (err_("boundary end not found"), 400);
     this->boundary = headers["Content-Type"].substr(bound_beg + 9, bound_end - bound_beg - 9);
 
     if (!process_multipart(body))
@@ -523,10 +527,10 @@ bool request::delete_all_folder_content(std::string ress_path)
                 return (err_("Cannot delete file"), closedir(dir), false);
         }
     }
-    closedir(dir);
+    
     if (rmdir(ress_path.c_str()))
-        return (err_("Cannot delete dir"), false);
-    return (true);
+        return (err_("Cannot delete dir"), closedir(dir), false);
+    return (closedir(dir), true);
 }
 
 bool request::has_write_access_on_folder()

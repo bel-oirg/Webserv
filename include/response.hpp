@@ -1,8 +1,9 @@
-#pragma once
+#ifndef RESPONSE_HPP
+#define RESPONSE_HPP
 
 #include "request.hpp"
-#define CHUNK_SIZE 999999
-#define ERR_DIR "/Users/bel-oirg/Desktop/Webserv/Error_pages/"
+#define CHUNK_SIZE 1024
+#define ERR_DIR "/Users/bel-oirg/Desktop/tmptmp/Error_pages/"
 //TODO change the err pages based on config file
 
 using std::string; 
@@ -12,19 +13,22 @@ class response : public request
     private:
         int _content_length;
 
-        string     _status;
-        string     _location; 
-        string     _content_type; 
-        string     _server; 
-        string     _cookies; 
-        string     _connection;
-        string     _transfer_encoding;
-        string     _body;
+        string          _status;
+        string          _location; 
+        string          _content_type; 
+        string          _server; 
+        string          _cookies; 
+        string          _connection;
+        string          _transfer_encoding;
+        string          _body;
         std::ifstream   infile;
         size_t          file_size;
     
     public:
+        bool            _eof;
         response(string req, std::map<string, loc_details> locations);
+		response();
+		// void init(string req, std::map<string, loc_details> locations);
         void set_status();
         void set_content_length();
         void set_server();
@@ -44,3 +48,6 @@ class response : public request
         bool prepare_autoindex();
         std::map<string, string>    prepare_cgi(Server &server);
 };
+
+
+#endif /* RESPONSE_HPP */

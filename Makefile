@@ -1,28 +1,35 @@
-NAME = Req
+NAME = webserve
+RM = rm -rf
 CC = c++
-CFLAGS = #-Wall -Wextra -Werror #-std=c++98# -fsanitize=address -g
+CFLAGS = -std=c++11 -pedantic  -Wall -Wextra -Werror -Wuninitialized  -fno-omit-frame-pointer
 
-SRCS = $(shell find . -name "*.cpp")
 
-OBJS = $(SRCS:.cpp=.o)
+SRCS = $(shell find ./ -name "*.cpp")
+
+OBJS = $(SRCS:%.cpp=$(OBJ_DIR)/%.o)
 
 HEADERS = $(shell find . -name "*.hpp")
 
 INCLUDE = -I include/
+
+OBJ_DIR = $(CURDIR)/Obj
+
 
 all : $(NAME)
 
 $(NAME) : $(OBJS)
 	$(CC) $(CFLAGS) $(OBJS) -o $(NAME)
 
-%.o : %.cpp $(HEADERS)
+$(OBJ_DIR)/%.o : %.cpp $(HEADERS) Makefile
+	@mkdir -p $(dir $@)
 	$(CC) $(CFLAGS) $(INCLUDE) -c $< -o $@
+
 
 fclean : clean
 	$(RM) $(NAME)
 
 clean :
-	$(RM) $(OBJS)
+	$(RM) Obj
 
 re : fclean all
 

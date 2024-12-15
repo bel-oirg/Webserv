@@ -30,7 +30,7 @@ void response::set_status()
     _status = status_map[stat_code];
 }
 
-std::string response::get_response_header()
+std::string response::get_response_header() //_____SEND__RESP__HEAD
 {
     if (this->stat_code == -1)
         return (p "GOTO CGI\n", "CGI");
@@ -42,9 +42,10 @@ std::string response::get_response_header()
     if (!this->_location.empty())
         line << "Location: " << this->_location << "\r\n";
 
-    if (!this->_connection.empty())
-        line << "Connection: " << this->_connection << "\r\n";
-
+    if (this->_connection.empty())
+        this->_connection = "close";
+    line << "Connection: " << this->_connection << "\r\n";
+    
     line << "Server: " << this->_server << "\r\n";
     
     if (!this->_content_type.empty())
@@ -60,15 +61,15 @@ std::string response::get_response_header()
 
     line << "\r\n";
 
-    // line << _body;
-
     return (line.str());
 }
 
 void response::set_content_length()
 {
-    if (_content_length != -1)
-        _content_length = file_size + 4;
+    if (!_body.empty())
+        _content_length = _body.size();
+    else if (_content_length != -1)
+        _content_length = file_size;
 }
 
 void response::set_server()
@@ -89,7 +90,8 @@ void response::set_connection()
 void response::set_content_type()
 {
     this->_content_type = "";
-    if (!this->_body.size())
+
+    if (!this->_body.size() && !this->file_size)
         return ;
     static std::map<std::string, std::string> mime;
 
@@ -102,20 +104,45 @@ void response::set_content_type()
     mime["jpeg"] = "image/jpeg";
     mime["jpg"] = "image/jpeg";
     mime["js"] = "application/javascript";
+    mime["mjs"] = "application/javascript";
     mime["atom"] = "application/atom+xml";
     mime["rss"] = "application/rss+xml";
     mime["txt"] = "text/plain";
     mime["png"] = "image/png";
     mime["json"] = "application/json";
+    mime["pdf"] = "application/pdf";
+    mime["zip"] = "application/zip";
+    mime["tar"] = "application/x-tar";
+    mime["mp3"] = "audio/mpeg";
+    mime["wav"] = "audio/wav";
+    mime["mp4"] = "video/mp4";
+    mime["mpeg"] = "video/mpeg";
+    mime["avi"] = "video/x-msvideo";
+    mime["webm"] = "video/webm";
+    mime["ico"] = "image/vnd.microsoft.icon";
+    mime["svg"] = "image/svg+xml";
+    mime["webp"] = "image/webp";
+    mime["otf"] = "font/otf";
+    mime["ttf"] = "font/ttf";
+    mime["woff"] = "font/woff";
+    mime["woff2"] = "font/woff2";
+    mime["3gp"] = "video/3gpp";
+    mime["3g2"] = "video/3gpp2";
+    mime["ts"] = "video/mp2t";
+    mime["eot"] = "application/vnd.ms-fontobject";
+    mime["wasm"] = "application/wasm";
+    mime["csv"] = "text/csv";
+    mime["md"] = "text/markdown";
+    mime["php"] = "application/x-httpd-php";
+    mime["exe"] = "application/octet-stream";
 
     _content_type = "text/html";
     size_t dot_p = this->URI.find_last_of('.');
-    if (dot_p == std::string::npos)
+    if (dot_p == std::string::npos || this->stat_code != 200)
         return ;
 
     std::string ext = this->URI.substr(dot_p + 1);
     std::transform(ext.begin(), ext.end(), ext.begin(), ::tolower);
-
     std::map<std::string, std::string>::iterator it = mime.find(ext);
     if (it != mime.end())
         this->_content_type = it->second;
@@ -163,7 +190,7 @@ bool response::prepare_autoindex()
             continue;
         current = dir + dp->d_name;
         if (stat(current.c_str(), &s) < 0)
-            return (perror(NULL), false);
+            return (closedir(dirp), perror(NULL), false);
 
         if (S_ISDIR(s.st_mode))
             raw_body << "<li><a href=\"" << dp->d_name << "/\">" << dp->d_name << "</a>" << std::endl;
@@ -172,7 +199,7 @@ bool response::prepare_autoindex()
     }
     raw_body << "</ul>\n<hr>\n</body>\n</html>\n";
     _body = raw_body.str();
-    return (true);
+    return (closedir(dirp), true);
 }
 
 inline void     err_(const std::string &err) //TODO dup in request.cpp
@@ -182,6 +209,8 @@ inline void     err_(const std::string &err) //TODO dup in request.cpp
 
 bool response::prep_body(const std::string &path)
 {
+    if (!_body.empty())
+        return (true);
     infile.open(path, std::ios::binary);
 
     if (!infile)
@@ -197,9 +226,10 @@ bool response::prep_body(const std::string &path)
     return (true);
 }
 
-string response::get_to_send()
+string response::get_to_send() //_____RESP_BODY_SEND__
 {
-    std::stringstream ss;
+    if (!_body.empty()) //in this case i am sure that the body is small (indexing a dir / ..)
+        return (this->_eof = true, _body);
 
     char buff[CHUNK_SIZE + 1] = {0};
     infile.read(buff, CHUNK_SIZE);
@@ -213,11 +243,12 @@ string response::get_to_send()
 
     //     ss << std::hex << file_len << "\r\n";
     // }
-    if (!infile.gcount()) // else if
-        return(infile.close(), "\r\n\r\n");
+   size_t readden = infile.gcount(); // else if
+
+   if (!readden)
+        return(this->_eof = true, infile.close(), "");
     
-    ss << buff << "\r\n";
-    return(ss.str());
+    return(std::string(buff, readden));
 }
 
 //TODO chunked body with indexed
@@ -274,6 +305,7 @@ std::map<std::string, std::string>    response::prepare_cgi(Server &server)
 
 response::response(std::string req, std::map<string, loc_details> locations) : request(req, locations)
 {
+    this->_eof = false;
     set_status(); //JUST REP
     set_connection(); //JUST REP
     set_server(); //JUST REP
@@ -283,12 +315,27 @@ response::response(std::string req, std::map<string, loc_details> locations) : r
     set_content_type();
     set_content_length();
     set_transfer_encoding();
+    if (stat_code != 204)
+        this->upload_eof = true;
 }
-
-//TODO test DELTE
-//TODO test redirection/location
 
 /*
 TODO Set a default file to answer if the request is a directory.
 TODO configure where they should be saved.
 */
+
+// response::response() {}
+
+// response::init(string req, std::map<string, loc_details> locations) : request(req, locations)
+// {
+// 	this->_eof = false;
+//     set_status(); //JUST REP
+//     set_connection(); //JUST REP
+//     set_server(); //JUST REP
+//     set_cookies(); //JUST REP
+//     set_location(); //JUST REP
+//     set_body();
+//     set_content_type();
+//     set_content_length();
+//     set_transfer_encoding();
+// }
