@@ -215,6 +215,7 @@ int request::get_request_resource() //get_resource_type()
         this->resource_path = current_loc.root + this->URI;
 
     struct stat s;
+	cout << MAGENTA << resource_path << RESET << endl;
     if (!stat(this->resource_path.c_str(), &s))
     {
         if (S_ISDIR(s.st_mode))
