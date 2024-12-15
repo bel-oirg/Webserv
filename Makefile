@@ -1,7 +1,7 @@
 NAME = webserve
 RM = rm -rf
 CC = c++
-CFLAGS = -std=c++11 -pedantic  -Wall -Wextra -Werror -Wuninitialized  -fno-omit-frame-pointer
+CFLAGS = -std=c++11 -pedantic  -Wall -Wextra -Werror -g
 
 
 SRCS = $(shell find ./ -name "*.cpp")
@@ -15,7 +15,8 @@ INCLUDE = -I include/
 OBJ_DIR = $(CURDIR)/Obj
 
 
-all : $(NAME)
+all :
+	make -j 10 $(NAME)
 
 $(NAME) : $(OBJS)
 	$(CC) $(CFLAGS) $(OBJS) -o $(NAME)

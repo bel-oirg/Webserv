@@ -117,11 +117,9 @@ void Server::setup()
 	this->address.sin_port = htons(this->port);
 	this->address.sin_addr.s_addr = this->host;
 
-	//BENNAR ZAMMEL
 	const int enable = 1;
 	if (setsockopt(this->socket_fd, SOL_SOCKET, SO_REUSEADDR, &enable, sizeof(int)) < 0)
-    std::cerr << "setsockopt(SO_REUSEADDR) failed" << endl;
-	//BENNAR ABA7LAW
+    	std::cerr << "setsockopt(SO_REUSEADDR) failed" << endl;
 
 	int bind_t = ::bind(this->socket_fd, (const struct sockaddr *)&(this->address), sizeof(this->address));
 	if (bind_t == -1)
@@ -142,28 +140,24 @@ void Server::setup()
 	this->_pfd.fd = this->socket_fd;
 }
 
-#define NUM_CLIENTS 100
 
 void Server::accept_connections(ServersManager &manager)
 {
 	socklen_t address_size = sizeof(this->address);
-	// for (int i = 0; i < NUM_CLIENTS ; i++)
-	// {
-		int client_fd = accept(this->socket_fd, (sockaddr *)&(this->address), &address_size);
-		if (client_fd < 0)
-		{
-			if (errno == EAGAIN || errno == EWOULDBLOCK)
-				return ;// break; // No more clients 
-			perror("accept() failed");
-				return;
-		}
+	int client_fd = accept(this->socket_fd, (sockaddr *)&(this->address), &address_size);
+	if (client_fd < 0)
+	{
+		if (errno == EAGAIN || errno == EWOULDBLOCK)
+			return ;// break; // No more clients 
+		perror("accept() failed");
+			return;
+	}
 
-		cout << "New client accepted with fd: " << client_fd << std::endl;
-		Client *client = new Client(*this, client_fd);
-		client->register_interaction();
+	cout << "New client accepted with fd: " << client_fd << std::endl;
+	Client *client = new Client(*this, client_fd);
+	client->register_interaction();
 
-		manager.client_pool[client_fd] = client;
-	// }
+	manager.client_pool[client_fd] = client;
 }
 
 
@@ -178,7 +172,7 @@ void ServersManager::remove_client(int fd)
 	close(fd);
 }
 
-#define REQUEST_MAX_SIZE 2000
+#define REQUEST_MAX_SIZE 20000
 
 void ServersManager::get_request(pollfd &pfd)
 {
@@ -203,13 +197,12 @@ void ServersManager::get_request(pollfd &pfd)
 		return;
 	}
 
-	buffer[valread] = '\0';
 	Client *cur_client = client_pool[pfd.fd];
 	cur_client->register_interaction();
 
 	try
     {
-		cout << MAGENTA << "SIZE before :"<< strlen(buffer) << RESET << endl;
+		cout << MAGENTA << "SIZE before :"<< valread << RESET << endl;
         cur_client->save_request(std::string(buffer, valread));
 		if (cur_client->_response->upload_eof)
 		{
@@ -335,10 +328,10 @@ void ServersManager::run()
 			{
 				send_response(fds[i]);
 			}
-			// else
-			// {
-			// 	check_timeout(fds[i]);
-			// }
+			else
+			{
+				check_timeout(fds[i]);
+			}
 		}
 	}
 }

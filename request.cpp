@@ -215,6 +215,7 @@ int request::get_request_resource() //get_resource_type()
         this->resource_path = current_loc.root + this->URI;
 
     struct stat s;
+	// cout << MAGENTA << resource_path << RESET << endl;
     if (!stat(this->resource_path.c_str(), &s))
     {
         if (S_ISDIR(s.st_mode))
@@ -389,7 +390,6 @@ int request::process_multipart(std::string &current_part) //____UPLOAD_REQ_
 {
     std::string line;
 
-    p RED << "PPPLL" << current_part << RESET << endl;
 
     if (file_name.empty())
     {
@@ -397,7 +397,7 @@ int request::process_multipart(std::string &current_part) //____UPLOAD_REQ_
         size_t file_beg = current_part.find("filename=\"");
         size_t file_end = current_part.find("\"\r\n", file_beg + 10);
         if (file_beg == std::string::npos || file_end == std::string::npos)
-            return (this->eof = true, err_("Cannot find name") ,0);
+            return (this->eof = true, err_("Cannot find name : ") ,0);
 
         file_name = current_part.substr(file_beg + 10, file_end - file_beg - 10);
         if (file_name.find("/") != std::string::npos)
@@ -417,9 +417,7 @@ int request::process_multipart(std::string &current_part) //____UPLOAD_REQ_
     size_t last_bound_beg = current_part.find("\r\n--");
     if (last_bound_beg != std::string::npos)
     {
-        // outfile << current_part.substr(0, last_bound_beg);
-        outfile.write(current_part.substr(0, last_bound_beg).c_str(), last_bound_beg); //maybe you missed 1 here
-
+        outfile << current_part.substr(0, last_bound_beg);
         uploaded_size += last_bound_beg;
         this->eof = true;
         outfile.close();
@@ -427,7 +425,7 @@ int request::process_multipart(std::string &current_part) //____UPLOAD_REQ_
     }
     else
     {
-        outfile.write(current_part.c_str(), current_part.size());
+        outfile << current_part;
         uploaded_size += current_part.size();
     }
     return (1);

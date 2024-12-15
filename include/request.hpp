@@ -12,7 +12,9 @@
 #include <vector>
 #include "server.hpp"
 
-#define UPLOAD_DIR "/Users/bel-oirg/Desktop/THEWEB/Upload/"
+// #define UPLOAD_DIR "/Users/bel-oirg/Desktop/THEWEB/Upload/"
+
+#define UPLOAD_DIR "/Users/abennar/goinfre/Upload/"
 //TODO change UPLOAD_DIR based on config file
 
 #define MAX_URI_SIZE 2048
