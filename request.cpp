@@ -483,7 +483,6 @@ int request::if_loc_support_upload()
     if (bound_beg == string::npos)
         return (err_("boundary beg not found"), 400);
     size_t bound_end = headers["Content-Type"].size();
-    p YELLOW << headers["Content-Type"] << RESET << endl;
     if (bound_end == string::npos)
         return (err_("boundary end not found"), 400);
     this->boundary = headers["Content-Type"].substr(bound_beg + 9, bound_end - bound_beg - 9);
