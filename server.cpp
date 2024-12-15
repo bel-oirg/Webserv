@@ -178,7 +178,7 @@ void ServersManager::remove_client(int fd)
 	close(fd);
 }
 
-#define REQUEST_MAX_SIZE 1200
+#define REQUEST_MAX_SIZE 2000
 
 void ServersManager::get_request(pollfd &pfd)
 {
@@ -210,7 +210,7 @@ void ServersManager::get_request(pollfd &pfd)
 	try
     {
 		cout << MAGENTA << "SIZE before :"<< strlen(buffer) << RESET << endl;
-        cur_client->save_request(std::string(buffer));
+        cur_client->save_request(std::string(buffer, valread));
 		if (cur_client->_response->upload_eof)
 		{
 			cur_client->change_event();

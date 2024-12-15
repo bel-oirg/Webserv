@@ -417,7 +417,9 @@ int request::process_multipart(std::string &current_part) //____UPLOAD_REQ_
     size_t last_bound_beg = current_part.find("\r\n--");
     if (last_bound_beg != std::string::npos)
     {
-        outfile << current_part.substr(0, last_bound_beg);
+        // outfile << current_part.substr(0, last_bound_beg);
+        outfile.write(current_part.substr(0, last_bound_beg).c_str(), last_bound_beg); //maybe you missed 1 here
+
         uploaded_size += last_bound_beg;
         this->eof = true;
         outfile.close();
@@ -425,7 +427,7 @@ int request::process_multipart(std::string &current_part) //____UPLOAD_REQ_
     }
     else
     {
-        outfile << current_part;
+        outfile.write(current_part.c_str(), current_part.size());
         uploaded_size += current_part.size();
     }
     return (1);
