@@ -3,7 +3,7 @@
 
 #include "request.hpp"
 #define CHUNK_SIZE 1024
-#define ERR_DIR "/Users/abennar/Desktop/push/Error_pages/"
+#define ERR_DIR "/Users/bel-oirg/Desktop/tmptmp/Error_pages/"
 //TODO change the err pages based on config file
 
 using std::string; 

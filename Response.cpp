@@ -244,7 +244,6 @@ string response::get_to_send() //_____RESP_BODY_SEND__
     //     ss << std::hex << file_len << "\r\n";
     // }
    size_t readden = infile.gcount(); // else if
-	cerr << "readen size " << RED << readden << RESET << endl;
 
    if (!readden)
         return(this->_eof = true, infile.close(), "");
@@ -307,7 +306,6 @@ std::map<std::string, std::string>    response::prepare_cgi(Server &server)
 response::response(std::string req, std::map<string, loc_details> locations) : request(req, locations)
 {
     this->_eof = false;
-	this->upload_eof = true;
     set_status(); //JUST REP
     set_connection(); //JUST REP
     set_server(); //JUST REP
@@ -317,6 +315,8 @@ response::response(std::string req, std::map<string, loc_details> locations) : r
     set_content_type();
     set_content_length();
     set_transfer_encoding();
+    if (stat_code != 204)
+        this->upload_eof = true;
 }
 
 /*

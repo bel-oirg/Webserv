@@ -12,7 +12,7 @@
 #include <vector>
 #include "server.hpp"
 
-#define UPLOAD_DIR "/Users/abennar/Desktop/push/Upload"
+#define UPLOAD_DIR "/Users/bel-oirg/Desktop/tmptmp/Upload/"
 //TODO change UPLOAD_DIR based on config file
 
 #define MAX_URI_SIZE 2048
@@ -75,7 +75,7 @@ class request
         //POST
         int if_loc_support_upload();
         bool unchunk_body();
-        int process_multipart(std::string body);
+        int process_multipart(std::string &body);
 
         //DELETE
         bool has_write_access_on_folder();

@@ -12,7 +12,7 @@ std::map<string, loc_details> &Server::get_locations()
 	return (this->locations);
 }
 
-Server::Server() : port(0), server_name(""), host(0), _timeout(5)
+Server::Server() : port(0), server_name(""), host(0), _timeout(10)
 {}
 
 Server &Server::operator=(const Server &cpy)
@@ -172,14 +172,14 @@ void ServersManager::remove_client(int fd)
 	close(fd);
 }
 
-#define REQUEST_MAX_SIZE 3000000
+#define REQUEST_MAX_SIZE 1200
 
 void ServersManager::get_request(pollfd &pfd)
 {
 	char buffer[REQUEST_MAX_SIZE] = {0};
 
 	int valread;
-	valread = read(pfd.fd, buffer, REQUEST_MAX_SIZE - 1);
+	valread = recv(pfd.fd, buffer, REQUEST_MAX_SIZE - 1, 0);
 	if (valread == -1)
 	{
 		perror("read() failed");
@@ -203,9 +203,12 @@ void ServersManager::get_request(pollfd &pfd)
 
 	try
     {
+		cout << MAGENTA << "SIZE before :"<< strlen(buffer) << RESET << endl;
         cur_client->save_request(std::string(buffer));
-		// TODO the check for eof should be here, 
-		cur_client->change_event();
+		if (cur_client->_response->upload_eof)
+		{
+			cur_client->change_event();
+		}
     }
     catch (const std::exception &e)
     {
@@ -253,7 +256,7 @@ void ServersManager::send_response(pollfd &pfd)
 	cur_client->register_interaction();
 
 	int wr_ret = send(pfd.fd, (void *)response.c_str(), response.size(), 0);
-	cerr << "resp size " << YELLOW << response.size() << RESET << endl;
+	cout << BLUE << response << RESET << endl;
 	if (wr_ret < 0)
 	{
 		perror ("send() ");
@@ -295,7 +298,7 @@ void ServersManager::run()
 	while (true)
 	{
 		std::vector<pollfd> &fds = this->get_fds();
-		int ret = poll(fds.data(), fds.size(), 5000); // TODO check the timeout and remove all of the clients
+		int ret = poll(fds.data(), fds.size(), 10000); // TODO check the timeout and remove all of the clients
 		if (ret == -1)
 		{
 			perror("poll() failed");
@@ -326,10 +329,10 @@ void ServersManager::run()
 			{
 				send_response(fds[i]);
 			}
-			else
-			{
-				check_timeout(fds[i]);
-			}
+			// else
+			// {
+			// 	check_timeout(fds[i]);
+			// }
 		}
 	}
 }

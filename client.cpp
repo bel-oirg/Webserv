@@ -10,7 +10,8 @@ Client::Client(Server &server, int fd)
 	 _response(NULL),
 	 _headers_sended(false),
 	 first_response_read(true),
-	 _last_interaction(0)
+	 _last_interaction(0),
+	 _buff_num(0)
 {
     _pfd.fd = fd;
     _pfd.events = POLLIN;
@@ -19,17 +20,20 @@ Client::Client(Server &server, int fd)
 
 
 void Client::save_request(string request)
-{
-		// TODO buffered requesting here
-		// if (first_response_read)
-		// {
+{	
+		cout << MAGENTA << "SIZE after :"<< request.size() << RESET << endl;
+
+		this->_buff_num++;
+		if (first_response_read)
+		{
+			// p request << endl;
 			this->_response = new response(request, this->_server.get_locations());
-			// first_response_read = false;
-		// }
-		// else 
-		// {
-		// 	_response->process_multipart(request);
-		// }
+			first_response_read = false;
+		}
+		else 
+		{
+			_response->process_multipart(request);
+		}
 
 
 

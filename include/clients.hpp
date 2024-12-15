@@ -65,6 +65,7 @@ class Client
 		bool		_headers_sended;
 		bool		first_response_read;
 		clock_t		_last_interaction;
+		int			_buff_num;
 
 	public:
 		Client(Server &server, int fd);

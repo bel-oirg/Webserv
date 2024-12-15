@@ -4,10 +4,11 @@
 request::request(std::string raw_req, std::map<std::string, loc_details> locations) : req(raw_req), locations(locations)
 {
 	upload_eof = false;
-    p "REQ---- " << raw_req << "----REQ" << endl;
+
     this->stat_code = init_parse_req();
     if (!this->stat_code)
         this->stat_code = req_arch();
+    
 }
 
 
@@ -140,6 +141,7 @@ int request::is_req_well_formed() //REQ
         && this->headers.find("Content-Length") == this->headers.end()
         && this->method == "POST")
         return (err_("no Trans/Cont length and the method is POST"), 400);
+    
     return (0);
 }
 
@@ -285,8 +287,8 @@ int     request::GET()
 
 int     request::POST()
 {
-    if (body.size() > current_loc.client_max_body_size)
-        return (err_("BODY > CLIENT_MAX_BODY _SIZE"), 413);
+    // if (body.size() > current_loc.client_max_body_size)
+    //     return (err_("BODY > CLIENT_MAX_BODY _SIZE"), 413);
     if (current_loc.enable_upload)
         return (if_loc_support_upload());
 
@@ -383,25 +385,25 @@ bool    request::get_auto_index()
     return (true);
 }
 
-int request::process_multipart(std::string current_part) //____UPLOAD_REQ_
+int request::process_multipart(std::string &current_part) //____UPLOAD_REQ_
 {
     std::string line;
-	this->upload_eof = true;
+
+    p RED << "PPPLL" << current_part << RESET << endl;
 
     if (file_name.empty())
     {
         uploaded_size = 0;
         size_t file_beg = current_part.find("filename=\"");
-        size_t file_end = current_part.find("\"", file_beg + 10);
-
+        size_t file_end = current_part.find("\"\r\n", file_beg + 10);
         if (file_beg == std::string::npos || file_end == std::string::npos)
             return (this->eof = true, err_("Cannot find name") ,0);
 
         file_name = current_part.substr(file_beg + 10, file_end - file_beg - 10);
-        if (file_name.find("/") == std::string::npos)
+        if (file_name.find("/") != std::string::npos)
             return (this->eof = true, err_("Invalid file name") ,0);
 
-        outfile.open(UPLOAD_DIR + file_name, std::ios::binary);
+        outfile.open(UPLOAD_DIR + file_name, std::ios::out | std::ios::binary);
         if (!outfile)
             return (this->eof = true, err_("Failed to open the upload_file"), 0);
 
@@ -412,20 +414,14 @@ int request::process_multipart(std::string current_part) //____UPLOAD_REQ_
         current_part =  current_part.substr(cont_beg + 4);
 		// cout << "IN THE STATMENT" << endl;
     }
-
-    size_t last_bound_beg = current_part.find(this->boundary);
+    size_t last_bound_beg = current_part.find("\r\n--");
     if (last_bound_beg != std::string::npos)
     {
         outfile << current_part.substr(0, last_bound_beg);
         uploaded_size += last_bound_beg;
-        if (current_part.substr(last_bound_beg, this->boundary.size() + 2) == this->boundary + "--" )
-        {
-            this->eof = true;
-            outfile.close();
-            return (p "file uploaded successfuly\n", upload_eof = true); //2 means the file upload is done
-        }
-		else
-			cout << YELLOW << this->boundary + "--" << RESET << endl; // TODO i added that
+        this->eof = true;
+        outfile.close();
+        return (p "file uploaded successfuly\n", upload_eof = true);
     }
     else
     {
@@ -473,7 +469,6 @@ bool request::unchunk_body()
     return (true);
 }
 
-//XXX UPLOADING A PNG DOES NOT WORK, I DO NOT RECEIVE A COMPLETE REQ
 //POST
 int request::if_loc_support_upload()
 {        
@@ -485,7 +480,12 @@ int request::if_loc_support_upload()
             return (400);
 
     size_t bound_beg = headers["Content-Type"].find("boundary=");
-    size_t bound_end = headers["Content-Type"].find_first_of(" \r\n", bound_beg);
+    if (bound_beg == string::npos)
+        return (err_("boundary beg not found"), 400);
+    size_t bound_end = headers["Content-Type"].size();
+    p YELLOW << headers["Content-Type"] << RESET << endl;
+    if (bound_end == string::npos)
+        return (err_("boundary end not found"), 400);
     this->boundary = headers["Content-Type"].substr(bound_beg + 9, bound_end - bound_beg - 9);
 
     if (!process_multipart(body))
