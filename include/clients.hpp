@@ -66,6 +66,7 @@ class Client
 		bool		first_response_read;
 		clock_t		_last_interaction;
 		int			_buff_num;
+		string		tmp_request;
 
 	public:
 		Client(Server &server, int fd);
@@ -94,14 +95,8 @@ class Client
 		~Client()
 		{
 			delete _response;
-		}
-
-		// ~Client()
-		// {
-		// 	close(this->_pfd.fd);
 		// 	// TODO may add kill cgi;
-		// }
-
+		}
 };
 
 #endif /* CLIENTS_HPP */

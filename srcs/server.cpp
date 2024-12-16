@@ -116,7 +116,8 @@ void Server::setup()
 	this->address.sin_addr.s_addr = this->host;
 
 	const int enable = 1;
-	if (setsockopt(this->socket_fd, SOL_SOCKET, SO_REUSEADDR, &enable, sizeof(int)) < 0)
+	if (setsockopt(this->socket_fd, SOL_SOCKET, SO_REUSEADDR, &enable, sizeof(int)) < 0
+	|| setsockopt(this->socket_fd, SOL_SOCKET, SO_REUSEPORT, &enable, sizeof(int)) < 0)
     	std::cerr << "setsockopt(SO_REUSEADDR) failed" << endl;
 
 	int bind_t = ::bind(this->socket_fd, (const struct sockaddr *)&(this->address), sizeof(this->address));
@@ -175,17 +176,17 @@ void ServersManager::get_request(pollfd &pfd)
 	char buffer[REQUEST_MAX_SIZE] = {0};
 
 	int valread;
-	valread = recv(pfd.fd, buffer, REQUEST_MAX_SIZE - 1, 0);
+	valread = recv(pfd.fd, buffer, REQUEST_MAX_SIZE , 0);
 	if (valread == -1)
 	{
 		perror("read() failed");
 		exit(1);
 	}
-	else if (valread >= REQUEST_MAX_SIZE)
-	{
-		cout << "request lenght too large : action => discarding" << std::endl;
-		return;
-	}
+	// else if (valread >= REQUEST_MAX_SIZE)
+	// {
+	// 	cout << "request lenght too large : action => discarding" << std::endl;
+	// 	return;
+	// }
 	if (valread == 0)
 	{
 		cout << "Client disconnected" << std::endl;
@@ -198,9 +199,8 @@ void ServersManager::get_request(pollfd &pfd)
 
 	try
     {
-		cout << MAGENTA << "SIZE before :"<< valread << RESET << endl;
         cur_client->save_request(std::string(buffer, valread));
-		if (cur_client->_response->upload_eof)
+		if (cur_client->tmp_request.empty() && cur_client->_response->upload_eof)
 		{
 			cur_client->change_event();
 		}
@@ -251,7 +251,7 @@ void ServersManager::send_response(pollfd &pfd)
 	cur_client->register_interaction();
 
 	int wr_ret = send(pfd.fd, (void *)response.c_str(), response.size(), 0);
-	cout << BLUE << response << RESET << endl;
+	// cout << BLUE << response << RESET << endl;
 	if (wr_ret < 0)
 	{
 		perror ("send() ");
@@ -282,7 +282,7 @@ void	ServersManager::check_timeout(pollfd& fd)
 
     if (elapsed_time >= client->_server._timeout)
     {
-		// TODO log for timeout 
+		clog  << "Time-out client : " << fd.fd << endl;
         this->remove_client(fd.fd);
     }
 }

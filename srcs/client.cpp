@@ -10,11 +10,24 @@ Client::Client(Server &server, int fd)
 	  _headers_sended(false),
 	  first_response_read(true),
 	  _last_interaction(0),
-	  _buff_num(0)
+	  _buff_num(0),
+	  tmp_request("")
 {
 	_pfd.fd = fd;
 	_pfd.events = POLLIN;
 	_pfd.revents = 0;
+}
+
+bool	headers_complet(string &request)
+{
+	if (request.find("boundary=") != string::npos)
+	{
+		if (request.find("filename=") != string::npos)
+			return true;
+		else
+			return false;
+	}
+	return (true);
 }
 
 void Client::save_request(string request)
@@ -22,9 +35,13 @@ void Client::save_request(string request)
 	this->_buff_num++;
 	if (first_response_read)
 	{
-		pp "THIS IS REQ \n" << request.size() << request << endl;
-		this->_response = new response(request, this->_server.get_locations());
-		first_response_read = false;
+		tmp_request += request;
+		if (headers_complet(tmp_request))
+		{
+			this->_response = new response(tmp_request, this->_server.get_locations());
+			first_response_read = false;
+			tmp_request.clear();
+		}
 	}
 	else
 	{
