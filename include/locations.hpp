@@ -21,8 +21,18 @@ struct loc_details
     size_t					client_max_body_size;
 
 
-	loc_details() : auto_index(false), enable_upload(false),
-					has_cgi(false), has_slash(false),  status_code(0), client_max_body_size(0) {}
+	loc_details() : error_pages(),
+          allowed_methods(),
+          index_path(""),
+          root(""),
+          redir_to(""),
+          upload_path(""),
+          auto_index(false),
+          enable_upload(false),
+          has_cgi(false),
+          has_slash(false),
+          status_code(0),
+          client_max_body_size(0) {}
 
 
 

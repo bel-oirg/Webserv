@@ -276,7 +276,6 @@ void locations(map<string, string>::iterator loc, loc_details &dest)
 std::vector<Server> Parse::config2server(std::vector<Config> configs)
 {
 	std::vector<Server> servers;
-	loc_details tmp;
 
 	try
 	{
@@ -298,7 +297,8 @@ std::vector<Server> Parse::config2server(std::vector<Config> configs)
 			for (std::map<string, std::map<string, string>>::iterator iter = it->location.begin();
 				 iter != it->location.end(); ++iter)
 			{
-				// cout << "\tLocation : "  << iter->first << endl;
+				loc_details tmp;
+				// cout << " Location : "  << iter->first << endl;
 				for (std::map<string, string>::iterator keys_iterator = iter->second.begin();
 					 keys_iterator != iter->second.end(); keys_iterator++)
 				{

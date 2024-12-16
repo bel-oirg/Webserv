@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>File Upload</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #f0f2f5;
+        }
+
+        .upload-container {
+            background-color: white;
+            padding: 2rem;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            text-align: center;
+        }
+
+        .upload-btn {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            margin-top: 1rem;
+        }
+
+        .upload-btn:hover {
+            background-color: #45a049;
+        }
+
+        .file-input {
+            margin-bottom: 1rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="upload-container">
+        <h2>File Upload</h2>
+        <form id="uploadForm" method="post" enctype="multipart/form-data">
+            <div class="file-input">
+                <input type="file" name="file" id="file" required>
+            </div>
+            <button type="submit" class="upload-btn" id="uploadBtn">Upload File</button>
+        </form>
+    </div>
+
+    <!-- JavaScript to disable the button -->
+    <script>
+        document.getElementById('uploadForm').addEventListener('submit', function(event) {
+            // Disable the button to prevent multiple submissions
+            const uploadButton = document.getElementById('uploadBtn');
+            uploadButton.disabled = true;
+            uploadButton.innerText = 'Uploading...';
+
+            // Enable the button after the upload is complete or on failure
+            this.addEventListener('load', function() {
+                uploadButton.disabled = false;
+                uploadButton.innerText = 'Upload File';
+            });
+
+            // Handle form submission if needed with AJAX for better control
+            // This will prevent the default form submission behavior
+            event.preventDefault();
+
+            // Using fetch for form submission (optional for better control)
+            const formData = new FormData(this);
+            fetch('/upload', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => {
+                if (response.ok) {
+                    alert("File uploaded successfully!");
+                } else {
+                    alert("Error uploading file.");
+                }
+                // Re-enable the button
+                uploadButton.disabled = false;
+                uploadButton.innerText = 'Upload File';
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert("Error uploading file.");
+                uploadButton.disabled = false;
+                uploadButton.innerText = 'Upload File';
+            });
+        });
+    </script>
+</body>
+</html>

@@ -4,7 +4,7 @@
 #include "request.hpp"
 #define CHUNK_SIZE 1024
 
-#define	ERR_DIR "/Users/bel-oirg/Desktop/WEBTHE/Error_pages/"
+#define	ERR_DIR "/Users/abennar/Desktop/merge2/Error_pages/"
 
 using std::string; 
 

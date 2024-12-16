@@ -1,6 +1,6 @@
-#define	ERR_DIR "/Users/bel-oirg/Desktop/WEBTHE/Error_pages/"
-#define UPLOAD_DIR "/Users/bel-oirg/Desktop/WEBTHE/Upload/"
-#define CGI_ERR_DIR "/Users/bel-oirg/Desktop/WEBTHE/Error_pages/"
+#define	ERR_DIR "/Users/abennar/Desktop/merge2/Error_pages/"
+#define UPLOAD_DIR "/Users/abennar/Desktop/merge2/Upload/"
+#define CGI_ERR_DIR "/Users/abennar/Desktop/merge2/Error_pages/"
 #define CHUNK_SIZE 1024
 #define MAX_URI_SIZE 2048
 #define REQUEST_MAX_SIZE 20000
