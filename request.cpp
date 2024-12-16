@@ -1,6 +1,5 @@
 #include "response.hpp"
 #include "server.hpp"
-#include "webserv.hpp"
 
 //TODO check 1.1
 request::request(std::string raw_req, std::map<std::string, loc_details> locations) : req(raw_req), locations(locations)
@@ -81,6 +80,18 @@ bool    request::is_valid_URI()
     return (true);
 }
 
+bool is_valid_content_length(const string &str_num, size_t &num)
+{
+    std::stringstream ss(str_num);
+    char c;
+
+    if (!(ss >> num))
+        return (false);
+    if (ss >> c)
+        return (false);
+    return (true);
+}
+
 int request::is_req_well_formed() //REQ
 {
     //LINE 1
@@ -142,6 +153,14 @@ int request::is_req_well_formed() //REQ
         && this->headers.find("Content-Length") == this->headers.end()
         && this->method == "POST")
         return (err_("no Trans/Cont length and the method is POST"), 400);
+    
+    //TODO maybe client max body size is not well
+    // size_t content_length = 0;
+    // is_valid_content_length(this->headers["Content-Length"], content_length);
+
+    // pp MAGENTA << content_length << " ---- "  << current_loc.client_max_body_size << RESET << endl;
+    // if (content_length > current_loc.client_max_body_size)
+    //     return (err_("BODY > CLIENT_MAX_BODY _SIZE"), 413);
     
     return (0);
 }
@@ -291,8 +310,6 @@ int     request::GET()
 
 int     request::POST()
 {
-    // if (_content_length > current_loc.client_max_body_size)
-    //     return (err_("BODY > CLIENT_MAX_BODY _SIZE"), 413);
     if (current_loc.enable_upload)
         return (if_loc_support_upload());
 

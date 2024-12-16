@@ -6,7 +6,6 @@
 #define REQUEST_MAX_SIZE 20000
 #define pp cout << 
 
-
 #define RESET   "\033[0m"
 #define RED     "\033[31m"
 #define GREEN   "\033[32m"
@@ -14,7 +13,6 @@
 #define BLUE    "\033[34m"
 #define MAGENTA "\033[35m"
 #define CYAN    "\033[36m"
-
 
 #include <string>
 #include <limits>
@@ -41,8 +39,9 @@
 #include <iostream>
 #include <sstream>
 #include <sys/stat.h>
- #include <dirent.h>
+#include <dirent.h>
 
+using namespace std;
 
 // using std::string;
 // using cout;

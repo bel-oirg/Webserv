@@ -8,7 +8,6 @@
 #include <fstream>
 #include <string>
 
-
 class cgi_response
 {
     private:

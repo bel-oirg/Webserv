@@ -11,6 +11,7 @@
 #include <string>
 #include <vector>
 #include "server.hpp"
+#include "webserv.hpp"
 
 //TODO change UPLOAD_DIR based on config file
 

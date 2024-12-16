@@ -5,8 +5,6 @@
 #include "server.hpp"
 #include "cgi_response.hpp"
 
-using namespace std;
-
 std::map<string, loc_details> &Server::get_locations()
 {
 	return (this->locations);
