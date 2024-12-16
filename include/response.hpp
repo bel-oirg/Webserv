@@ -27,6 +27,7 @@ class response : public request
     public:
         bool            _eof;
         response(string req, std::map<string, loc_details> locations);
+        ~response();
         void set_status();
         void set_content_length();
         void set_server();

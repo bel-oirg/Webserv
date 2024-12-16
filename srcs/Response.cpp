@@ -327,6 +327,12 @@ response::response(std::string req, std::map<string, loc_details> locations) : r
         this->upload_eof = true;
 }
 
+response::~response()
+{
+    if (infile && infile.is_open())
+        infile.close();
+}
+
 /*
 TODO Set a default file to answer if the request is a directory.
 TODO configure where they should be saved.

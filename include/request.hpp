@@ -45,6 +45,7 @@ class request
     public:
 		bool		upload_eof;
         request(std::string raw_req, std::map<std::string, loc_details> locations);
+        virtual ~request();
         void    display_req();
         bool    valid_method();
         bool    valid_elem(std::string elem);

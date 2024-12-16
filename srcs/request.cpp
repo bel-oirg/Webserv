@@ -561,6 +561,12 @@ bool request::has_write_access_on_folder()
     return (s.st_mode & S_IWUSR);
 }
 
+request::~request()
+{
+    if (outfile && outfile.is_open())
+        outfile.close();
+}
+
 /*
     TODO maybe you should encode the URL
     If the data contain characters that are not allowed in URLs, these characters are URL-encoded.
