@@ -1,4 +1,4 @@
-
+#include "webserv.hpp"
 #include "clients.hpp"
 #include "response.hpp"
 #include "cgi_response.hpp"
@@ -22,7 +22,7 @@ void Client::save_request(string request)
 	this->_buff_num++;
 	if (first_response_read)
 	{
-		// p request << endl;
+		pp "THIS IS REQ \n" << request.size() << request << endl;
 		this->_response = new response(request, this->_server.get_locations());
 		first_response_read = false;
 	}

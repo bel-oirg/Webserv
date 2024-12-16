@@ -1,4 +1,5 @@
 #include "cgi_response.hpp"
+#include "webserv.hpp"
 
 void cgi_response::set_status()
 {
@@ -25,7 +26,7 @@ void cgi_response::set_body()
     if (cgi_stat_code != 200)
     {
         std::ifstream infile;
-        infile.open(CGI_ERR_DIR + std::to_string(cgi_stat_code) + ".html");
+        infile.open(ERR_DIR + std::to_string(cgi_stat_code) + ".html");
         if (!infile)
         {
             std::cerr << "Error opening error_file on CGI" << std::endl;

@@ -1,15 +1,10 @@
-
-
-
-// #include "cgi.hpp"
-// #include "cgi_response.hpp"
-// #include "clients.hpp"
-// #include "config.hpp"
-// #include "parse.hpp"
-// #include "pollfd.hpp"
-// #include "request.hpp"
-// #include "response.hpp"
-// #include "server.hpp"
+#define	ERR_DIR "/Users/bel-oirg/Desktop/WEBTHE/Error_pages/"
+#define UPLOAD_DIR "/Users/bel-oirg/Desktop/WEBTHE/Upload/"
+#define CGI_ERR_DIR "/Users/bel-oirg/Desktop/WEBTHE/Error_pages/"
+#define CHUNK_SIZE 1024
+#define MAX_URI_SIZE 2048
+#define REQUEST_MAX_SIZE 20000
+#define pp cout << 
 
 
 #define RESET   "\033[0m"

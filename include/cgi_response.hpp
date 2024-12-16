@@ -8,8 +8,6 @@
 #include <fstream>
 #include <string>
 
-// #define CGI_ERR_DIR "/Users/bel-oirg/Desktop/Webserv/Error_pages/"
-#define CGI_ERR_DIR "/Users/abennar/Desktop/merge/Error_pages"
 
 class cgi_response
 {

@@ -3,9 +3,8 @@
 
 #include "request.hpp"
 #define CHUNK_SIZE 1024
-// #define ERR_DIR "/Users/bel-oirg/Desktop/THEWEB/Error_pages/"
-#define	ERR_DIR "/Users/abennar/Desktop/merge/Error_pages/"
-//TODO change the err pages based on config file
+
+#define	ERR_DIR "/Users/bel-oirg/Desktop/WEBTHE/Error_pages/"
 
 using std::string; 
 
@@ -28,7 +27,6 @@ class response : public request
     public:
         bool            _eof;
         response(string req, std::map<string, loc_details> locations);
-		response();
 		// void init(string req, std::map<string, loc_details> locations);
         void set_status();
         void set_content_length();

@@ -33,7 +33,7 @@ void response::set_status()
 std::string response::get_response_header() //_____SEND__RESP__HEAD
 {
     if (this->stat_code == -1)
-        return (p "GOTO CGI\n", "CGI");
+        return (pp "GOTO CGI\n", "CGI");
     
     std::stringstream   line;
     
@@ -270,14 +270,18 @@ void response::set_body()
         _body = "Content Uploaded Successfully"; //TODO 204 returns nothing
     else if (this->stat_code == 200)
     {
-        int res = get_request_resource();
-        if (res == 1 && get_auto_index())
+        if (resource_type == 1 && !current_loc.index_path.size() && get_auto_index())
         {
             if (!prepare_autoindex())
                 this->stat_code = 501;
         }
         else
             prep_body(this->resource_path);
+    }
+    else
+    {
+        err_("stat_code unknown");
+        stat_code = 501;
     }
 }
 
@@ -323,19 +327,3 @@ response::response(std::string req, std::map<string, loc_details> locations) : r
 TODO Set a default file to answer if the request is a directory.
 TODO configure where they should be saved.
 */
-
-// response::response() {}
-
-// response::init(string req, std::map<string, loc_details> locations) : request(req, locations)
-// {
-// 	this->_eof = false;
-//     set_status(); //JUST REP
-//     set_connection(); //JUST REP
-//     set_server(); //JUST REP
-//     set_cookies(); //JUST REP
-//     set_location(); //JUST REP
-//     set_body();
-//     set_content_type();
-//     set_content_length();
-//     set_transfer_encoding();
-// }

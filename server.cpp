@@ -172,8 +172,6 @@ void ServersManager::remove_client(int fd)
 	close(fd);
 }
 
-#define REQUEST_MAX_SIZE 20000
-
 void ServersManager::get_request(pollfd &pfd)
 {
 	char buffer[REQUEST_MAX_SIZE] = {0};

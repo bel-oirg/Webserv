@@ -12,15 +12,7 @@
 #include <vector>
 #include "server.hpp"
 
-// #define UPLOAD_DIR "/Users/bel-oirg/Desktop/THEWEB/Upload/"
-
-#define UPLOAD_DIR "/Users/abennar/goinfre/Upload/"
 //TODO change UPLOAD_DIR based on config file
-
-#define MAX_URI_SIZE 2048
-#define GLOBAL_CLIENT_MAX_BODY_SIZE 4000
-
-#define p cout << 
 
 class request
 {
@@ -44,9 +36,10 @@ class request
         std::string query;
         std::string correct_loc_name;
         int         stat_code;
+        int         resource_type;
         bool        add_slash;
         bool        eof;
-        bool respond_with_autoindex;
+        bool        respond_with_autoindex;
 
     public:
 		bool		upload_eof;
@@ -60,7 +53,6 @@ class request
         bool    is_method_allowed_in_loc();
         int     get_request_resource();
         int     init_parse_req();
-        int     set_to_get(string buffer, int seq);
         bool    is_uri_has_slash_in_end();
         bool    is_dir_has_index_path();
         bool    if_location_has_cgi();

@@ -1,6 +1,8 @@
 #include "response.hpp"
 #include "server.hpp"
+#include "webserv.hpp"
 
+//TODO check 1.1
 request::request(std::string raw_req, std::map<std::string, loc_details> locations) : req(raw_req), locations(locations)
 {
 	upload_eof = false;
@@ -10,7 +12,6 @@ request::request(std::string raw_req, std::map<std::string, loc_details> locatio
         this->stat_code = req_arch();
     
 }
-
 
 inline void     err_(const std::string &err)
 {
@@ -215,7 +216,7 @@ int request::get_request_resource() //get_resource_type()
         this->resource_path = current_loc.root + this->URI;
 
     struct stat s;
-	// cout << MAGENTA << resource_path << RESET << endl;
+	cout << MAGENTA << resource_path << RESET << endl;
     if (!stat(this->resource_path.c_str(), &s))
     {
         if (S_ISDIR(s.st_mode))
@@ -240,12 +241,13 @@ bool request::is_dir_has_index_path()
     std::string to_check;
     struct stat s;
 
-    for (size_t index = 0; index < current_loc.index_path.size() ; index++)
+    if (current_loc.index_path.size())
     {
-        to_check = current_loc.root + "/" + current_loc.index_path[index];
+        to_check = current_loc.root + "/" + current_loc.index_path;
         if (!stat(to_check.c_str(), &s) && S_ISREG(s.st_mode))
         {
             resource_path = to_check;
+    pp MAGENTA << "IS DIR " << resource_path << RESET << endl;
             return (true);
         }
     }
@@ -266,7 +268,7 @@ void    request::display_req()
 
 int     request::GET()
 {
-    int resource_type = get_request_resource();
+    resource_type = get_request_resource();
     if (resource_type <= 0)
         return (404);
     if (resource_type == 1) // dir
@@ -281,6 +283,7 @@ int     request::GET()
             return (200); //return autoindex of the directory
         }
     }
+    pp MAGENTA << "KK " << resource_path << RESET << endl;
     if (!if_location_has_cgi())
         return (200);
    return (-1);
@@ -288,12 +291,12 @@ int     request::GET()
 
 int     request::POST()
 {
-    // if (body.size() > current_loc.client_max_body_size)
+    // if (_content_length > current_loc.client_max_body_size)
     //     return (err_("BODY > CLIENT_MAX_BODY _SIZE"), 413);
     if (current_loc.enable_upload)
         return (if_loc_support_upload());
 
-    int resource_type = get_request_resource();
+    resource_type = get_request_resource();
     if (resource_type <= 0)
         return (404);
     if (resource_type == 1) // dir
@@ -317,7 +320,7 @@ int     request::POST()
 
 int     request::DELETE()
 {
-    int resource_type = get_request_resource();
+    resource_type = get_request_resource();
     if (resource_type <= 0)
         return (404);
     if (resource_type == 1) // dir
@@ -421,7 +424,7 @@ int request::process_multipart(std::string &current_part) //____UPLOAD_REQ_
         uploaded_size += last_bound_beg;
         this->eof = true;
         outfile.close();
-        return (p "file uploaded successfuly\n", upload_eof = true);
+        return (pp "file uploaded successfuly\n", upload_eof = true);
     }
     else
     {
