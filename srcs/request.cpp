@@ -1,5 +1,6 @@
 #include "response.hpp"
 #include "server.hpp"
+#include <algorithm>
 
 //TODO check 1.1
 request::request(std::string raw_req, std::map<std::string, loc_details> locations) : req(raw_req), locations(locations)

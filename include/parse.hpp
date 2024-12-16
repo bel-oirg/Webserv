@@ -20,7 +20,7 @@ private:
 	string file_name;
 
 public:
-	wbs_ifstream(string name) : std::ifstream(name), file_name(name) {}
+	wbs_ifstream(string name) : std::ifstream(name.c_str()), file_name(name) {}
 	string name(void)
 	{
 		return (this->file_name);

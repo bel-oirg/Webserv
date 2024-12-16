@@ -16,6 +16,7 @@
 
 #include <string>
 #include <limits>
+#include <cstdlib>
 #include <stdint.h>
 #include <map>
 #include <iostream>

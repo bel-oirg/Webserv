@@ -4,6 +4,7 @@
 #include "parse.hpp"
 #include "clients.hpp"
 #include <algorithm>
+#include "utils.hpp"
 
 using namespace std;
 
@@ -16,23 +17,17 @@ std::string hostToString(in_addr_t host)
 	return inet_ntoa(addr);
 }
 
-std::string trim(const std::string &str)
-{
-	size_t start = str.find_first_not_of(" \t");
-	size_t end = str.find_last_not_of(" \t");
-	return (start == std::string::npos) ? "" : str.substr(start, end - start + 1);
-}
 
 // check if a line starts with "server" and is valid
 bool is_server(const std::string &line)
 {
-	std::string trimmed = trim(line);
+	std::string trimmed = wbs::trim_line(line);
 
 	if (trimmed.find("server") != 0)
 		return false;
 
 	std::string rem = trimmed.substr(6);
-	rem = trim(rem);
+	rem = wbs::trim_line(rem);
 
 	if (rem.empty() || (rem == "{"))
 		return true;
@@ -53,36 +48,6 @@ bool is_location(const std::string &line, string &path)
 		return (!path.empty() && openBracket == line.length() - 1);
 	}
 	return false;
-}
-
-std::vector<std::string> split(const std::string &str, string delimiters)
-{
-	std::vector<string> splited;
-
-	try
-	{
-		size_t start = 0, end = 0;
-		while ((end = str.find_first_of(delimiters, start)) != string::npos)
-		{
-			string cur_splited = str.substr(start, end - start);
-			cur_splited.erase(0, cur_splited.find_first_not_of(" \t"));
-			cur_splited.erase(cur_splited.find_last_not_of(" \t") + 1);
-			if (!cur_splited.empty())
-				splited.push_back(cur_splited);
-			start = end + 1;
-		}
-
-		string last = str.substr(start);
-		last.erase(0, last.find_first_not_of(" \t"));
-		last.erase(last.find_last_not_of(" \t") + 1);
-		splited.push_back(last);
-	}
-	catch (...)
-	{
-		throw runtime_error(__func__);
-	}
-
-	return splited;
 }
 
 // void	locations_syntax(loc_details &loc)
@@ -135,7 +100,7 @@ void defaults(std::map<string, string>::iterator iter, Server &server, loc_detai
 	{
 		int code;
 		string page;
-		std::vector<string> pages = split(value, ",\127"); // TODO maybe check multipple delemeters ,,,
+		std::vector<string> pages = wbs::split(value, ",\127"); // TODO maybe check multipple delemeters ,,,
 		for (size_t i = 0; i < pages.size(); i++)
 		{
 			std::istringstream stream(pages[i]);
@@ -147,7 +112,7 @@ void defaults(std::map<string, string>::iterator iter, Server &server, loc_detai
 	}
 	else if (key == "client_max_body_size")
 	{
-		if (all_of(value.begin(), value.end(), ::isdigit))
+		if (all_of(value.begin(), value.end(), ::isdigit)) // BUG c++ 11
 		{
 			uint32_t cmbs_value;
 			cmbs_value = atoll(value.c_str());
@@ -162,7 +127,7 @@ void defaults(std::map<string, string>::iterator iter, Server &server, loc_detai
 	}
 	else if (key == "allowed_methods")
 	{
-		loc.allowed_methods = split(value, " /t");
+		loc.allowed_methods = wbs::split(value, " /t");
 		for (size_t i = 0; i < loc.allowed_methods.size(); i++)
 		{
 			if (!(loc.allowed_methods[i] == "GET" ||
@@ -194,7 +159,7 @@ void locations(map<string, string>::iterator loc, loc_details &dest)
 		value.erase(0, 1);
 	if (key == "allowed_methods")
 	{
-		dest.allowed_methods = split(value, " /t");
+		dest.allowed_methods = wbs::split(value, " /t");
 		for (size_t i = 0; i < dest.allowed_methods.size(); i++)
 		{
 			if (!(dest.allowed_methods[i] == "GET" ||
@@ -303,7 +268,7 @@ std::vector<Server> Parse::config2server(std::vector<Config> configs)
 				{
 					locations(keys_iterator, tmp);
 				}
-				std::vector<string> paths = split(iter->first, " ");
+				std::vector<string> paths = wbs::split(iter->first, " ");
 				for (size_t i = 0; i < paths.size(); i++)
 				{
 					cur_server.locations[paths[i]] = tmp;
@@ -344,7 +309,7 @@ std::vector<Server> Parse::get_servers(std::string file_name)
 		std::string line;
 		while (std::getline(configFile, line))
 		{
-			line = trim(line);
+			line = wbs::trim_line(line);
 
 			if (line.empty() || line[0] == '#')
 				continue;
@@ -363,7 +328,7 @@ std::vector<Server> Parse::get_servers(std::string file_name)
 				{
 					// Expect {
 					std::getline(configFile, line);
-					line = trim(line);
+					line = wbs::trim_line(line);
 					if (line != "{")
 						throw runtime_error("Syntax Error: Missing '{' after server declaration.");
 					++serverBracketCount;
@@ -416,8 +381,8 @@ std::vector<Server> Parse::get_servers(std::string file_name)
 			size_t firstspace = line.find_first_of(" \t");
 			if (semicolonPos != std::string::npos)
 			{
-				std::string key = trim(line.substr(0, firstspace));
-				std::string value = trim(line.substr(firstspace + 1));
+				std::string key = wbs::trim_line(line.substr(0, firstspace));
+				std::string value = wbs::trim_line(line.substr(firstspace + 1));
 				value.pop_back(); // BUG c++ 11
 
 				if (key.empty() || value.empty())

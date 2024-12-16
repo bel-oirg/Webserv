@@ -1,4 +1,6 @@
 #include "response.hpp"
+#include <algorithm>
+#include "utils.hpp"
 
 string response::get_script_path()
 {
@@ -268,7 +270,7 @@ void response::set_body()
         if (current_loc.error_pages.find(this->stat_code) != current_loc.error_pages.end())
             prep_body(current_loc.root + current_loc.error_pages[this->stat_code]); //BUG CPP11
         else
-            prep_body(ERR_DIR + std::to_string(this->stat_code) + ".html"); //BUG CPP11
+            prep_body(ERR_DIR + wbs::to_string(this->stat_code) + ".html"); //BUG CPP11
     }
     else if (this->stat_code == 204)
         _body = "Content Uploaded Successfully"; //TODO 204 returns nothing
@@ -296,11 +298,11 @@ std::map<std::string, std::string>    response::prepare_cgi(Server &server)
     environ_vars["SERVER_NAME"] = this->_server;
     environ_vars["SCRIPT_NAME"] = this->URI ;
     environ_vars["CONTENT_TYPE"] = this->_content_type;
-    environ_vars["CONTENT_LENGTH"] = to_string(this->_content_length); //BUG CPP11 TODO THIS IS WRONG
+    environ_vars["CONTENT_LENGTH"] = wbs::to_string(this->_content_length); //BUG CPP11 TODO THIS IS WRONG
     environ_vars["SCRIPT_FILENAME"] = this->resource_path;
     environ_vars["HTTP_USER_AGENT"] = this->headers["User-Agent"];
     environ_vars["HTTP_COOKIE"] = this->_cookies;
-    environ_vars["SERVER_PORT"] = to_string(server.port); // BUG c++ 11
+    environ_vars["SERVER_PORT"] = wbs::to_string(server.port); // BUG c++ 11
 	environ_vars["GATEWAY_INTERFACE"] = "CGI/1337";
 	environ_vars["SERVER_SOFTWARE"] = "42 webserv (Unix)";
 	environ_vars["SERVER_PROTOCOL"] =  "HTTP/1.1";
