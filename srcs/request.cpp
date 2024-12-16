@@ -229,6 +229,10 @@ bool request::is_method_allowed_in_loc() //REQ
 
 int request::get_request_resource() //get_resource_type()
 {
+    if (current_loc.root.size())  //add / in case root does not finish with /
+        if (current_loc.root[current_loc.root.size() - 1] != '/')
+            current_loc.root += "/";
+    
     if (correct_loc_name != "default")
         this->resource_path = current_loc.root + this->URI.substr(correct_loc_name.size(), URI.size() - correct_loc_name.size());
     else
@@ -266,7 +270,6 @@ bool request::is_dir_has_index_path()
         if (!stat(to_check.c_str(), &s) && S_ISREG(s.st_mode))
         {
             resource_path = to_check;
-    pp MAGENTA << "IS DIR " << resource_path << RESET << endl;
             return (true);
         }
     }
@@ -302,7 +305,6 @@ int     request::GET()
             return (200); //return autoindex of the directory
         }
     }
-    pp MAGENTA << "KK " << resource_path << RESET << endl;
     if (!if_location_has_cgi())
         return (200);
    return (-1);

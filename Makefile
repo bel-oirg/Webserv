@@ -1,14 +1,14 @@
-NAME = webserve
+NAME = webserv
 RM = rm -rf
 CC = c++
 CFLAGS = -std=c++11 -pedantic  -Wall -Wextra -Werror -g
 
 
-SRCS = $(shell find ./ -name "*.cpp")
+SRCS = $(shell find ./srcs -name "*.cpp")
 
 OBJS = $(SRCS:%.cpp=$(OBJ_DIR)/%.o)
 
-HEADERS = $(shell find . -name "*.hpp")
+HEADERS = $(shell find ./include -name "*.hpp")
 
 INCLUDE = -I include/
 

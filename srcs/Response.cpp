@@ -58,6 +58,10 @@ std::string response::get_response_header() //_____SEND__RESP__HEAD
 
     if (!_cookies.empty())
         line << "Set-Cookie: " << _cookies << "\r\n";
+    
+    if (!_location.empty())
+        line << "Location: " << _location << "\r\n";
+
 
     line << "\r\n";
 
@@ -159,7 +163,7 @@ void response::set_location()
     this->_location = "";
     if (this->stat_code == 301)
     {
-        if (add_slash)
+        if (current_loc.redir_to.empty())
         {
             this->_location = this->URI + "/";
         }
