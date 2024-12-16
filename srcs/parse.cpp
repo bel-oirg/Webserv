@@ -1,4 +1,3 @@
-// #include "parse.hpp"
 #include "webserv.hpp"
 #include "locations.hpp"
 #include "server.hpp"
@@ -58,11 +57,11 @@ bool is_location(const std::string &line, string &path)
 
 std::vector<std::string> split(const std::string &str, string delimiters)
 {
-	size_t start = 0, end = 0;
 	std::vector<string> splited;
 
 	try
 	{
+		size_t start = 0, end = 0;
 		while ((end = str.find_first_of(delimiters, start)) != string::npos)
 		{
 			string cur_splited = str.substr(start, end - start);
@@ -283,7 +282,7 @@ std::vector<Server> Parse::config2server(std::vector<Config> configs)
 		servers.reserve(configs.size());
 
 		// loop over all configs and check syntax and parameters
-		for (std::vector<Config>::iterator it = configs.begin(); it != configs.end(); it++)
+		for (std::vector<Config>::iterator it = configs.begin(); it != configs.end(); ++it)
 		{
 			Server cur_server;
 			// iterate over all all defaults in one server
@@ -294,13 +293,13 @@ std::vector<Server> Parse::config2server(std::vector<Config> configs)
 				defaults(iter, cur_server, server_default);
 			}
 			cur_server.locations["default"] = server_default;
-			for (std::map<string, std::map<string, string>>::iterator iter = it->location.begin();
+			for (std::map<string, std::map<string, string> >::iterator iter = it->location.begin();
 				 iter != it->location.end(); ++iter)
 			{
 				loc_details tmp;
 				// cout << " Location : "  << iter->first << endl;
 				for (std::map<string, string>::iterator keys_iterator = iter->second.begin();
-					 keys_iterator != iter->second.end(); keys_iterator++)
+					 keys_iterator != iter->second.end(); ++keys_iterator)
 				{
 					locations(keys_iterator, tmp);
 				}
@@ -323,11 +322,10 @@ std::vector<Server> Parse::config2server(std::vector<Config> configs)
 
 std::vector<Server> Parse::get_servers(std::string file_name)
 {
-	std::vector<Config> configs;
 	Config cur_config;
 	wbs_ifstream configFile(file_name);
-	string cur_path;
 	std::vector<Server> servers;
+	string cur_path;
 
 	bool inServer = false;
 	bool inLocation = false;
@@ -342,6 +340,7 @@ std::vector<Server> Parse::get_servers(std::string file_name)
 		if (!configFile.is_open())
 			throw runtime_error("Unable to open config file");
 
+		std::vector<Config> configs;
 		std::string line;
 		while (std::getline(configFile, line))
 		{

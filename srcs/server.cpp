@@ -77,7 +77,7 @@ void ServersManager::print()
 std::vector<pollfd> &ServersManager::get_fds()
 {
 	manager_fds.clear();
-	for (auto it = client_pool.begin(); it != client_pool.end(); it++)
+	for (std::map<int , Client* >::iterator it = client_pool.begin(); it != client_pool.end(); ++it)
 	{
 		manager_fds.push_back(it->second->get_fd());
 	}

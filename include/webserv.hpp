@@ -3,7 +3,7 @@
 #define CGI_ERR_DIR "/Users/abennar/Desktop/merge2/Error_pages/"
 #define CHUNK_SIZE 1024
 #define MAX_URI_SIZE 2048
-#define REQUEST_MAX_SIZE 20000
+#define REQUEST_MAX_SIZE 30000
 #define pp cout << 
 
 #define RESET   "\033[0m"

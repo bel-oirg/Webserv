@@ -46,26 +46,26 @@ void Cgi::cgi_run()
 		switch (this->type)
 		{
 		case python:
-			args[0] = (char *)"/usr/bin/python3";
+			args[0] = (char *) ("/usr/bin/python3");
 			break;
 		case shell:
-			args[0] = (char *)"/bin/sh";
+			args[0] = (char *) ("/bin/sh");
 			break;
 		case ruby:
-			args[0] = (char *)"/usr/bin/ruby";
+			args[0] = (char *) ("/usr/bin/ruby");
 			break;
 		case php:
-			args[0] = (char *)"/usr/bin/php";
+			args[0] = (char *) ("/usr/bin/php");
 			break;
 		case binary:
-			args[0] = (char *)script_path.c_str();
+			args[0] = (char *) (script_path.c_str());
 			break;
 		default:
 			code = 500;
 			child_stat = 2;
 			return;
 		}
-		args[1] = (char *)script_path.c_str();
+		args[1] = (char *) script_path.c_str();
 		args[2] = NULL;
 
 		fdout = fileno(tmpfile());
@@ -85,6 +85,7 @@ void Cgi::cgi_run()
 
 		if (forked == 0)
 		{
+			// char const * *argv = args;
 			alarm(10); // Set timeout for CGI execution
 			dup2(fdin, STDIN_FILENO);
 			dup2(fdout, STDOUT_FILENO);
@@ -171,7 +172,7 @@ void Cgi::cgi_init(string scriptpath, string _request_body, std::map<string, str
 	this->env = new char *[env_map.size() + 1];
 
 	int i = 0;
-	for (map<string, string>::iterator it = env_map.begin(); it != env_map.end(); it++)
+	for (map<string, string>::iterator it = env_map.begin(); it != env_map.end(); ++it)
 	{
 		string combined;
 
@@ -188,7 +189,7 @@ void Cgi::cgi_init(string scriptpath, string _request_body, std::map<string, str
 	get_script_type();
 	cgi_run();
 
-	for (int i = 0; env[i]; ++i)
+	for (i = 0; env[i]; ++i)
 	{
 		delete[] env[i];
 	}

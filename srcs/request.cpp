@@ -80,7 +80,7 @@ bool    request::is_valid_URI()
     return (true);
 }
 
-bool is_valid_content_length(const string &str_num, size_t &num)
+bool is_valid_content_length(const string &str_num, size_t &num) // Bug unused
 {
     std::stringstream ss(str_num);
     char c;
@@ -169,7 +169,7 @@ bool request::get_matched_loc_for_req_uri() //REQ
 {
     size_t tmp_size = 0;
     std::vector<std::string> potential_locations;
-    for (std::map<std::string, loc_details>::iterator it = locations.begin(); it != locations.end(); it++)
+    for (std::map<std::string, loc_details>::iterator it = locations.begin(); it != locations.end(); ++it)
     {
         if (URI.rfind(it->first) == 0)
             potential_locations.push_back(it->first);
@@ -181,7 +181,7 @@ bool request::get_matched_loc_for_req_uri() //REQ
         else
             potential_locations.push_back("default");
     }
-    for (std::vector<std::string>::iterator it = potential_locations.begin(); it != potential_locations.end(); it++)
+    for (std::vector<std::string>::iterator it = potential_locations.begin(); it != potential_locations.end(); ++it)
     {
         if (tmp_size < it->size())
         {
@@ -284,7 +284,7 @@ bool request::if_location_has_cgi()
 void    request::display_req()
 {
     cout << this->method << " " << this->URI << " " << this->HTTP << std::endl;
-    for (std::map<std::string, std::string>::iterator it = headers.begin() ; it != headers.end() ; it++)
+    for (std::map<std::string, std::string>::iterator it = headers.begin() ; it != headers.end() ; ++it)
         cout << it->first << ": " << it->second << std::endl;
 }
 
@@ -410,7 +410,7 @@ bool    request::get_auto_index()
 
 int request::process_multipart(std::string &current_part) //____UPLOAD_REQ_
 {
-    std::string line;
+    std::string line; // BUG unused var
 
 
     if (file_name.empty())
