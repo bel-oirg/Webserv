@@ -125,21 +125,22 @@ void Cgi::cgi_run()
 				if (WEXITSTATUS(status) == 0)
 				{
 					code = 200;
-					char buffer[101];
+					// char buffer[101];
 					lseek(fdout, 0, SEEK_SET);
-					while (true)
-					{
-						int readed = read(fdout, buffer, 100);
-						if (readed < 0)
-						{
-							perror("read() failed");
-							exit(1);
-						}
-						else if (readed == 0)
-							break;
-						buffer[readed] = '\0';
-						response += buffer;
-					}
+					printf("HELLLL\n");
+					// while (true)
+					// {
+					// 	int readed = read(fdout, buffer, 100);
+					// 	if (readed < 0)
+					// 	{
+					// 		perror("read() failed");
+					// 		exit(1);
+					// 	}
+					// 	else if (readed == 0)
+					// 		break;
+					// 	buffer[readed] = '\0';
+					// 	response += buffer;
+					// }
 				}
 				else
 				{

@@ -1,4 +1,5 @@
 #include "response.hpp"
+#include "cgi_response.hpp"
 #include <algorithm>
 #include "utils.hpp"
 
@@ -35,7 +36,30 @@ void response::set_status()
 std::string response::get_response_header() //_____SEND__RESP__HEAD
 {
     if (this->stat_code == -1)
-        return (pp "GOTO CGI\n", "CGI");
+    {
+        _is_cgi = true;
+        // cgi_response ress()
+        cout << RED << "HERE\n" << RESET <<  endl;
+        _cgi.cgi_init(resource_path, _body, prepare_cgi());
+
+        // if (_cgi.is_cgi_ready())
+		// {
+		// 	int cgi_exit_code = _cgi.cgi_get_code();
+        //     cout << MAGENTA << "EXT ->" << cgi_exit_code << RESET <<  endl;
+		// 	if (cgi_exit_code != 200)
+		// 	{
+		// 		cgi_response cgi_resp("", cgi_exit_code);
+		// 		return (cgi_resp.get_cgi_response());
+		// 	}
+		// 	else
+		// 	{
+		// 		cgi_response cgi_resp(_cgi.cgi_get_response(), cgi_exit_code);
+		// 		_is_cgi = false;
+		// 		return (cgi_resp.get_cgi_response());
+		// 	}
+        // }
+        return "";
+    }
     
     std::stringstream   line;
     
@@ -234,6 +258,37 @@ bool response::prep_body(const std::string &path)
 
 string response::get_to_send() //_____RESP_BODY_SEND__
 {
+    if (_is_cgi)
+    { 
+        if (!_cgi.is_cgi_ready())
+            return "";
+        stat_code = _cgi.cgi_get_code();
+        if (stat_code == 200)
+        {
+			lseek(_cgi.get_outfd(), 0, SEEK_SET);
+
+            char buff[2001];
+            int readen = read(_cgi.get_outfd(), buff, 2000);
+            pp  buff << " ++ " << _cgi.get_outfd() << " {} " << readen << endl;
+            if (readen > 0)
+                return (string(buff));
+            else if (!readen)
+            {
+                this->_eof = true;
+                return ("EOF");
+            }
+            else
+            {
+                this->_eof = true;
+                //err
+                return ("ERR");
+            }
+        }
+        else
+        {
+            // handle errors 
+        }
+    }
     if (!_body.empty()) //in this case i am sure that the body is small (indexing a dir / ..)
         return (this->_eof = true, _body);
 
@@ -284,30 +339,30 @@ void response::set_body()
         else
             prep_body(this->resource_path);
     }
-    else
+    else if (stat_code != -1)
     {
         err_("stat_code unknown");
         stat_code = 501;
     }
 }
 
-std::map<std::string, std::string>    response::prepare_cgi(Server &server)
+std::map<std::string, std::string>    response::prepare_cgi()
 {
     std::map<std::string, std::string> environ_vars;
     environ_vars["REQUEST_METHOD"] = this->method;
-    environ_vars["SERVER_NAME"] = this->_server;
+    // environ_vars["SERVER_NAME"] = this->_server;
     environ_vars["SCRIPT_NAME"] = this->URI ;
     environ_vars["CONTENT_TYPE"] = this->_content_type;
     environ_vars["CONTENT_LENGTH"] = wbs::to_string(this->_content_length); //BUG CPP11 TODO THIS IS WRONG
     environ_vars["SCRIPT_FILENAME"] = this->resource_path;
     environ_vars["HTTP_USER_AGENT"] = this->headers["User-Agent"];
     environ_vars["HTTP_COOKIE"] = this->_cookies;
-    environ_vars["SERVER_PORT"] = wbs::to_string(server.port); // BUG c++ 11
+    // environ_vars["SERVER_PORT"] = wbs::to_string(server.port); // BUG c++ 11
 	environ_vars["GATEWAY_INTERFACE"] = "CGI/1337";
 	environ_vars["SERVER_SOFTWARE"] = "42 webserv (Unix)";
 	environ_vars["SERVER_PROTOCOL"] =  "HTTP/1.1";
-	environ_vars["REMOTE_ADDR"] = hostToString(server.host);
-	environ_vars["REMOTE_HOST"] = server.server_name;
+	// environ_vars["REMOTE_ADDR"] = hostToString(server.host);
+	// environ_vars["REMOTE_HOST"] = server.server_name;
     environ_vars["QUERY_STRING"] = this->query;
 
     return (environ_vars);
@@ -316,6 +371,7 @@ std::map<std::string, std::string>    response::prepare_cgi(Server &server)
 response::response(std::string req, std::map<string, loc_details> locations) : request(req, locations)
 {
     this->_eof = false;
+    this->_is_cgi = false;
     set_status(); //JUST REP
     set_connection(); //JUST REP
     set_server(); //JUST REP

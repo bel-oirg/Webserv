@@ -1,6 +1,6 @@
-#define	ERR_DIR "/Users/abennar/Desktop/merge2/Error_pages/"
-#define UPLOAD_DIR "/Users/abennar/goinfre/UPLOAD/"
-#define CGI_ERR_DIR "/Users/abennar/Desktop/merge2/Error_pages/"
+#define	ERR_DIR "/Users/bel-oirg/Desktop/webserv/Error_pages/"
+#define UPLOAD_DIR "/Users/bel-oirg/Desktop/webserv/UPLOAD/"
+#define CGI_ERR_DIR "/Users/bel-oirg/Desktop/webserv/Error_pages/"
 #define CHUNK_SIZE 1024
 #define MAX_URI_SIZE 2048
 #define REQUEST_MAX_SIZE 2000

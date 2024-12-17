@@ -241,6 +241,7 @@ void ServersManager::send_response(pollfd &pfd)
 	if (!cur_client->_headers_sended)
 	{
 		response = cur_client->_response->get_response_header();
+		pp BLUE << "RESP -> " << response << RESET << endl;
 		cur_client->_headers_sended = true;
 	}
 	else

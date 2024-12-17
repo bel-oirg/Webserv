@@ -34,6 +34,10 @@ class Cgi
 		int 	cgi_get_code();
 		string 	cgi_get_response();
 		bool	is_cgi_ready();
+		int 	&get_outfd()
+		{
+			return (this->fdout);
+		}
 		// ~Cgi();
 };
 

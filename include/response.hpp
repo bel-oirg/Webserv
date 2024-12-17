@@ -2,9 +2,10 @@
 #define RESPONSE_HPP
 
 #include "request.hpp"
+#include "cgi.hpp"
 #define CHUNK_SIZE 1024
 
-#define	ERR_DIR "/Users/abennar/Desktop/merge2/Error_pages/"
+#define	ERR_DIR "/Users/bel-oirg/Desktop/webserv/Error_pages/"
 
 using std::string; 
 
@@ -23,6 +24,8 @@ class response : public request
         string          _body;
         std::ifstream   infile;
         size_t          file_size;
+        Cgi             _cgi;
+        bool            _is_cgi;
     
     public:
         bool            _eof;
@@ -45,7 +48,7 @@ class response : public request
 		string get_script_path();
         string get_response_header();
         bool prepare_autoindex();
-        std::map<string, string>    prepare_cgi(Server &server);
+        std::map<string, string>    prepare_cgi(/*Server &server*/);
 };
 
 
