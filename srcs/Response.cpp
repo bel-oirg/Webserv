@@ -37,10 +37,18 @@ std::string response::get_response_header() //_____SEND__RESP__HEAD
 {
     if (this->stat_code == -1)
     {
-        _is_cgi = true;
-        // cgi_response ress()
-        cout << RED << "HERE\n" << RESET <<  endl;
-        _cgi.cgi_init(resource_path, _body, prepare_cgi());
+        if (!_is_cgi)
+        {
+            _is_cgi = true;
+            cout << RED << "HERE\n" << RESET <<  endl;
+            _cgi.cgi_init(resource_path, _body, prepare_cgi());
+        }
+
+        if (_cgi.is_cgi_ready())
+        {
+            cgi_response resp(_cgi.cgi_get_code());
+            return (resp.get_cgi_response(_cgi.get_outfd()));
+        }
 
         // if (_cgi.is_cgi_ready())
 		// {
@@ -265,23 +273,21 @@ string response::get_to_send() //_____RESP_BODY_SEND__
         stat_code = _cgi.cgi_get_code();
         if (stat_code == 200)
         {
-			lseek(_cgi.get_outfd(), 0, SEEK_SET);
-
             char buff[2001];
             int readen = read(_cgi.get_outfd(), buff, 2000);
-            pp  buff << " ++ " << _cgi.get_outfd() << " {} " << readen << endl;
             if (readen > 0)
                 return (string(buff));
             else if (!readen)
             {
                 this->_eof = true;
-                return ("EOF");
+                close(_cgi.get_outfd());
+                return ("");
             }
             else
             {
                 this->_eof = true;
                 //err
-                return ("ERR");
+                return ("");
             }
         }
         else

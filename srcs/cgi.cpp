@@ -126,7 +126,7 @@ void Cgi::cgi_run()
 				{
 					code = 200;
 					// char buffer[101];
-					lseek(fdout, 0, SEEK_SET);
+					
 					printf("HELLLL\n");
 					// while (true)
 					// {
@@ -148,7 +148,7 @@ void Cgi::cgi_run()
 					code = 500;
 				}
 				close(fdin);
-				close(fdout);
+				// close(fdout);
 				child_stat = 2;
 				return;
 			}
@@ -162,7 +162,7 @@ bool Cgi::is_cgi_ready()
 	if (child_stat == 2)
 	{
 		close(fdin);
-		close(fdout);
+		// close(fdout);
 		return (true);
 	}
 	return (false);

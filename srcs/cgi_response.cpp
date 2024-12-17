@@ -7,19 +7,19 @@ void cgi_response::set_status()
     std::map<int, std::string> status_map;
 
     status_map[500] = std::string("Internal Server Error");
-    status_map[200] = std::string("OK");
+    status_map[200] = std::string("200 OK");
     status_map[504] = std::string("Gateway Timeout");
     _status = status_map[cgi_stat_code];
 }
 
-cgi_response::cgi_response(std::string cgi_body, int cgi_stat_code) : cgi_stat_code(cgi_stat_code), _body(cgi_body)
+cgi_response::cgi_response(int cgi_stat_code) : cgi_stat_code(cgi_stat_code)
 {
     // cout <<  "RAW_RESPO--------###" << cgi_body << "ENDHERE-----\n";
     set_status();
     set_server();
-    set_body();
+    // set_body();
     set_connection();
-    set_content_length();
+    // set_content_length();
 }
 
 void cgi_response::set_body()
@@ -55,17 +55,20 @@ void cgi_response::set_connection()
     this->_connection = "close";
 }
 
-std::string cgi_response::get_cgi_response()
+std::string cgi_response::get_cgi_response(int fdout)
 {
     std::stringstream   line;
     line << "HTTP/1.1 " << _status << "\r\n";
     line << "Connection: " << this->_connection << "\r\n";
     line << "Server: " << this->_server << "\r\n";
-    line << "Content-Type: " << _content_type << "\r\n";
-    line << "Content-Length: " << this->_content_length << "\r\n";
+    line << "Content-Type: " << "text/html" << "\r\n";
+
+    line << "Content-Length: " << lseek(fdout, 0, SEEK_END) << "\r\n";
 
     line << "\r\n";
-    line << _body;
+    // line << _body;
 
+    lseek(fdout, 0, SEEK_SET);
+    
     return (line.str());
 }

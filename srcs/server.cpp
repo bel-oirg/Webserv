@@ -241,12 +241,15 @@ void ServersManager::send_response(pollfd &pfd)
 	if (!cur_client->_headers_sended)
 	{
 		response = cur_client->_response->get_response_header();
-		pp BLUE << "RESP -> " << response << RESET << endl;
-		cur_client->_headers_sended = true;
+		if (!response.empty())
+		{
+			cur_client->_headers_sended = true;
+		}
 	}
 	else
 	{
 		response = cur_client->_response->get_to_send();
+`		printf("--> %s\n", response.c_str());
 	}
 
 	cur_client->register_interaction();

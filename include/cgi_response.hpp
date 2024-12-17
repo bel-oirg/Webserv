@@ -25,9 +25,9 @@ class cgi_response
         void    set_body(); //it set also the content type
         void    set_server();
         void    set_connection();
-        std::string get_cgi_response();
+        std::string get_cgi_response(int fdout);
 
-        cgi_response(std::string body, int cgi_stat_code);
+        cgi_response(int cgi_stat_code);
 };
 
 
