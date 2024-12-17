@@ -249,7 +249,7 @@ void ServersManager::send_response(pollfd &pfd)
 	else
 	{
 		response = cur_client->_response->get_to_send();
-`		printf("--> %s\n", response.c_str());
+		printf("--> %s\n", response.c_str());
 	}
 
 	cur_client->register_interaction();
