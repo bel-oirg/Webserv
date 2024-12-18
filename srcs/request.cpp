@@ -2,7 +2,6 @@
 #include "server.hpp"
 #include <algorithm>
  
-//TODO check 1.1
 request::request(std::string raw_req, std::map<std::string, loc_details> locations) : req(raw_req), locations(locations)
 {
 	upload_eof = false;
@@ -65,7 +64,6 @@ bool    request::valid_elem(std::string elem)
 
 bool    request::is_valid_URI()
 {
-    //BUG maybe string str = "data" CPP11
     std::string allowed_URI = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-._~:/?#[]@!$&'()*+,;=%";
     for (size_t index = 0; index < URI.size() ; index++)
     {
@@ -411,9 +409,6 @@ bool    request::get_auto_index()
 
 int request::process_multipart(std::string &current_part) //____UPLOAD_REQ_
 {
-    std::string line; // BUG unused var
-
-
     if (file_name.empty())
     {
         uploaded_size = 0;
@@ -567,10 +562,3 @@ request::~request()
     if (outfile && outfile.is_open())
         outfile.close();
 }
-
-/*
-    TODO maybe you should encode the URL
-    If the data contain characters that are not allowed in URLs, these characters are URL-encoded.
-    This basically means that the character (say ~) is replaced with a % followed by its two-digit ASCII number (say %7E).
-    The details are available in RFC 1738 about URLs, which is linked to in the references.
-*/

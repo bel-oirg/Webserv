@@ -313,7 +313,7 @@ string response::get_to_send() //_____RESP_BODY_SEND__
 void response::set_body()
 {
     _body = "";
-    if (this->stat_code == 301)
+    if (this->stat_code == 301 || this->stat_code == -1)
         return;
 
     if (this->stat_code / 400)
@@ -324,7 +324,7 @@ void response::set_body()
             prep_body(ERR_DIR + wbs::to_string(this->stat_code) + ".html"); //BUG CPP11
     }
     else if (this->stat_code == 204)
-        _body = "Content Uploaded Successfully"; //TODO 204 returns nothing
+        _body = "Content Uploaded Successfully";
     else if (this->stat_code == 200)
     {
         if (resource_type == 1 && !current_loc.index_path.size() && get_auto_index())
@@ -335,11 +335,8 @@ void response::set_body()
         else
             prep_body(this->resource_path);
     }
-    else if (stat_code != -1)
-    {
-        err_("stat_code unknown");
-        stat_code = 501;
-    }
+    err_("stat_code unknown");
+    stat_code = 501;
 }
 
 std::map<std::string, std::string>    response::prepace_env_cgi()
@@ -368,11 +365,10 @@ response::response(std::string req, std::map<string, loc_details> locations) : r
 {
     this->_eof = false;
     this->_is_cgi = false;
-     //JUST REP
-    set_connection(); //JUST REP
-    set_server(); //JUST REP
-    set_cookies(); //JUST REP
-    set_location(); //JUST REP
+    set_connection();
+    set_server();
+    set_cookies();
+    set_location();
     set_body();
     set_content_type();
     set_content_length();
@@ -388,5 +384,5 @@ response::~response()
 
 /*
 TODO Set a default file to answer if the request is a directory.
-TODO configure where they should be saved.
+configure where they should be saved.
 */
