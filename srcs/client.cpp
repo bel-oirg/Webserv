@@ -1,7 +1,6 @@
 #include "webserv.hpp"
 #include "clients.hpp"
 #include "response.hpp"
-#include "cgi_response.hpp"
 
 Client::Client(Server &server, int fd)
 	: _server(server),
@@ -47,38 +46,6 @@ void Client::save_request(string request)
 	{
 		_response->process_multipart(request);
 	}
-
-	// if (check_cgi == "CGI")
-	// {
-	// 	cout << RED <<  "IS CGI" << RESET << endl;
-	// 	this->_is_cgi = true;
-	// 	_cgi.cgi_init(_response->get_script_path(), _response->get_body(), _response->prepare_cgi(this->_server));
-	// }
-	// }
-	// if (_is_cgi)
-	// {
-	// 	if (_cgi.is_cgi_ready())
-	// 	{
-	// 		cgi_exit_code = _cgi.cgi_get_code();
-	// 		if (cgi_exit_code != 200)
-	// 		{
-	// 			cgi_response cgi_resp("", cgi_exit_code);
-	// 			_cgi_resp = cgi_resp.get_cgi_response();
-	// 		}
-	// 		else
-	// 		{
-	// 			cgi_response cgi_resp(_cgi.cgi_get_response(), cgi_exit_code);
-	// 			_cgi_resp = cgi_resp.get_cgi_response();
-	// 			_is_cgi = false;
-	// 		}
-	// 	}
-	// }
-	// else
-	// {
-	// 	this->_response = new response(request, this->_server.get_locations());
-	// }
-
-	// std::string check_cgi = this->_response->get_response_header();
 }
 
 pollfd &Client::get_fd()
@@ -95,11 +62,6 @@ void Client::change_event(int)
 {
 	this->_pfd.events = POLLIN;
 }
-
-// string Client::get_response()
-// {
-// 	return (_response);
-// }
 
 void Client::register_interaction()
 {

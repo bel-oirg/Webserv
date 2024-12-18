@@ -1,5 +1,4 @@
 #include "response.hpp"
-#include "cgi_response.hpp"
 #include <algorithm>
 #include "utils.hpp"
 
@@ -13,7 +12,7 @@ string response::get_body()
 	return (this->_body);
 }
 
-void response::set_status()
+std::string response::set_status(int stat_code)
 {
     static std::map<int, std::string> status_map;
     status_map[200] = std::string("200 OK");
@@ -30,48 +29,57 @@ void response::set_status()
     status_map[500] = std::string("500 Internal Server Error");
     status_map[501] = std::string("501 Not Implemented");
     status_map[504] = std::string("504 Gateway Timeout");
-    _status = status_map[stat_code];
+    return (status_map[stat_code]);
+}
+
+bool response::prep_cgi()
+{
+    if (!_is_cgi)
+    {
+        _is_cgi = true;
+        _cgi.cgi_init(resource_path, _body, prepace_env_cgi());
+    }
+    
+    if (!_cgi.is_cgi_ready())
+        return (false);
+    stat_code = _cgi.cgi_get_code();
+    _server = "CGI-2.0";
+    _content_length = lseek(_cgi.get_outfd(), 0, SEEK_END);
+    pp RED << _content_length << RESET << endl;
+    lseek(_cgi.get_outfd(), 0, SEEK_SET); //CHANGE HERE
+
+    char buff[REQUEST_MAX_SIZE + 1];
+    int readen = read(_cgi.get_outfd(), buff, REQUEST_MAX_SIZE);
+
+    if (readen <= 0)
+    {
+        this->_eof = true;
+        close(_cgi.get_outfd());
+        return(false);
+    }
+    this->_cgi_str = string(buff, readen);
+    size_t cgi_head_end = this->_cgi_str.find("\r\n\r\n");
+    if (cgi_head_end != string::npos && cgi_head_end)
+    {
+        this->_cgi_head = this->_cgi_str.substr(0, cgi_head_end);
+        this->_cgi_str = this->_cgi_str.substr(cgi_head_end + 4);
+        _content_type = "";
+        _content_length -= readen;
+    }
+    return (true);
 }
 
 std::string response::get_response_header() //_____SEND__RESP__HEAD
 {
-    if (this->stat_code == -1)
-    {
-        if (!_is_cgi)
-        {
-            _is_cgi = true;
-            cout << RED << "HERE\n" << RESET <<  endl;
-            _cgi.cgi_init(resource_path, _body, prepare_cgi());
-        }
+    if (this->stat_code == -1 && !prep_cgi())
+        return ("");
 
-        if (_cgi.is_cgi_ready())
-        {
-            cgi_response resp(_cgi.cgi_get_code());
-            return (resp.get_cgi_response(_cgi.get_outfd()));
-        }
-
-        // if (_cgi.is_cgi_ready())
-		// {
-		// 	int cgi_exit_code = _cgi.cgi_get_code();
-        //     cout << MAGENTA << "EXT ->" << cgi_exit_code << RESET <<  endl;
-		// 	if (cgi_exit_code != 200)
-		// 	{
-		// 		cgi_response cgi_resp("", cgi_exit_code);
-		// 		return (cgi_resp.get_cgi_response());
-		// 	}
-		// 	else
-		// 	{
-		// 		cgi_response cgi_resp(_cgi.cgi_get_response(), cgi_exit_code);
-		// 		_is_cgi = false;
-		// 		return (cgi_resp.get_cgi_response());
-		// 	}
-        // }
-        return "";
-    }
-    
     std::stringstream   line;
     
-    line << "HTTP/1.1 " << _status << "\r\n";
+    line << "HTTP/1.1 " << set_status(stat_code) << "\r\n";
+
+    if (!this->_cgi_head.empty())
+        line << _cgi_head << "\r\n";
 
     if (!this->_location.empty())
         line << "Location: " << this->_location << "\r\n";
@@ -96,8 +104,10 @@ std::string response::get_response_header() //_____SEND__RESP__HEAD
     if (!_location.empty())
         line << "Location: " << _location << "\r\n";
 
-
     line << "\r\n";
+
+    if (!this->_cgi_str.empty())
+        line << this->_cgi_str << "\r\n";
 
     return (line.str());
 }
@@ -129,6 +139,8 @@ void response::set_content_type()
 {
     this->_content_type = "";
 
+    if (this->stat_code == -1)
+        this->_content_type = "text/html";
     if (!this->_body.size() && !this->file_size)
         return ;
     static std::map<std::string, std::string> mime;
@@ -276,19 +288,8 @@ string response::get_to_send() //_____RESP_BODY_SEND__
             char buff[2001];
             int readen = read(_cgi.get_outfd(), buff, 2000);
             if (readen > 0)
-                return (string(buff));
-            else if (!readen)
-            {
-                this->_eof = true;
-                close(_cgi.get_outfd());
-                return ("");
-            }
-            else
-            {
-                this->_eof = true;
-                //err
-                return ("");
-            }
+                return (buff[readen] = 0, string(buff, readen));
+            return (this->_eof = true, close(_cgi.get_outfd()), "");
         }
         else
         {
@@ -301,24 +302,13 @@ string response::get_to_send() //_____RESP_BODY_SEND__
     char buff[CHUNK_SIZE + 1] = {0};
     infile.read(buff, CHUNK_SIZE);
 
-    // if (file_size > CHUNK_SIZE) //in this case we will use always CHUNKED
-    // {
-    //     _content_length = -1;
-    //     std::streamsize file_len = infile.gcount();
-    //     if (!file_len)
-    //         return(infile.close(), "0\r\n\r\n");
-
-    //     ss << std::hex << file_len << "\r\n";
-    // }
-   size_t readden = infile.gcount(); // else if
+   size_t readden = infile.gcount();
 
    if (!readden)
         return(this->_eof = true, infile.close(), "");
     
     return(std::string(buff, readden));
 }
-
-//TODO chunked body with indexed
 
 void response::set_body()
 {
@@ -352,7 +342,7 @@ void response::set_body()
     }
 }
 
-std::map<std::string, std::string>    response::prepare_cgi()
+std::map<std::string, std::string>    response::prepace_env_cgi()
 {
     std::map<std::string, std::string> environ_vars;
     environ_vars["REQUEST_METHOD"] = this->method;
@@ -378,7 +368,7 @@ response::response(std::string req, std::map<string, loc_details> locations) : r
 {
     this->_eof = false;
     this->_is_cgi = false;
-    set_status(); //JUST REP
+     //JUST REP
     set_connection(); //JUST REP
     set_server(); //JUST REP
     set_cookies(); //JUST REP
@@ -393,8 +383,7 @@ response::response(std::string req, std::map<string, loc_details> locations) : r
 
 response::~response()
 {
-    if (infile && infile.is_open())
-        infile.close();
+    infile.close();
 }
 
 /*

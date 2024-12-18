@@ -24,14 +24,17 @@ class response : public request
         string          _body;
         std::ifstream   infile;
         size_t          file_size;
+        
         Cgi             _cgi;
         bool            _is_cgi;
+        string          _cgi_head;
+        string          _cgi_str;
     
     public:
         bool            _eof;
         response(string req, std::map<string, loc_details> locations);
         ~response();
-        void set_status();
+        static std::string set_status(int stat_code);
         void set_content_length();
         void set_server();
         void set_location();
@@ -41,6 +44,7 @@ class response : public request
         void set_content_type();
 
         bool prep_body(const string &path);
+        bool prep_cgi();
         void set_body();
 		string get_body();
         string get_to_send();
@@ -48,7 +52,7 @@ class response : public request
 		string get_script_path();
         string get_response_header();
         bool prepare_autoindex();
-        std::map<string, string>    prepare_cgi(/*Server &server*/);
+        std::map<string, string>    prepace_env_cgi(/*Server &server*/);
 };
 
 

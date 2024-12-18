@@ -3,7 +3,6 @@
 // #include "config.hpp"
 #include "clients.hpp"
 #include "server.hpp"
-#include "cgi_response.hpp"
 
 std::map<string, loc_details> &Server::get_locations()
 {
@@ -217,39 +216,19 @@ void ServersManager::send_response(pollfd &pfd)
 	Client *cur_client = client_pool[pfd.fd];
 	string response;
 
-	// if (cur_client->_is_cgi)
-	// {
-	// 	if (cur_client->_cgi.is_cgi_ready())
-	// 	{
-	// 		cur_client->cgi_exit_code = cur_client->_cgi.cgi_get_code();
-	// 		if (cur_client->cgi_exit_code != 200)
-	// 		{
-	// 			cgi_response cgi_resp("", cur_client->cgi_exit_code);
-	// 			response = cgi_resp.get_cgi_response();
-	// 		}
-	// 		else
-	// 		{
-	// 			cgi_response cgi_resp(cur_client->_cgi.cgi_get_response(), cur_client->cgi_exit_code);
-	// 			response = cgi_resp.get_cgi_response();
-	// 		}
-	// 	}
-	// 	else
-	// 		return;
-	// }
-	// else
-	// {
 	if (!cur_client->_headers_sended)
 	{
 		response = cur_client->_response->get_response_header();
 		if (!response.empty())
 		{
 			cur_client->_headers_sended = true;
+			pp BLUE << response << RESET << endl;
 		}
 	}
 	else
 	{
 		response = cur_client->_response->get_to_send();
-		printf("--> %s\n", response.c_str());
+		pp MAGENTA << response << RESET << endl;
 	}
 
 	cur_client->register_interaction();
