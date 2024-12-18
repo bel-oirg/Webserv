@@ -23,8 +23,8 @@ class Cgi
 		int		child_stat;
 		char **env;
 		string request_body;
-		int		fdout;
-		int		fdin;
+		FILE*	outfile;
+		FILE*	infile;
 		int		forked;
 
 	public:
@@ -34,10 +34,12 @@ class Cgi
 		int 	cgi_get_code();
 		string 	cgi_get_response();
 		bool	is_cgi_ready();
-		int 	&get_outfd()
+		int 	get_outfd()
 		{
-			return (this->fdout);
+			return (fileno(outfile));
 		}
+		void	clear();
+
 		// ~Cgi();
 };
 

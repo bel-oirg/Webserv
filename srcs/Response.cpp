@@ -54,7 +54,7 @@ bool response::prep_cgi()
     if (readen <= 0)
     {
         this->_eof = true;
-        close(_cgi.get_outfd());
+		_cgi.clear();
         return(false);
     }
     this->_cgi_str = string(buff, readen);
@@ -289,7 +289,7 @@ string response::get_to_send() //_____RESP_BODY_SEND__
             int readen = read(_cgi.get_outfd(), buff, 2000);
             if (readen > 0)
                 return (buff[readen] = 0, string(buff, readen));
-            return (this->_eof = true, close(_cgi.get_outfd()), "");
+            return (this->_eof = true, _cgi.clear(), "");
         }
         else
         {
@@ -335,8 +335,11 @@ void response::set_body()
         else
             prep_body(this->resource_path);
     }
-    err_("stat_code unknown");
-    stat_code = 501;
+	else
+	{
+		err_("stat_code unknown");
+		stat_code = 501;
+	}
 }
 
 std::map<std::string, std::string>    response::prepace_env_cgi()

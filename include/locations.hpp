@@ -18,7 +18,7 @@ struct loc_details
     bool					has_cgi;
     bool					has_slash;
 	int						status_code;
-    size_t					client_max_body_size;
+    uint64_t				client_max_body_size;
 
 
 	loc_details() : error_pages(),

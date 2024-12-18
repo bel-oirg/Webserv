@@ -115,8 +115,7 @@ void Server::setup()
 	this->address.sin_addr.s_addr = this->host;
 
 	const int enable = 1;
-	if (setsockopt(this->socket_fd, SOL_SOCKET, SO_REUSEADDR, &enable, sizeof(int)) < 0
-	|| setsockopt(this->socket_fd, SOL_SOCKET, SO_REUSEPORT, &enable, sizeof(int)) < 0)
+	if (setsockopt(this->socket_fd, SOL_SOCKET, SO_REUSEADDR, &enable, sizeof(int)) < 0)
     	std::cerr << "setsockopt(SO_REUSEADDR) failed" << endl;
 
 	int bind_t = ::bind(this->socket_fd, (const struct sockaddr *)&(this->address), sizeof(this->address));

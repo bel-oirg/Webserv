@@ -19,7 +19,7 @@ std::string hostToString(in_addr_t host)
 
 
 // check if a line starts with "server" and is valid
-bool is_server(const std::string &line)
+bool Parse::is_server(const std::string &line)
 {
 	std::string trimmed = wbs::trim_line(line);
 
@@ -36,7 +36,7 @@ bool is_server(const std::string &line)
 }
 
 // check if a line starts with "location" and ends with "{"
-bool is_location(const std::string &line, string &path)
+bool Parse::is_location(const std::string &line, string &path)
 {
 	size_t pos = line.find("location");
 	if (pos != std::string::npos)
@@ -58,10 +58,47 @@ bool is_location(const std::string &line, string &path)
 // 	}
 // }
 
-void defaults(std::map<string, string>::iterator iter, Server &server, loc_details &loc)
+string	Parse::non_empty(string &key, string &value)
 {
-	string key = iter->first;
-	string value = iter->second;
+	if (value.empty())
+		throw runtime_error("[Error] The '" + key + "' directive cannot be empty. Provide a valid file name.");
+	else
+		return value;
+}
+
+bool	Parse::bool_type_parse(string &key, string &value)
+{
+	bool	ret_val;
+
+	if (value == "on")
+			ret_val = true;
+	else if (value == "off")
+			ret_val = false;
+	else
+		throw runtime_error("[Error] Invalid value for '" + key + "': '" + value + "'. Valid options are: 'on' or 'off'.");
+	return (ret_val);
+}
+
+std::vector<string>	Parse::allowed_methods(string &value)
+{
+	vector<string> methodes = wbs::split(value, " /t");
+	// sort(methodes.begin(), methodes.end());
+	// unique(methodes.begin(), methodes.end());
+
+	for (size_t i = 0; i < methodes.size(); ++i)
+	{
+		if (!(	methodes[i] == "GET" ||
+			 	methodes[i] == "POST" ||
+				methodes[i] == "DELETE"))
+			throw runtime_error("[Error] Invalid method: '" + methodes[i] + "'. Allowed methods are: GET, POST, DELETE.");
+	}
+	return (methodes);
+}
+
+void Parse::defaults(std::map<string, string>::iterator iter, Server &server, loc_details &loc)
+{
+	string key = wbs::trim_line(iter->first);
+	string value = wbs::trim_line(iter->second);
 	if (value[0] == '\127')
 		value.erase(0, 1);
 
@@ -82,19 +119,17 @@ void defaults(std::map<string, string>::iterator iter, Server &server, loc_detai
 	}
 	else if (key == "host")
 	{
+		if (value == "localhost")
+			value = "127.0.0.1";
 		in_addr_t host;
 		host = inet_addr(value.c_str());
-		if (host == 0)
+		if (host == static_cast<in_addr_t> (-1))
 			throw runtime_error("[Error] Invalid host address: '" + value + "'. Provide a valid IPv4 address.");
 		server.host = host;
 	}
-
 	else if (key == "index")
 	{
-		if (value.empty())
-			throw runtime_error("[Error] The 'index' directive cannot be empty. Provide a valid file name.");
-		else
-			loc.index_path = value;
+		loc.index_path = non_empty(key, value);
 	}
 	else if (key == "error_page")
 	{
@@ -114,7 +149,7 @@ void defaults(std::map<string, string>::iterator iter, Server &server, loc_detai
 	{
 		if (all_of(value.begin(), value.end(), ::isdigit)) // BUG c++ 11
 		{
-			uint32_t cmbs_value;
+			uint64_t cmbs_value;
 			cmbs_value = atoll(value.c_str());
 			loc.client_max_body_size = cmbs_value;
 		}
@@ -127,23 +162,11 @@ void defaults(std::map<string, string>::iterator iter, Server &server, loc_detai
 	}
 	else if (key == "allowed_methods")
 	{
-		loc.allowed_methods = wbs::split(value, " /t");
-		for (size_t i = 0; i < loc.allowed_methods.size(); i++)
-		{
-			if (!(loc.allowed_methods[i] == "GET" ||
-				  loc.allowed_methods[i] == "POST" ||
-				  loc.allowed_methods[i] == "DELETE"))
-				throw runtime_error("[Error] Invalid method: '" + loc.allowed_methods[i] + "'. Allowed methods are: GET, POST, DELETE.");
-		}
+		loc.allowed_methods = allowed_methods(value);
 	}
 	else if (key == "autoindex")
-	{
-		if (value == "on")
-			loc.auto_index = true;
-		else if (value == "off")
-			loc.auto_index = false;
-		else
-			throw runtime_error("[Error] Invalid value for 'autoindex': '" + value + "'. Valid options are: 'on' or 'off'.");
+	{	
+		loc.auto_index = bool_type_parse(key, value);
 	}
 	else
 	{
@@ -151,56 +174,39 @@ void defaults(std::map<string, string>::iterator iter, Server &server, loc_detai
 	}
 }
 
-void locations(map<string, string>::iterator loc, loc_details &dest)
+
+
+void Parse::locations(map<string, string>::iterator loc, loc_details &dest)
 {
-	string key = loc->first;
-	string value = loc->second;
+	string key = wbs::trim_line(loc->first);
+	string value = wbs::trim_line(loc->second);
 	if (value[0] == '\127')
 		value.erase(0, 1);
 	if (key == "allowed_methods")
 	{
-		dest.allowed_methods = wbs::split(value, " /t");
-		for (size_t i = 0; i < dest.allowed_methods.size(); i++)
-		{
-			if (!(dest.allowed_methods[i] == "GET" ||
-				  dest.allowed_methods[i] == "POST" ||
-				  dest.allowed_methods[i] == "DELETE"))
-				throw runtime_error("[Error] Invalid method: '" + dest.allowed_methods[i] + "'. Allowed methods are: GET, POST, DELETE.");
-		}
+		dest.allowed_methods = allowed_methods(value);
 	}
 	else if (key == "autoindex")
 	{
-		if (value == "on")
-			dest.auto_index = true;
-		else if (value == "off")
-			dest.auto_index = false;
-		else
-			throw runtime_error("[Error] Invalid value for 'autoindex': '" + value + "'. Valid options are: 'on' or 'off'.");
+		dest.auto_index = bool_type_parse(key, value);
 	}
 	else if (key == "root")
 	{
-		if (value.empty())
-			throw runtime_error("[Error] The 'root' directive cannot be empty. Provide a valid file name.");
-		dest.root = value;
+		dest.root = non_empty(key, value);
 	}
 	else if (key == "index")
 	{
-		if (value.empty())
-			throw runtime_error("[Error] The 'index' directive cannot be empty. Provide a valid file name.");
-		dest.index_path = value;
-		// TODO
+		dest.index_path = non_empty(key, value); // TODO change this to  vector of paths;
 	}
 	else if (key == "return")
 	{
-		if (value.empty())
-			throw runtime_error("[Error] The 'return' directive cannot be empty. Provide a valid file name.");
-		dest.redir_to = value;
+		dest.redir_to = non_empty(key, value);
 	}
 	else if (key == "client_max_body_size") // FIXME may this nor allowed here
 	{
 		if (all_of(value.begin(), value.end(), ::isdigit))
 		{
-			uint32_t cmbs_value;
+			uint64_t cmbs_value;
 			cmbs_value = atoll(value.c_str());
 			dest.client_max_body_size = cmbs_value;
 		}
@@ -209,27 +215,15 @@ void locations(map<string, string>::iterator loc, loc_details &dest)
 	}
 	else if (key == "cgi_pass")
 	{
-		if (value == "on")
-			dest.has_cgi = true;
-		else if (value == "off")
-			dest.has_cgi = false;
-		else
-			throw runtime_error("[Error] Invalid value for 'cgi_pass': '" + value + "'. Valid options are: 'on' or 'off'.");
+		dest.has_cgi = bool_type_parse(key, value);
 	}
 	else if (key == "upload_path")
 	{
-		if (value.empty())
-			throw runtime_error("[Error] The 'upload_path' directive cannot be empty. Provide a valid file name.");
-		dest.upload_path = value;
+		dest.upload_path = non_empty(key, value);
 	}
 	else if (key == "upload_enable")
-	{
-		if (value == "on")
-			dest.enable_upload = true;
-		else if (value == "off")
-			dest.enable_upload = false;
-		else
-			throw runtime_error("[Error] Invalid value for 'upload_enable': '" + value + "'. Valid options are: 'on' or 'off'.");
+	{	
+		dest.enable_upload = bool_type_parse(key, value);
 	}
 	else
 	{

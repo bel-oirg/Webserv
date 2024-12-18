@@ -5,7 +5,7 @@
 #include "cgi.hpp"
 #define CHUNK_SIZE 1024
 
-#define	ERR_DIR "/Users/bel-oirg/Desktop/webserv/Error_pages/"
+#define	ERR_DIR "/Users/abennar/Desktop/lastpush/Error_pages/"
 
 using std::string; 
 

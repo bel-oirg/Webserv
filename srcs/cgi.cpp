@@ -46,34 +46,41 @@ void Cgi::cgi_run()
 		char *args[3];
 		switch (this->type)
 		{
-		case python:
-			args[0] = (char *) ("/usr/bin/python3");
-			break;
-		case shell:
-			args[0] = (char *) ("/bin/sh");
-			break;
-		case ruby:
-			args[0] = (char *) ("/usr/bin/ruby");
-			break;
-		case php:
-			args[0] = (char *) ("/usr/bin/php");
-			break;
-		case binary:
-			args[0] = (char *) (script_path.c_str());
-			break;
-		default:
+			case python:
+				args[0] = (char *)("/usr/bin/python3");
+				break;
+			case shell:
+				args[0] = (char *)("/bin/bash");
+				break;
+			case ruby:
+				args[0] = (char *)("/usr/bin/ruby");
+				break;
+			case php:
+				args[0] = (char *)("/usr/bin/php");
+				break;
+			case binary:
+				args[0] = (char *)(script_path.c_str());
+				break;
+			default:
+				code = 500;
+				child_stat = 2;
+				return;
+		}
+		args[1] = (char *)script_path.c_str();
+		args[2] = NULL;
+
+		this->outfile = tmpfile();
+		this->infile  = tmpfile();
+		if (outfile == NULL || infile == NULL)
+		{
 			code = 500;
 			child_stat = 2;
 			return;
 		}
-		args[1] = (char *) script_path.c_str();
-		args[2] = NULL;
 
-		fdout = fileno(tmpfile());
-		fdin = fileno(tmpfile()); // BUG handle errors 
 
-		write(fdin, request_body.c_str(), request_body.size());
-		lseek(fdin, 0, SEEK_SET);
+		write(fileno(infile), request_body.c_str(), request_body.size());
+		lseek(fileno(infile), 0, SEEK_SET);
 
 		child_stat = 1;
 		forked = fork();
@@ -87,13 +94,13 @@ void Cgi::cgi_run()
 		if (forked == 0)
 		{
 			// char const * *argv = args;
-			alarm(10); // Set timeout for CGI execution
-			dup2(fdin, STDIN_FILENO);
-			dup2(fdout, STDOUT_FILENO);
-			close(fdin);
-			close(fdout);
+			// alarm(10); // Set timeout for CGI execution
+			dup2(fileno(infile), STDIN_FILENO);
+			dup2(fileno(outfile), STDOUT_FILENO);
+			close(fileno(infile));
+			close(fileno(outfile));
 			execve(args[0], args, env);
-			perror("execve() failed");
+			perror(args[1]);
 			exit(1);
 		}
 	}
@@ -115,8 +122,7 @@ void Cgi::cgi_run()
 					this->code = 500;
 					std::cerr << "CGI killed by signal [" << WTERMSIG(status) << "]" << std::endl;
 				}
-				close(fdin);
-				close(fdout);
+
 				child_stat = 2;
 				return;
 			}
@@ -131,8 +137,6 @@ void Cgi::cgi_run()
 					std::cerr << "CGI error : exit status => [" << WEXITSTATUS(status) << "]" << std::endl;
 					code = 500;
 				}
-				close(fdin);
-				// close(fdout);
 				child_stat = 2;
 				return;
 			}
@@ -145,8 +149,6 @@ bool Cgi::is_cgi_ready()
 	cgi_run();
 	if (child_stat == 2)
 	{
-		close(fdin);
-		// close(fdout);
 		return (true);
 	}
 	return (false);
@@ -173,24 +175,18 @@ void Cgi::cgi_init(string scriptpath, string _request_body, std::map<string, str
 	this->script_path = scriptpath;
 	this->request_body = _request_body;
 	get_script_type();
-	cgi_run();
+}
 
-	for (i = 0; env[i]; ++i)
+void Cgi::clear()
+{
+	for (int i = 0; env[i]; ++i)
 	{
 		delete[] env[i];
 	}
 	delete[] env;
-	// close(fdin);
-	// close(fdout);
-}
 
-// Cgi::~Cgi() {
-//     if (env) {
-//         for (int i = 0; env[i]; ++i) {
-//             delete[] env[i];
-//         }
-//         delete[] env;
-//     }
-//     // close(fdout);
-//     // close(fdin);
-// }
+	close (fileno(infile));
+	close (fileno(outfile));
+	fclose(infile);
+	fclose(outfile);
+}
