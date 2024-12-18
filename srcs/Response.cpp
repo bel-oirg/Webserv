@@ -107,7 +107,7 @@ std::string response::get_response_header() //_____SEND__RESP__HEAD
     line << "\r\n";
 
     if (!this->_cgi_str.empty())
-        line << this->_cgi_str << "\r\n";
+        line << this->_cgi_str;
 
     return (line.str());
 }
