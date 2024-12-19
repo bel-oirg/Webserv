@@ -4,29 +4,48 @@
 #include "clients.hpp"
 #include "server.hpp"
 
+
 std::map<string, loc_details> &Server::get_locations()
 {
 	return (this->locations);
 }
 
-Server::Server() : port(0), server_name(""), host(0), _timeout(10)
+
+
+Server::Server():
+	server_fds(),
+	locations(),
+	port(-1),   
+	server_name(),
+	host(-1),
+	socket_fd(-1),
+	address(),
+	index(0),
+	_pfd(),
+	_timeout(10) // TIMEOUT
 {}
+
+Server::Server(const Server& cpy)
+{
+	*this = cpy;
+}
 
 Server &Server::operator=(const Server &cpy)
 {
 	if (this != &cpy)
 	{
+		server_fds = cpy.server_fds;
+		locations = cpy.locations;
 		port = cpy.port;
 		server_name = cpy.server_name;
 		host = cpy.host;
-		locations = cpy.locations;
+		socket_fd = cpy.socket_fd;
+		address = cpy.address;
+		index = cpy.index;
+		_pfd = cpy._pfd;
+		_timeout = cpy._timeout;
 	}
 	return *this;
-}
-
-Server::Server(const Server &cpy)
-{
-	*this = cpy;
 }
 
 void Server::print() const
@@ -34,6 +53,7 @@ void Server::print() const
 	cout << "Server Name: " << server_name << std::endl;
 	cout << "Port: " << port << std::endl;
 	cout << "Host: " << hostToString(host) << std::endl;
+	cout << "Timeout: " << _timeout << endl;
 	cout << "Locations:" << std::endl;
 	for (std::map<std::string, loc_details>::const_iterator it = locations.begin(); it != locations.end(); ++it)
 	{
@@ -175,17 +195,7 @@ void ServersManager::get_request(pollfd &pfd)
 
 	int valread;
 	valread = recv(pfd.fd, buffer, REQUEST_MAX_SIZE , 0);
-	if (valread == -1)
-	{
-		perror("read() failed");
-		exit(1);
-	}
-	// else if (valread >= REQUEST_MAX_SIZE)
-	// {
-	// 	cout << "request lenght too large : action => discarding" << std::endl;
-	// 	return;
-	// }
-	if (valread == 0)
+	if (valread <= 0)
 	{
 		cout << "Client disconnected" << std::endl;
 		this->remove_client(pfd.fd);
@@ -221,50 +231,42 @@ void ServersManager::send_response(pollfd &pfd)
 		if (!response.empty())
 		{
 			cur_client->_headers_sended = true;
-			pp BLUE << response << RESET << endl;
+			// pp BLUE << response << RESET << endl;
 		}
 	}
 	else
 	{
 		response = cur_client->_response->get_to_send();
-		pp MAGENTA << response << RESET << endl;
+		// pp MAGENTA << response << RESET << endl;
 	}
 
 	cur_client->register_interaction();
 
 	int wr_ret = send(pfd.fd, (void *)response.c_str(), response.size(), 0);
-	// cout << BLUE << response << RESET << endl;
-	if (wr_ret < 0)
+	if (cur_client->_response->_eof || wr_ret < 0)
 	{
-		perror ("send() ");
-	}
-	if (cur_client->_response->_eof || cur_client->_is_cgi)
-	{
-		cout << "eof: " << std::boolalpha << cur_client->_response->_eof  << std::endl;
-		cout << "is cgi: " << std::boolalpha << cur_client->_is_cgi << std::endl;
 		remove_client(pfd.fd);
-
 	}
 
 }
 
 // server core
 
-void	ServersManager::check_timeout(pollfd& fd)
+void ServersManager::check_timeout(pollfd& fd)
 {
-	if (is_server(fd.fd))
-		return;
+    if (is_server(fd.fd))
+        return;
 
-	Client	*client = client_pool[fd.fd];
+    Client* client = client_pool[fd.fd];
 
-	clock_t	last_inter = client->get_last_interaction();
-	clock_t	time_now = clock();
+    time_t last_inter = client->get_last_interaction();
+    time_t time_now = time(NULL);
 
-	double elapsed_time = double(time_now - last_inter) / CLOCKS_PER_SEC;
+    double elapsed_time = difftime(time_now, last_inter);
 
     if (elapsed_time >= client->_server._timeout)
     {
-		clog  << "Time-out client : " << fd.fd << endl;
+        std::clog << "Time-out client by : " << elapsed_time  << " expected action : " << client->_server._timeout  << std::endl;
         this->remove_client(fd.fd);
     }
 }

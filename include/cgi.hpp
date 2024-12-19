@@ -21,14 +21,15 @@ class Cgi
 		int 	code;
 		script_type type;
 		int		child_stat;
-		char **env;
+		char	**env;
 		string request_body;
 		FILE*	outfile;
 		FILE*	infile;
 		int		forked;
+		// bool	is_cgi;
 
 	public:
-		void	cgi_init(string scriptpath, string _request_body, std::map<string ,string> env_map);
+		Cgi(string scriptpath, string _request_body, std::map<string ,string> env_map);
 		void 	cgi_run();
 		void 	get_script_type();
 		int 	cgi_get_code();
@@ -38,7 +39,7 @@ class Cgi
 		{
 			return (fileno(outfile));
 		}
-		void	clear();
+		~Cgi();
 
 		// ~Cgi();
 };

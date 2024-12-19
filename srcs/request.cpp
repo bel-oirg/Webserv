@@ -238,7 +238,7 @@ int request::get_request_resource() //get_resource_type()
         this->resource_path = current_loc.root + this->URI;
 
     struct stat s;
-	cout << MAGENTA << resource_path << RESET << endl;
+	// cout << MAGENTA << resource_path << RESET << endl;
     if (!stat(this->resource_path.c_str(), &s))
     {
         if (S_ISDIR(s.st_mode))
@@ -411,6 +411,7 @@ int request::process_multipart(std::string &current_part) //____UPLOAD_REQ_
 {
     if (file_name.empty())
     {
+		// pp BLUE << current_loc.client_max_body_size << RESET << endl;
         uploaded_size = 0;
         size_t file_beg = current_part.find("filename=\"");
         size_t file_end = current_part.find("\"\r\n", file_beg + 10);

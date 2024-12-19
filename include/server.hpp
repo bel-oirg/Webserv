@@ -20,10 +20,8 @@ class ServersManager;
 class	Server
 {
 	public :
-		// std::vector<Client>				clients;
 		std::vector<pollfd>				server_fds;
 		std::map<string, loc_details>	locations;
-		// uint16_t						port;
 		uint64_t						port;
 		string							server_name;
 		in_addr_t						host;
@@ -35,14 +33,15 @@ class	Server
 
 	public :
 		Server();
+		Server(const Server& cpy);
+		Server& operator= (const Server &cpy);
+
 		std::map<string, loc_details> &get_locations(); 
 		void add_client(int fd, ServersManager &manager);
 		void setup();
 		static void run(std::vector<Server> &servers);
 		void	accept_connections(ServersManager &manager);
 		// void accept_connections();
-		Server& operator= (const Server &cpy);
-		Server(const Server &cpy);
 		void print() const;
 		pollfd& get_poll();
 		std::vector<pollfd>	get_fds();

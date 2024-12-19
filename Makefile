@@ -1,7 +1,7 @@
 NAME = webserv
 RM = rm -rf
 CC = c++
-CFLAGS = -Wall -Wextra -Werror -g 
+CFLAGS = -std=c++98 -Wall -Wextra -Werror 
 
 
 SRCS = $(shell find ./srcs -name "*.cpp")
@@ -16,7 +16,7 @@ OBJ_DIR = $(CURDIR)/Obj
 
 
 all :
-	make -j 10 $(NAME)
+	make -j $(NAME)
 
 $(NAME) : $(OBJS)
 	$(CC) $(CFLAGS) $(OBJS) -o $(NAME)

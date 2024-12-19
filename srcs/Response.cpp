@@ -37,24 +37,23 @@ bool response::prep_cgi()
     if (!_is_cgi)
     {
         _is_cgi = true;
-        _cgi.cgi_init(resource_path, _body, prepace_env_cgi());
+        _cgi = new Cgi(resource_path, _body, prepace_env_cgi());
     }
     
-    if (!_cgi.is_cgi_ready())
+    if (!_cgi->is_cgi_ready())
         return (false);
-    stat_code = _cgi.cgi_get_code();
+    stat_code = _cgi->cgi_get_code();
     _server = "CGI-2.0";
-    _content_length = lseek(_cgi.get_outfd(), 0, SEEK_END);
-    pp RED << _content_length << RESET << endl;
-    lseek(_cgi.get_outfd(), 0, SEEK_SET); //CHANGE HERE
+    _content_length = lseek(_cgi->get_outfd(), 0, SEEK_END);
+    // pp RED << _content_length << RESET << endl;
+    lseek(_cgi->get_outfd(), 0, SEEK_SET); //CHANGE HERE
 
     char buff[REQUEST_MAX_SIZE + 1];
-    int readen = read(_cgi.get_outfd(), buff, REQUEST_MAX_SIZE);
+    int readen = read(_cgi->get_outfd(), buff, REQUEST_MAX_SIZE);
 
     if (readen <= 0)
     {
         this->_eof = true;
-		_cgi.clear();
         return(false);
     }
     this->_cgi_str = string(buff, readen);
@@ -280,16 +279,16 @@ string response::get_to_send() //_____RESP_BODY_SEND__
 {
     if (_is_cgi)
     { 
-        if (!_cgi.is_cgi_ready())
+        if (!_cgi->is_cgi_ready())
             return "";
-        stat_code = _cgi.cgi_get_code();
+        stat_code = _cgi->cgi_get_code();
         if (stat_code == 200)
         {
             char buff[2001];
-            int readen = read(_cgi.get_outfd(), buff, 2000);
+            int readen = read(_cgi->get_outfd(), buff, 2000);
             if (readen > 0)
                 return (buff[readen] = 0, string(buff, readen));
-            return (this->_eof = true, _cgi.clear(), "");
+            return (this->_eof = true,  "");
         }
         else
         {
@@ -368,6 +367,7 @@ response::response(std::string req, std::map<string, loc_details> locations) : r
 {
     this->_eof = false;
     this->_is_cgi = false;
+	_cgi = NULL;
     set_connection();
     set_server();
     set_cookies();
@@ -383,6 +383,8 @@ response::response(std::string req, std::map<string, loc_details> locations) : r
 response::~response()
 {
     infile.close();
+	if (_cgi)
+		delete _cgi;
 }
 
 /*

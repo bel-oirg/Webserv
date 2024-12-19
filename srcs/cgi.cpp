@@ -103,6 +103,7 @@ void Cgi::cgi_run()
 			perror(args[1]);
 			exit(1);
 		}
+
 	}
 	else if (child_stat == 1)
 	{
@@ -154,10 +155,18 @@ bool Cgi::is_cgi_ready()
 	return (false);
 }
 
-void Cgi::cgi_init(string scriptpath, string _request_body, std::map<string, string> env_map)
+Cgi::Cgi(string _scriptpath, string _request_body, std::map<string, string> env_map)
+ :	response(""),
+	script_path(_scriptpath),
+	code(0),
+	type(),
+	child_stat(0),
+	env(new char *[env_map.size() + 1]),
+	request_body(_request_body),
+	outfile(NULL),
+	infile(NULL),
+	forked(0)
 {
-	this->child_stat = 0;
-	this->env = new char *[env_map.size() + 1];
 
 	int i = 0;
 	for (map<string, string>::iterator it = env_map.begin(); it != env_map.end(); ++it)
@@ -171,13 +180,11 @@ void Cgi::cgi_init(string scriptpath, string _request_body, std::map<string, str
 	}
 
 	this->env[i] = NULL;
-
-	this->script_path = scriptpath;
-	this->request_body = _request_body;
 	get_script_type();
 }
 
-void Cgi::clear()
+
+Cgi::~Cgi()
 {
 	for (int i = 0; env[i]; ++i)
 	{
@@ -185,8 +192,12 @@ void Cgi::clear()
 	}
 	delete[] env;
 
-	close (fileno(infile));
-	close (fileno(outfile));
+	int fd = fileno(infile);
+	if (fd != -1)
+		close(fd);
 	fclose(infile);
+	fd = fileno(outfile);
+	if (fd != -1)
+		close(fd);
 	fclose(outfile);
 }

@@ -4,7 +4,6 @@
 
 Client::Client(Server &server, int fd)
 	: _server(server),
-	  _is_cgi(false),
 	  _response(NULL),
 	  _headers_sended(false),
 	  first_response_read(true),
@@ -65,7 +64,7 @@ void Client::change_event(int)
 
 void Client::register_interaction()
 {
-	this->_last_interaction = clock();
+	this->_last_interaction = time(NULL);
 }
 
 clock_t Client::get_last_interaction()
@@ -74,7 +73,11 @@ clock_t Client::get_last_interaction()
 }
 
 Client::Client(const Client &other)
-	: _server(other._server), _request(other._request), _pfd(other._pfd), _is_cgi(other._is_cgi), _headers_sended(other._headers_sended), _last_interaction(other._last_interaction)
+	: _server(other._server)
+	, _request(other._request)
+	, _pfd(other._pfd)
+	, _headers_sended(other._headers_sended)
+	, _last_interaction(other._last_interaction)
 {
 }
 

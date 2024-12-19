@@ -57,14 +57,12 @@ class Client
 		Server&		_server;
 		string		_request;
 		pollfd		_pfd;
-		Cgi			_cgi;
-		bool		_is_cgi;
 		int			cgi_exit_code;
 		response*	_response;
 		string		_cgi_resp;
 		bool		_headers_sended;
 		bool		first_response_read;
-		clock_t		_last_interaction;
+		time_t		_last_interaction;
 		int			_buff_num;
 		string		tmp_request;
 
@@ -81,21 +79,10 @@ class Client
 		void		register_interaction();
 		clock_t		get_last_interaction();
         void        change_event(int);
-		bool		is_cgi_ready()
-		{
-			return (_cgi.is_cgi_ready());
-		}
-
-
-		bool		is_cgi()
-		{
-			return (_is_cgi);
-		}
 		
 		~Client()
 		{
 			delete _response;
-		// 	// TODO may add kill cgi;
 		}
 };
 

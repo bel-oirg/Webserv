@@ -5,7 +5,7 @@
 #include "cgi.hpp"
 #define CHUNK_SIZE 1024
 
-#define	ERR_DIR "/Users/abennar/Desktop/lastpush/Error_pages/"
+#define	ERR_DIR "/Users/abennar/Desktop/check_errors/Error_pages/"
 
 using std::string; 
 
@@ -25,7 +25,7 @@ class response : public request
         std::ifstream   infile;
         size_t          file_size;
         
-        Cgi             _cgi;
+        Cgi             *_cgi;
         bool            _is_cgi;
         string          _cgi_head;
         string          _cgi_str;
