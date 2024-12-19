@@ -3,6 +3,7 @@
 // #include "config.hpp"
 #include "clients.hpp"
 #include "server.hpp"
+#include "utils.hpp"
 
 
 std::map<string, loc_details> &Server::get_locations()
@@ -152,6 +153,10 @@ void Server::setup()
 		exit(EXIT_FAILURE);
 	}
 
+	this->_server_info.remote_addr = hostToString(this->host);
+	this->_server_info.server_name = this->server_name;
+	this->_server_info.server_port = wbs::to_string(this->port);
+
 	this->_pfd.events = POLLIN;
 	this->_pfd.revents = 0;
 	this->_pfd.fd = this->socket_fd;
@@ -245,7 +250,8 @@ void ServersManager::send_response(pollfd &pfd)
 	int wr_ret = send(pfd.fd, (void *)response.c_str(), response.size(), 0);
 	if (cur_client->_response->_eof || wr_ret < 0)
 	{
-		remove_client(pfd.fd);
+		if (cur_client->_response->_is_closed)
+			remove_client(pfd.fd);
 	}
 
 }

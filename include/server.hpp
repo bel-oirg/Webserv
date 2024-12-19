@@ -30,6 +30,7 @@ class	Server
 		int								index;
 		pollfd							_pfd;
 		uint64_t						_timeout;
+		server_info						_server_info;
 
 	public :
 		Server();
@@ -47,6 +48,10 @@ class	Server
 		std::vector<pollfd>	get_fds();
 		Client*				get_client_by_fd(int fd);
 		bool				erase(int fd);
+		server_info		&get_info()
+		{
+			return (this->_server_info);
+		}
 };
 
 class ServersManager

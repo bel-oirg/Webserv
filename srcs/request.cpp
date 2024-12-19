@@ -249,7 +249,7 @@ int request::get_request_resource() //get_resource_type()
             return (err_("get_request_resource"), -1);
     }
     else
-        return (err_("Resource not found"), 0);
+        return (err_("Resource not found" + resource_path), 0);
     return (err_("Error on getcwd"), -2);
 }
 

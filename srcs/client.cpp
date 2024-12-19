@@ -36,7 +36,7 @@ void Client::save_request(string request)
 		tmp_request += request;
 		if (headers_complet(tmp_request))
 		{
-			this->_response = new response(tmp_request, this->_server.get_locations());
+			this->_response = new response(tmp_request, this->_server.get_locations(), this->_server.get_info());
 			first_response_read = false;
 			tmp_request.clear();
 		}

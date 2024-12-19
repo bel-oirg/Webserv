@@ -70,6 +70,9 @@ bool response::prep_cgi()
 
 std::string response::get_response_header() //_____SEND__RESP__HEAD
 {
+
+	if(headers["Connection"] != "Keep-Alive")
+		_is_closed = true;
     if (this->stat_code == -1 && !prep_cgi())
         return ("");
 
@@ -345,29 +348,32 @@ std::map<std::string, std::string>    response::prepace_env_cgi()
 {
     std::map<std::string, std::string> environ_vars;
     environ_vars["REQUEST_METHOD"] = this->method;
-    // environ_vars["SERVER_NAME"] = this->_server;
+    environ_vars["SERVER_NAME"] = this->_server_info.server_name;
     environ_vars["SCRIPT_NAME"] = this->URI ;
     environ_vars["CONTENT_TYPE"] = this->_content_type;
     environ_vars["CONTENT_LENGTH"] = wbs::to_string(this->_content_length); //BUG CPP11 TODO THIS IS WRONG
     environ_vars["SCRIPT_FILENAME"] = this->resource_path;
     environ_vars["HTTP_USER_AGENT"] = this->headers["User-Agent"];
     environ_vars["HTTP_COOKIE"] = this->_cookies;
-    // environ_vars["SERVER_PORT"] = wbs::to_string(server.port); // BUG c++ 11
+    environ_vars["SERVER_PORT"] = this->_server_info.server_port;
 	environ_vars["GATEWAY_INTERFACE"] = "CGI/1337";
 	environ_vars["SERVER_SOFTWARE"] = "42 webserv (Unix)";
 	environ_vars["SERVER_PROTOCOL"] =  "HTTP/1.1";
-	// environ_vars["REMOTE_ADDR"] = hostToString(server.host);
-	// environ_vars["REMOTE_HOST"] = server.server_name;
+	environ_vars["REMOTE_ADDR"] = this->_server_info.remote_addr;
+	environ_vars["REMOTE_HOST"] = this->_server_info.server_name;
     environ_vars["QUERY_STRING"] = this->query;
 
     return (environ_vars);
 }
 
-response::response(std::string req, std::map<string, loc_details> locations) : request(req, locations)
+response::response(std::string req, std::map<string, loc_details> locations, server_info info) : request(req, locations)
 {
     this->_eof = false;
     this->_is_cgi = false;
+	this->_is_closed = true;
+
 	_cgi = NULL;
+	this->_server_info = info;
     set_connection();
     set_server();
     set_cookies();

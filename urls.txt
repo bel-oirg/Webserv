@@ -1,0 +1,4 @@
+http://127.0.0.1:8002/cgi-bin/rpn_calc.py?expression=1+2+%2B
+http://127.0.0.1:8002/cgi-bin/shape.py
+http://127.0.0.1:8002/
+http://127.0.0.1:8002/WWW/

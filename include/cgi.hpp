@@ -29,7 +29,7 @@ class Cgi
 		// bool	is_cgi;
 
 	public:
-		Cgi(string scriptpath, string _request_body, std::map<string ,string> env_map);
+		Cgi(string _scriptpath, string _request_body, map<string, string> env_map);
 		void 	cgi_run();
 		void 	get_script_type();
 		int 	cgi_get_code();

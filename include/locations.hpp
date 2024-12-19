@@ -5,10 +5,19 @@
 
 using namespace std;
 
+struct server_info
+{
+	string	server_name;
+	string	server_port;
+	string	remote_addr;
+};
+
+
 struct loc_details
 {
     map<int, string>		error_pages;
     vector<string>			allowed_methods;
+	vector<string>			cgi_extentions;
 	string					index_path; // index_path
     string					root;
     string					redir_to; // redir_to
@@ -23,6 +32,7 @@ struct loc_details
 
 	loc_details() : error_pages(),
           allowed_methods(),
+		  cgi_extentions(),
           index_path(""),
           root(""),
           redir_to(""),
@@ -69,6 +79,16 @@ struct loc_details
             cout << "        " << it->first << ": " << it->second << std::endl;
         }
     }
+
+	cout << " Cgi extentions:" << std::endl;
+    if (cgi_extentions.empty()) {
+        cout << "        None" << std::endl;
+    } else {
+        for (std::vector<string>::const_iterator it = cgi_extentions.begin(); it != cgi_extentions.end(); ++it) {
+            cout << *it << ",";
+        }
+    }
+	cout << endl;
 
     cout << "    Has Slash: " << (has_slash ? "true" : "false") << std::endl;
     // cout << "----------------------------------------------------------------------" << std::endl;

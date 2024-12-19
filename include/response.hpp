@@ -5,7 +5,7 @@
 #include "cgi.hpp"
 #define CHUNK_SIZE 1024
 
-#define	ERR_DIR "/Users/abennar/Desktop/check_errors/Error_pages/"
+#define	ERR_DIR "/Users/abennar/Desktop/webserv/Error_pages/"
 
 using std::string; 
 
@@ -24,6 +24,7 @@ class response : public request
         string          _body;
         std::ifstream   infile;
         size_t          file_size;
+		server_info		_server_info;
         
         Cgi             *_cgi;
         bool            _is_cgi;
@@ -31,8 +32,9 @@ class response : public request
         string          _cgi_str;
     
     public:
+		bool			_is_closed;
         bool            _eof;
-        response(string req, std::map<string, loc_details> locations);
+        response(string req, std::map<string, loc_details> locations, server_info);
         ~response();
         static std::string set_status(int stat_code);
         void set_content_length();

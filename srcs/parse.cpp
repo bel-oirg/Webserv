@@ -225,6 +225,13 @@ void Parse::locations(map<string, string>::iterator loc, loc_details &dest)
 	{	
 		dest.enable_upload = bool_type_parse(key, value);
 	}
+	else if (key == "cgi_ext")
+	{
+		vector<string> splited  = wbs::split(value, ",");
+		for_each(splited.begin(), splited.end(), wbs::trim_line);
+		dest.cgi_extentions = splited;
+		// POS use this
+	}
 	else
 	{
 		throw runtime_error("[Error] Unknown argument for location directive: '" + key + "'. Check 'webserv -h'");

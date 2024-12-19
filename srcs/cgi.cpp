@@ -95,12 +95,12 @@ void Cgi::cgi_run()
 		{
 			// char const * *argv = args;
 			// alarm(10); // Set timeout for CGI execution
+
 			dup2(fileno(infile), STDIN_FILENO);
 			dup2(fileno(outfile), STDOUT_FILENO);
 			close(fileno(infile));
 			close(fileno(outfile));
 			execve(args[0], args, env);
-			perror(args[1]);
 			exit(1);
 		}
 
@@ -155,7 +155,7 @@ bool Cgi::is_cgi_ready()
 	return (false);
 }
 
-Cgi::Cgi(string _scriptpath, string _request_body, std::map<string, string> env_map)
+Cgi::Cgi(string _scriptpath, string _request_body, map<string, string> env_map)
  :	response(""),
 	script_path(_scriptpath),
 	code(0),
