@@ -1,6 +1,6 @@
-#define	ERR_DIR "/Users/abennar/Desktop/webserv/Error_pages/"
-#define UPLOAD_DIR "/Users/abennar/goinfre/UPLOAD/"
-#define CGI_ERR_DIR "/Users/abennar/Desktop/webserv/Error_pages/"
+#define	ERR_DIR "/Users/bel-oirg/Desktop/merge_here/Error_pages/"
+#define UPLOAD_DIR "/Users/bel-oirg/Desktop/merge_here/UPLOAD/"
+
 #define CHUNK_SIZE 1024
 #define MAX_URI_SIZE 2048
 #define REQUEST_MAX_SIZE 2000
@@ -20,13 +20,13 @@
 #include <stdint.h>
 #include <map>
 #include <iostream>
-#include <iostream>
 #include <sys/socket.h>
 #include <arpa/inet.h>
 #include <fcntl.h>
 #include <unistd.h>
-#include <cstring>
+#include <sys/types.h>
 #include <sys/socket.h>
+#include <sys/wait.h>
 #include <assert.h>
 #include <netinet/in.h>
 #include <cstring>
@@ -44,7 +44,7 @@
 
 using namespace std;
 
-// using std::string;
+using std::string;
 // using cout;
 // using std::endl;
 // using std::cerr;

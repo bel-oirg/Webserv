@@ -1,7 +1,7 @@
 #ifndef CGI_HPP
 #define CGI_HPP
-#include "server.hpp"
 
+#include "server.hpp"
 
 enum script_type
 {

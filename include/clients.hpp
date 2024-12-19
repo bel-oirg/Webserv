@@ -3,7 +3,6 @@
 
 #include "server.hpp"
 #include "cgi.hpp"
-// #include "locations.hpp"
 #include "response.hpp"
 
 

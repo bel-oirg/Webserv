@@ -3,11 +3,6 @@
 
 #include "request.hpp"
 #include "cgi.hpp"
-#define CHUNK_SIZE 1024
-
-#define	ERR_DIR "/Users/abennar/Desktop/webserv/Error_pages/"
-
-using std::string; 
 
 class response : public request
 {
@@ -54,7 +49,7 @@ class response : public request
 		string get_script_path();
         string get_response_header();
         bool prepare_autoindex();
-        std::map<string, string>    prepace_env_cgi(/*Server &server*/);
+        std::map<string, string>    prepare_env_cgi(/*Server &server*/);
 };
 
 

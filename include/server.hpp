@@ -1,18 +1,9 @@
 #ifndef SERVER_HPP
 #define SERVER_HPP
 
-#include <iostream>
-#include <vector>
-#include <map>
-#include <string>
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <poll.h>
 #include "locations.hpp"
 
 std::string hostToString(in_addr_t host);
-
-using namespace std;
 
 class Client;
 class ServersManager;

@@ -1,8 +1,5 @@
 #include "cgi.hpp"
-#include <sys/types.h>
-#include <sys/wait.h>
 #include "webserv.hpp"
-#include <cstdlib>
 
 int Cgi::cgi_get_code()
 {

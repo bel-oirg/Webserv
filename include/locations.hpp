@@ -3,8 +3,6 @@
 
 #include "webserv.hpp"
 
-using namespace std;
-
 struct server_info
 {
 	string	server_name;

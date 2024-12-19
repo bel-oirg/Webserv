@@ -236,13 +236,12 @@ void ServersManager::send_response(pollfd &pfd)
 		if (!response.empty())
 		{
 			cur_client->_headers_sended = true;
-			// pp BLUE << response << RESET << endl;
 		}
 	}
 	else
 	{
 		response = cur_client->_response->get_to_send();
-		// pp MAGENTA << response << RESET << endl;
+		pp MAGENTA << "-->" << response << RESET << endl;
 	}
 
 	cur_client->register_interaction();

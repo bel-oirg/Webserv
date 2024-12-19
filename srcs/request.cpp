@@ -79,7 +79,7 @@ bool    request::is_valid_URI()
     return (true);
 }
 
-bool is_valid_content_length(const string &str_num, size_t &num) // Bug unused
+bool is_valid_size_t(const string &str_num, size_t &num)
 {
     std::stringstream ss(str_num);
     char c;
@@ -347,27 +347,21 @@ int     request::DELETE()
             return (409);
         this->add_slash = true;
         if (!if_location_has_cgi())
-            return (403);
-        if (is_dir_has_index_path())
         {
-            if (if_location_has_cgi())
-            {
-                if (!is_dir_has_index_path())
-                    return (403);
-                return (-1);
-            }
             if (delete_all_folder_content(resource_path))
                 return (204);
             if (has_write_access_on_folder())
                 return (500);
             return (403);
         }
+        if (!is_dir_has_index_path())
+            return (403);
+        return (-1);
     }
-    //file
-    if (!if_location_has_cgi())
+    if (!if_location_has_cgi()) // file
     {
         remove(this->resource_path.c_str());
-        return (204);
+        return (pp "File deleted succesfully", 204);
     }
     return (-1);
 }
@@ -411,8 +405,11 @@ int request::process_multipart(std::string &current_part) //____UPLOAD_REQ_
 {
     if (file_name.empty())
     {
-		// pp BLUE << current_loc.client_max_body_size << RESET << endl;
         uploaded_size = 0;
+        if (!is_valid_size_t(headers["Content-Length"], this->length))
+            return (this->eof = true, err_("Invalid content-length") ,0);
+
+        //TODO check the filename inside the boundary 
         size_t file_beg = current_part.find("filename=\"");
         size_t file_end = current_part.find("\"\r\n", file_beg + 10);
         if (file_beg == std::string::npos || file_end == std::string::npos)
@@ -429,24 +426,20 @@ int request::process_multipart(std::string &current_part) //____UPLOAD_REQ_
         size_t cont_beg = current_part.find("\r\n\r\n");
         if (cont_beg == std::string::npos)
             return (this->eof = true, err_("No body found to upload"), 0);
-
         current_part =  current_part.substr(cont_beg + 4);
-		// cout << "IN THE STATMENT" << endl;
+
+        length -= cont_beg + 12 + boundary.size();
     }
-    size_t last_bound_beg = current_part.find("\r\n--");
-    if (last_bound_beg != std::string::npos)
+
+    if (uploaded_size + current_part.size() >= this->length)
     {
-        outfile << current_part.substr(0, last_bound_beg);
-        uploaded_size += last_bound_beg;
+        outfile << current_part.substr(0, this->length - uploaded_size);
         this->eof = true;
         outfile.close();
         return (pp "file uploaded successfuly\n", upload_eof = true);
     }
-    else
-    {
-        outfile << current_part;
-        uploaded_size += current_part.size();
-    }
+    outfile << current_part;
+    uploaded_size += current_part.size();
     return (1);
 }
 
@@ -560,6 +553,5 @@ bool request::has_write_access_on_folder()
 
 request::~request()
 {
-    if (outfile && outfile.is_open())
-        outfile.close();
+    outfile.close();
 }

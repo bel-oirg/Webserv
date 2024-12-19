@@ -3,8 +3,6 @@
 
 #include "webserv.hpp"
 
-using namespace std;
-
 struct loc_details;
 
 typedef std::map<string, string>::iterator default_iter;

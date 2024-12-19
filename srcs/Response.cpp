@@ -37,7 +37,7 @@ bool response::prep_cgi()
     if (!_is_cgi)
     {
         _is_cgi = true;
-        _cgi = new Cgi(resource_path, _body, prepace_env_cgi());
+        _cgi = new Cgi(resource_path, _body, prepare_env_cgi());
     }
     
     if (!_cgi->is_cgi_ready())
@@ -326,7 +326,11 @@ void response::set_body()
             prep_body(ERR_DIR + wbs::to_string(this->stat_code) + ".html"); //BUG CPP11
     }
     else if (this->stat_code == 204)
-        _body = "Content Uploaded Successfully";
+    {
+        if (method != "DELETE")
+            _body = "File Uploaded Successfully";
+        _body = "File Deleted Successfully";
+    }
     else if (this->stat_code == 200)
     {
         if (resource_type == 1 && !current_loc.index_path.size() && get_auto_index())
@@ -344,7 +348,7 @@ void response::set_body()
 	}
 }
 
-std::map<std::string, std::string>    response::prepace_env_cgi()
+std::map<std::string, std::string>    response::prepare_env_cgi()
 {
     std::map<std::string, std::string> environ_vars;
     environ_vars["REQUEST_METHOD"] = this->method;
