@@ -27,11 +27,6 @@ string fix_slash(string base, string file)
     return (base + file);
 }
 
-// inline void     err_(const std::string &err)
-// {
-//     std::cerr << "[-] " << err << std::endl;
-// }
-
 std::string trim_line(const std::string &line)
 {
     size_t first = line.find_first_not_of(" \t");
@@ -96,6 +91,9 @@ bool    request::is_valid_URI()
 
 bool is_valid_size_t(const string &str_num, size_t &num)
 {
+    if (str_num.empty())
+        return(num = 0, true);
+        
     std::stringstream ss(str_num);
     char c;
 
@@ -167,14 +165,6 @@ int request::is_req_well_formed() //REQ
         && this->headers.find("Content-Length") == this->headers.end()
         && this->method == "POST")
         return (err_("no Trans/Cont length and the method is POST"), 400);
-    
-    //TODO maybe client max body size is not well
-    // size_t content_length = 0;
-    // is_valid_content_length(this->headers["Content-Length"], content_length);
-
-    // pp MAGENTA << content_length << " ---- "  << current_loc.client_max_body_size << RESET << endl;
-    // if (content_length > current_loc.client_max_body_size)
-    //     return (err_("BODY > CLIENT_MAX_BODY _SIZE"), 413);
     
     return (0);
 }
@@ -389,6 +379,10 @@ int     request::init_parse_req()
         return (stat_code);
     if (!get_matched_loc_for_req_uri())
         return (404);
+
+    is_valid_size_t(this->headers["Content-Length"], length);
+    if (length > current_loc.client_max_body_size)
+        return (err_("BODY > CLIENT_MAX_BODY _SIZE"), 413);
 
     if (is_location_have_redir())
         return (301);

@@ -50,7 +50,6 @@ using std::string;
 
 string   fix_slash(string base, string file);
 void     err_(const std::string &err);
-// using cout;
 // using std::endl;
 // using std::cerr;
 // using std::vector;

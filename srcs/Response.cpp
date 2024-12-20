@@ -305,6 +305,13 @@ string response::get_to_send() //_____RESP_BODY_SEND__
     return(std::string(buff, readden));
 }
 
+void response::throw_err_body(string err)
+{
+    this->stat_code = 500;
+    err_(err);
+    _40X_50X();
+}
+
 void response::_20X()
 {
     if (this->stat_code == 204)
@@ -320,26 +327,15 @@ void response::_20X()
             if (is_dir_has_index_path())
                 prep_body(this->resource_path);
             else if (get_auto_index() && !prepare_autoindex())
-            {
-                this->stat_code = 501;
-                _40X_50X();
-            }
+		        throw_err_body("");
         }
         else if (resource_type == 2)
             prep_body(this->resource_path);
         else
-        {
-		    err_("resource_type unknown");
-            stat_code = 500;
-            _40X_50X();
-        }
+            throw_err_body("resource_type unknown");
     }
     else
-    {
-        err_("20X unknown");
-        stat_code = 500;
-        _40X_50X();
-    }
+        throw_err_body("20X unknown");
 }
 
 void response::_40X_50X()
@@ -366,11 +362,7 @@ void response::set_body()
     else if (this->stat_code / 200)
         _20X();
 	else
-	{
-		err_("stat_code unknown");
-		stat_code = 501;
-        set_body();
-	}
+        throw_err_body("stat_code unknown");
 }
 
 std::map<std::string, std::string>    response::prepare_env_cgi()

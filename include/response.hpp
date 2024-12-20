@@ -44,6 +44,7 @@ class response : public request
         void _20X();
         void _40X_50X();
         bool prep_cgi();
+        void throw_err_body(string err);
         void set_body();
 		string get_body();
         string get_to_send();
