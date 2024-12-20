@@ -249,7 +249,7 @@ bool response::prepare_autoindex()
     return (closedir(dirp), true);
 }
 
-inline void     err_(const std::string &err) //TODO dup in request.cpp
+inline void     err_(const std::string &err)
 {
     std::cerr << "[-] " << err << std::endl;
 }

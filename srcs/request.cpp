@@ -93,7 +93,7 @@ bool is_valid_size_t(const string &str_num, size_t &num)
 {
     if (str_num.empty())
         return(num = 0, true);
-        
+
     std::stringstream ss(str_num);
     char c;
 
@@ -415,7 +415,6 @@ int request::process_multipart(std::string &current_part) //____UPLOAD_REQ_
         if (!is_valid_size_t(headers["Content-Length"], this->length))
             return (this->eof = true, err_("Invalid content-length") ,0);
 
-        //TODO check the filename inside the boundary 
         size_t file_beg = current_part.find("filename=\"");
         size_t file_end = current_part.find("\"\r\n", file_beg + 10);
         if (file_beg == std::string::npos || file_end == std::string::npos)
