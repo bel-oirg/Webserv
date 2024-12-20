@@ -261,7 +261,7 @@ bool response::prep_body(const std::string &path)
     infile.open(path, std::ios::binary);
     if (!infile)
     {
-        this->stat_code = 501;
+        this->stat_code = 500;
         std::cerr << "Error opening " << path << std::endl;
         return (false);
     }
@@ -305,20 +305,9 @@ string response::get_to_send() //_____RESP_BODY_SEND__
     return(std::string(buff, readden));
 }
 
-void response::set_body()
+void response::_20X()
 {
-    _body = "";
-    if (this->stat_code == 301 || this->stat_code == -1)
-        return;
-
-    if (this->stat_code / 400)
-    {
-        if (current_loc.error_pages.find(this->stat_code) != current_loc.error_pages.end())
-            prep_body(fix_slash(current_loc.root, current_loc.error_pages[this->stat_code])); //BUG CPP11
-        else
-            prep_body(fix_slash(ERR_DIR,wbs::to_string(this->stat_code)) + ".html"); //BUG CPP11
-    }
-    else if (this->stat_code == 204)
+    if (this->stat_code == 204)
     {
         _body = "File Deleted Successfully";
         if (method != "DELETE")
@@ -333,7 +322,7 @@ void response::set_body()
             else if (get_auto_index() && !prepare_autoindex())
             {
                 this->stat_code = 501;
-                set_body();
+                _40X_50X();
             }
         }
         else if (resource_type == 2)
@@ -342,9 +331,40 @@ void response::set_body()
         {
 		    err_("resource_type unknown");
             stat_code = 500;
-            set_body();
+            _40X_50X();
         }
     }
+    else
+    {
+        err_("20X unknown");
+        stat_code = 500;
+        _40X_50X();
+    }
+}
+
+void response::_40X_50X()
+{
+    if (current_loc.error_pages.find(this->stat_code) != current_loc.error_pages.end())
+    {
+        if (current_loc.error_pages[this->stat_code].size())
+            prep_body(fix_slash(current_loc.root, current_loc.error_pages[this->stat_code])); //BUG CPP11
+        else
+            prep_body(fix_slash(current_loc.root, locations["default"].error_pages[this->stat_code])); //BUG CPP11
+    }
+    else
+        prep_body(fix_slash(ERR_DIR, wbs::to_string(this->stat_code)) + ".html"); //BUG CPP11
+}
+
+void response::set_body()
+{
+    _body = "";
+    if (this->stat_code == 301 || this->stat_code == -1)
+        return;
+
+    if (this->stat_code / 400)
+        _40X_50X();
+    else if (this->stat_code / 200)
+        _20X();
 	else
 	{
 		err_("stat_code unknown");

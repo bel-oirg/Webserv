@@ -237,7 +237,9 @@ bool request::is_location_have_redir() //REQ
 
 bool request::is_method_allowed_in_loc() //REQ
 {
-    std::vector<std::string> met = current_loc.allowed_methods;    
+    std::vector<std::string> met = current_loc.allowed_methods;
+    if (!met.size())
+        met = this->locations["default"].allowed_methods;
     return (std::find(met.begin(), met.end(), this->method) != met.end());
 }
 
@@ -250,7 +252,7 @@ int request::get_request_resource() //get_resource_type()
         this->resource_path = fix_slash(current_loc.root, this->URI);
 
     struct stat s;
-	cout << MAGENTA << resource_path << RESET << endl;
+	// cout << MAGENTA << resource_path << RESET << endl;
     if (!stat(this->resource_path.c_str(), &s))
     {
         if (S_ISDIR(s.st_mode))

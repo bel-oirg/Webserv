@@ -14,12 +14,12 @@ class request
         std::fstream outfile;
         std::string HTTP;
         std::string req;
-        std::map<std::string, loc_details> locations;
         size_t uploaded_size;
         size_t length;
 
     protected:
         std::map<std::string, std::string> headers;
+        std::map<std::string, loc_details> locations;
         loc_details current_loc;
 
         std::string resource_path;

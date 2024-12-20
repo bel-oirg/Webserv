@@ -41,6 +41,8 @@ class response : public request
         void set_content_type();
 
         bool prep_body(const string &path);
+        void _20X();
+        void _40X_50X();
         bool prep_cgi();
         void set_body();
 		string get_body();
