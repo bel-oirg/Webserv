@@ -32,7 +32,6 @@ class request
         int         resource_type;
         bool        add_slash;
         bool        eof;
-        bool        respond_with_autoindex;
 
     public:
 		bool		upload_eof;

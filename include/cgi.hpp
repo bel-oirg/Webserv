@@ -29,7 +29,7 @@ class Cgi
 		// bool	is_cgi;
 
 	public:
-		Cgi(string _scriptpath, string _request_body, map<string, string> env_map);
+		Cgi(string _scriptpath, string _request_body, map<string, string> env_map, string key, loc_details current_loc);
 		void 	cgi_run();
 		void 	get_script_type();
 		int 	cgi_get_code();

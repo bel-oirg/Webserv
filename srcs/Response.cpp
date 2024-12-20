@@ -37,7 +37,7 @@ bool response::prep_cgi()
     if (!_is_cgi)
     {
         _is_cgi = true;
-        _cgi = new Cgi(resource_path, _body, prepare_env_cgi());
+        _cgi = new Cgi(resource_path, _body, prepare_env_cgi(), this->correct_loc_name, current_loc);
     }
     
     if (!_cgi->is_cgi_ready())
@@ -45,7 +45,6 @@ bool response::prep_cgi()
     stat_code = _cgi->cgi_get_code();
     _server = "CGI-2.0";
     _content_length = lseek(_cgi->get_outfd(), 0, SEEK_END);
-    // pp RED << _content_length << RESET << endl;
     lseek(_cgi->get_outfd(), 0, SEEK_SET); //CHANGE HERE
 
     char buff[REQUEST_MAX_SIZE + 1];
@@ -70,7 +69,6 @@ bool response::prep_cgi()
 
 std::string response::get_response_header() //_____SEND__RESP__HEAD
 {
-
 	if(headers["Connection"] != "Keep-Alive")
 		_is_closed = true;
     if (this->stat_code == -1 && !prep_cgi())
@@ -82,9 +80,6 @@ std::string response::get_response_header() //_____SEND__RESP__HEAD
 
     if (!this->_cgi_head.empty())
         line << _cgi_head << "\r\n";
-
-    if (!this->_location.empty())
-        line << "Location: " << this->_location << "\r\n";
 
     if (this->_connection.empty())
         this->_connection = "close";
@@ -119,7 +114,7 @@ void response::set_content_length()
     if (!_body.empty())
         _content_length = _body.size();
     else if (_content_length != -1)
-        _content_length = file_size;
+        _content_length = _file_size;
 }
 
 void response::set_server()
@@ -143,7 +138,7 @@ void response::set_content_type()
 
     if (this->stat_code == -1)
         this->_content_type = "text/html";
-    if (!this->_body.size() && !this->file_size)
+    if (!this->_body.size() && !this->_file_size)
         return ;
     static std::map<std::string, std::string> mime;
 
@@ -264,7 +259,6 @@ bool response::prep_body(const std::string &path)
     if (!_body.empty())
         return (true);
     infile.open(path, std::ios::binary);
-
     if (!infile)
     {
         this->stat_code = 501;
@@ -273,7 +267,7 @@ bool response::prep_body(const std::string &path)
     }
 
     infile.seekg(0, ios::end);
-    file_size = infile.tellg();
+    _file_size = infile.tellg();
     infile.seekg(0);
     return (true);
 }
@@ -303,10 +297,9 @@ string response::get_to_send() //_____RESP_BODY_SEND__
 
     char buff[CHUNK_SIZE + 1] = {0};
     infile.read(buff, CHUNK_SIZE);
+    size_t readden = infile.gcount();
 
-   size_t readden = infile.gcount();
-
-   if (!readden)
+    if (!readden)
         return(this->_eof = true, infile.close(), "");
     
     return(std::string(buff, readden));
@@ -321,30 +314,42 @@ void response::set_body()
     if (this->stat_code / 400)
     {
         if (current_loc.error_pages.find(this->stat_code) != current_loc.error_pages.end())
-            prep_body(current_loc.root + current_loc.error_pages[this->stat_code]); //BUG CPP11
+            prep_body(fix_slash(current_loc.root, current_loc.error_pages[this->stat_code])); //BUG CPP11
         else
-            prep_body(ERR_DIR + wbs::to_string(this->stat_code) + ".html"); //BUG CPP11
+            prep_body(fix_slash(ERR_DIR,wbs::to_string(this->stat_code)) + ".html"); //BUG CPP11
     }
     else if (this->stat_code == 204)
     {
+        _body = "File Deleted Successfully";
         if (method != "DELETE")
             _body = "File Uploaded Successfully";
-        _body = "File Deleted Successfully";
     }
     else if (this->stat_code == 200)
     {
-        if (resource_type == 1 && !current_loc.index_path.size() && get_auto_index())
+        if (resource_type == 1)
         {
-            if (!prepare_autoindex())
+            if (is_dir_has_index_path())
+                prep_body(this->resource_path);
+            else if (get_auto_index() && !prepare_autoindex())
+            {
                 this->stat_code = 501;
+                set_body();
+            }
         }
-        else
+        else if (resource_type == 2)
             prep_body(this->resource_path);
+        else
+        {
+		    err_("resource_type unknown");
+            stat_code = 500;
+            set_body();
+        }
     }
 	else
 	{
 		err_("stat_code unknown");
 		stat_code = 501;
+        set_body();
 	}
 }
 
@@ -375,7 +380,8 @@ response::response(std::string req, std::map<string, loc_details> locations, ser
     this->_eof = false;
     this->_is_cgi = false;
 	this->_is_closed = true;
-
+    _content_length = 0;
+    _file_size = 0;
 	_cgi = NULL;
 	this->_server_info = info;
     set_connection();
@@ -398,6 +404,5 @@ response::~response()
 }
 
 /*
-TODO Set a default file to answer if the request is a directory.
-configure where they should be saved.
+    configure where they should be saved.
 */

@@ -5,6 +5,8 @@
 #define MAX_URI_SIZE 2048
 #define REQUEST_MAX_SIZE 2000
 #define pp cout << 
+#define ttt cout << CYAN << "\n\nTOUCHED TOUCHED\n\n" << RESET << endl; 
+
 
 #define RESET   "\033[0m"
 #define RED     "\033[31m"
@@ -45,6 +47,9 @@
 using namespace std;
 
 using std::string;
+
+string   fix_slash(string base, string file);
+void     err_(const std::string &err);
 // using cout;
 // using std::endl;
 // using std::cerr;

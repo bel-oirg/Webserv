@@ -12,10 +12,25 @@ request::request(std::string raw_req, std::map<std::string, loc_details> locatio
     
 }
 
-inline void     err_(const std::string &err)
+string fix_slash(string base, string file)
 {
-    std::cerr << "[-] " << err << std::endl;
+    if (!base.empty() && base[base.size() - 1] == '/')
+    {
+        if (!file.empty() && file[0] == '/')
+            file.erase(0, 1);
+    }
+    else
+    {
+        if (!file.empty() && file[0] != '/')
+            base.append(1, '/');
+    }
+    return (base + file);
 }
+
+// inline void     err_(const std::string &err)
+// {
+//     std::cerr << "[-] " << err << std::endl;
+// }
 
 std::string trim_line(const std::string &line)
 {
@@ -228,17 +243,14 @@ bool request::is_method_allowed_in_loc() //REQ
 
 int request::get_request_resource() //get_resource_type()
 {
-    if (current_loc.root.size())  //add / in case root does not finish with /
-        if (current_loc.root[current_loc.root.size() - 1] != '/')
-            current_loc.root += "/";
     
     if (correct_loc_name != "default")
-        this->resource_path = current_loc.root + this->URI.substr(correct_loc_name.size(), URI.size() - correct_loc_name.size());
+        this->resource_path = fix_slash(current_loc.root, this->URI.substr(correct_loc_name.size(), URI.size() - correct_loc_name.size()));
     else
-        this->resource_path = current_loc.root + this->URI;
+        this->resource_path = fix_slash(current_loc.root, this->URI);
 
     struct stat s;
-	// cout << MAGENTA << resource_path << RESET << endl;
+	cout << MAGENTA << resource_path << RESET << endl;
     if (!stat(this->resource_path.c_str(), &s))
     {
         if (S_ISDIR(s.st_mode))
@@ -255,7 +267,9 @@ int request::get_request_resource() //get_resource_type()
 
 inline bool request::is_uri_has_slash_in_end()
 {
-    return (this->URI[URI.size() - 1] == '/');
+    if (!URI.empty())
+        return (this->URI[URI.size() - 1] == '/');
+    return (false);
 }
 
 bool request::is_dir_has_index_path()
@@ -265,7 +279,7 @@ bool request::is_dir_has_index_path()
 
     if (current_loc.index_path.size())
     {
-        to_check = current_loc.root + "/" + current_loc.index_path;
+        to_check = fix_slash(current_loc.root, current_loc.index_path);
         if (!stat(to_check.c_str(), &s) && S_ISREG(s.st_mode))
         {
             resource_path = to_check;
@@ -392,13 +406,9 @@ int    request::req_arch()
 }
 
 //GET
-bool    request::get_auto_index()
+inline bool    request::get_auto_index()
 {
-    respond_with_autoindex = false;
-    if (!current_loc.auto_index)
-        return (false);
-    respond_with_autoindex = true;
-    return (true);
+    return (current_loc.auto_index);
 }
 
 int request::process_multipart(std::string &current_part) //____UPLOAD_REQ_

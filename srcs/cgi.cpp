@@ -152,7 +152,7 @@ bool Cgi::is_cgi_ready()
 	return (false);
 }
 
-Cgi::Cgi(string _scriptpath, string _request_body, map<string, string> env_map)
+Cgi::Cgi(string _scriptpath, string _request_body, map<string, string> env_map, string key, loc_details current_loc)
  :	response(""),
 	script_path(_scriptpath),
 	code(0),
@@ -164,7 +164,8 @@ Cgi::Cgi(string _scriptpath, string _request_body, map<string, string> env_map)
 	infile(NULL),
 	forked(0)
 {
-
+	(void)key;
+	(void)current_loc;
 	int i = 0;
 	for (map<string, string>::iterator it = env_map.begin(); it != env_map.end(); ++it)
 	{

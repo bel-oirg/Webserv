@@ -7,7 +7,7 @@
 class response : public request
 {
     private:
-        int _content_length;
+        int _content_length; //change 
 
         string          _status;
         string          _location; 
@@ -18,7 +18,7 @@ class response : public request
         string          _transfer_encoding;
         string          _body;
         std::ifstream   infile;
-        size_t          file_size;
+        size_t          _file_size;
 		server_info		_server_info;
         
         Cgi             *_cgi;

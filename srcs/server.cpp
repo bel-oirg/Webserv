@@ -233,6 +233,7 @@ void ServersManager::send_response(pollfd &pfd)
 	if (!cur_client->_headers_sended)
 	{
 		response = cur_client->_response->get_response_header();
+		// pp RED << "-->" << response << RESET << endl;
 		if (!response.empty())
 		{
 			cur_client->_headers_sended = true;
@@ -241,7 +242,7 @@ void ServersManager::send_response(pollfd &pfd)
 	else
 	{
 		response = cur_client->_response->get_to_send();
-		pp MAGENTA << "-->" << response << RESET << endl;
+		// pp MAGENTA << "-->" << response << RESET << endl;
 	}
 
 	cur_client->register_interaction();
