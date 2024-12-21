@@ -20,7 +20,6 @@ class response : public request
         string          _transfer_encoding;
         string          _body;
         std::ifstream   infile;
-        size_t          _file_size;
 		server_info		_server_info;
         
         Cgi             *_cgi;

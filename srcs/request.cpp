@@ -412,25 +412,23 @@ int request::process_multipart(std::string &current_part) //____UPLOAD_REQ_
     if (file_name.empty())
     {
         uploaded_size = 0;
-        if (!is_valid_size_t(headers["Content-Length"], this->length))
-            return (this->eof = true, err_("Invalid content-length") ,0);
 
         size_t file_beg = current_part.find("filename=\"");
         size_t file_end = current_part.find("\"\r\n", file_beg + 10);
         if (file_beg == std::string::npos || file_end == std::string::npos)
-            return (this->eof = true, err_("Cannot find name : ") ,0);
+            return (err_("Cannot find name : ") ,0);
 
         file_name = current_part.substr(file_beg + 10, file_end - file_beg - 10);
         if (file_name.find("/") != std::string::npos)
-            return (this->eof = true, err_("Invalid file name") ,0);
+            return (err_("Invalid file name") ,0);
 
         outfile.open(UPLOAD_DIR + file_name, std::ios::out | std::ios::binary);
         if (!outfile)
-            return (this->eof = true, err_("Failed to open the upload_file"), 0);
+            return (err_("Failed to open the upload_file"), 0);
 
         size_t cont_beg = current_part.find("\r\n\r\n");
         if (cont_beg == std::string::npos)
-            return (this->eof = true, err_("No body found to upload"), 0);
+            return (err_("No body found to upload"), 0);
         current_part =  current_part.substr(cont_beg + 4);
 
         length -= cont_beg + 12 + boundary.size();
@@ -439,7 +437,6 @@ int request::process_multipart(std::string &current_part) //____UPLOAD_REQ_
     if (uploaded_size + current_part.size() >= this->length)
     {
         outfile << current_part.substr(0, this->length - uploaded_size);
-        this->eof = true;
         outfile.close();
         return (pp "file uploaded successfuly\n", upload_eof = true);
     }

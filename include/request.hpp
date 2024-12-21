@@ -31,7 +31,6 @@ class request
         int         stat_code;
         int         resource_type;
         bool        add_slash;
-        bool        eof;
 
     public:
 		bool		upload_eof;

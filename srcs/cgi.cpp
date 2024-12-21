@@ -70,7 +70,7 @@ void Cgi::cgi_run()
 		if (forked == 0)
 		{
 			// char const * *argv = args;
-			// alarm(10); // Set timeout for CGI execution
+			alarm(2); // Set timeout for CGI execution
 
 			dup2(fileno(infile), STDIN_FILENO);
 			dup2(fileno(outfile), STDOUT_FILENO);

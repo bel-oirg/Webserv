@@ -44,7 +44,12 @@ bool response::prep_cgi()
     
     if (!_cgi->is_cgi_ready())
         return (false);
-    stat_code = _cgi->cgi_get_code();
+
+    this->stat_code = _cgi->cgi_get_code();
+    if (this->stat_code / 400)
+    {
+        return (_40X_50X(), true);
+    }
     _server = "CGI-2.0";
     _content_length = lseek(_cgi->get_outfd(), 0, SEEK_END);
     lseek(_cgi->get_outfd(), 0, SEEK_SET); //CHANGE HERE
@@ -115,8 +120,6 @@ void response::set_content_length()
 {
     if (!_body.empty())
         _content_length = _body.size();
-    else if (_content_length != -1)
-        _content_length = _file_size;
 }
 
 void response::set_server()
@@ -140,7 +143,7 @@ void response::set_content_type()
 
     if (this->stat_code == -1)
         this->_content_type = "text/html";
-    if (!this->_body.size() && !this->_file_size)
+    if (!this->_body.size() && !this->_content_length)
         return ;
     static std::map<std::string, std::string> mime;
 
@@ -261,6 +264,7 @@ bool response::prep_body(const std::string &path)
     if (!_body.empty())
         return (true);
     infile.open(path, std::ios::binary);
+    pp "{" << path << "}" << endl;
     if (!infile)
     {
         this->stat_code = 500;
@@ -269,7 +273,7 @@ bool response::prep_body(const std::string &path)
     }
 
     infile.seekg(0, ios::end);
-    _file_size = infile.tellg();
+    _content_length = infile.tellg();
     infile.seekg(0);
     return (true);
 }
@@ -289,16 +293,12 @@ string response::get_to_send() //_____RESP_BODY_SEND__
                 return (buff[readen] = 0, string(buff, readen));
             return (this->_eof = true,  "");
         }
-        else
-        {
-            // handle errors 
-        }
     }
     if (!_body.empty()) //in this case i am sure that the body is small (indexing a dir / ..)
         return (this->_eof = true, _body);
 
-    char buff[CHUNK_SIZE + 1] = {0};
-    infile.read(buff, CHUNK_SIZE);
+    char buff[REQUEST_MAX_SIZE + 1] = {0};
+    infile.read(buff, REQUEST_MAX_SIZE);
     size_t readden = infile.gcount();
 
     if (!readden)
@@ -395,7 +395,6 @@ response::response(std::string req, std::map<string, loc_details> locations, ser
     this->_is_cgi = false;
 	this->_is_closed = true;
     _content_length = 0;
-    _file_size = 0;
 	_cgi = NULL;
 	this->_server_info = info;
     set_connection();
