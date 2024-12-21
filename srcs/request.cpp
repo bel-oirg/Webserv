@@ -319,6 +319,8 @@ int     request::POST()
 {
     if (current_loc.enable_upload)
         return (if_loc_support_upload());
+    else if (length)
+        return (err_("The upload is not enabled on the config file"), 403);
 
     resource_type = get_request_resource();
     if (resource_type <= 0)
@@ -409,6 +411,7 @@ inline bool    request::get_auto_index()
 
 int request::process_multipart(std::string &current_part) //____UPLOAD_REQ_
 {
+    ttt
     if (file_name.empty())
     {
         uploaded_size = 0;

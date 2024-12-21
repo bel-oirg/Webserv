@@ -82,7 +82,7 @@
                 if (response.ok) {
                     alert("File uploaded successfully!");
                 } else {
-                    alert("Error uploading file.");
+                    alert("Error uploading file: " + response.status);
                 }
                 // Re-enable the button
                 uploadButton.disabled = false;
