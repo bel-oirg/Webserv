@@ -87,9 +87,9 @@ std::vector<string>	Parse::allowed_methods(string &value)
 
 	for (size_t i = 0; i < methodes.size(); ++i)
 	{
-		if (!(	methodes[i] == "GET" ||
-			 	methodes[i] == "POST" ||
-				methodes[i] == "DELETE"))
+		if (	methodes[i] != "GET"	&&
+			 	methodes[i] != "POST"	&&
+				methodes[i] != "DELETE")
 			throw runtime_error("[Error] Invalid method: '" + methodes[i] + "'. Allowed methods are: GET, POST, DELETE.");
 	}
 	return (methodes);
@@ -99,7 +99,7 @@ void Parse::defaults(std::map<string, string>::iterator iter, Server &server, lo
 {
 	string key = wbs::trim_line(iter->first);
 	string value = wbs::trim_line(iter->second);
-	if (value[0] == '\127')
+	if (value[0] == '\177')
 		value.erase(0, 1);
 
 	if (key == "listen")
@@ -135,7 +135,7 @@ void Parse::defaults(std::map<string, string>::iterator iter, Server &server, lo
 	{
 		int code;
 		string page;
-		std::vector<string> pages = wbs::split(value, ",\127"); // TODO maybe check multipple delemeters ,,,
+		std::vector<string> pages = wbs::split(value, ",\177"); // TODO maybe check multipple delemeters ,,,
 		for (size_t i = 0; i < pages.size(); i++)
 		{
 			std::istringstream stream(pages[i]);
@@ -168,6 +168,19 @@ void Parse::defaults(std::map<string, string>::iterator iter, Server &server, lo
 	{	
 		loc.auto_index = bool_type_parse(key, value);
 	}
+	else if (key == "cgi_executor") // POS implemented here 
+	{
+		std::vector<string> splited = wbs::split(value, ",\177");
+		for (size_t i = 0; i < splited.size(); ++i)
+		{
+			 string extention, path;
+ 			istringstream stream(splited[i]);
+ 			stream >> skipws;
+ 			if (!(stream >> extention >> path && stream.eof()))
+ 				throw runtime_error("[Error] Invalid value for 'cgi_executor': '" + extention + ":" + path + "'. Expected format: '<extention> <excuter>'.");
+ 			loc.cgi_excutor[extention] = path;
+		}
+	}
 	else
 	{
 		throw runtime_error("[Error] Unknown argument: '" + key + "'. Check 'webserv -h' for valid options.");
@@ -180,7 +193,7 @@ void Parse::locations(map<string, string>::iterator loc, loc_details &dest)
 {
 	string key = wbs::trim_line(loc->first);
 	string value = wbs::trim_line(loc->second);
-	if (value[0] == '\127')
+	if (value[0] == '\177')
 		value.erase(0, 1);
 	if (key == "allowed_methods")
 	{
@@ -225,13 +238,21 @@ void Parse::locations(map<string, string>::iterator loc, loc_details &dest)
 	{	
 		dest.enable_upload = bool_type_parse(key, value);
 	}
-	else if (key == "cgi_ext")
-	{
-		vector<string> splited  = wbs::split(value, ",");
-		for_each(splited.begin(), splited.end(), wbs::trim_line);
-		dest.cgi_extentions = splited;
-		// POS use this
-	}
+	// else if (key == "cgi_ext")
+	// {
+	// 	vector<string> splited  = wbs::split(value, " ");
+	// 	for_each(splited.begin(), splited.end(), wbs::trim_line);
+	// 	for (size_t i = 0; i < splited.size(); ++i)
+	// 	{
+	// 		if (	splited[i] != "py" 
+	// 			&&	splited[i] != "ruby" && splited[i] != "rb"
+	// 			&&	splited[i] != "sh"
+	// 			&&	splited[i] != "php" 
+	// 			&&	splited[i] != "out")
+	// 				throw runtime_error("[Error] Invalid value for 'cgi_ext': '" + splited[i] + ":" + wbs::to_string(splited[i].size()) +  "'. Unimplemented extention");
+	// 	}
+	// 	dest.cgi_extentions = splited;
+	// }
 	else
 	{
 		throw runtime_error("[Error] Unknown argument for location directive: '" + key + "'. Check 'webserv -h'");
@@ -391,11 +412,11 @@ std::vector<Server> Parse::get_servers(std::string file_name)
 
 				if (inLocation)
 				{
-					cur_config.location[cur_path][key] = value;
+					cur_config.location[cur_path][key] += (" " + value);
 				}
 				else if (inServer)
 				{
-					cur_config.defaults[key] += ("\127" + value);
+					cur_config.defaults[key] += ("\177" + value);
 				}
 				else
 					throw runtime_error("Syntax Error: Key-value pair outside of valid block.");

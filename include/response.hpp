@@ -4,6 +4,8 @@
 #include "request.hpp"
 #include "cgi.hpp"
 
+void     err_(const std::string &err);
+
 class response : public request
 {
     private:

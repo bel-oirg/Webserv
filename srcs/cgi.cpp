@@ -11,61 +11,40 @@ string Cgi::cgi_get_response()
 	return this->response;
 }
 
-void Cgi::get_script_type()
+void Cgi::load_cgi_script()
 {
-	string extention;
-	size_t dot_pos = script_path.find_last_of('.');
+	string	extention;
+	size_t	dot_pos;
 
-	// if there is no dot its binary
+	dot_pos = script_path.find('.');
 	if (dot_pos == string::npos)
 	{
-		this->type = binary;
+		code = 500;
+		child_stat =2;
+		return;
 	}
 
-	extention = script_path.substr(dot_pos);
 
-	if (extention == ".ruby")
-		this->type = ruby;
-	else if (extention == ".sh")
-		this->type = shell;
-	else if (extention == ".py")
-		this->type = python;
-	else if (extention == ".php")
-		this->type = php;
-	else
-		this->type = unknown;
+	extention = script_path.substr(dot_pos + 1);
+
+	map<string, string>::iterator it = location.cgi_excutor.find(extention);
+	if (it == location.cgi_excutor.end())
+	{
+		code = 500;
+		child_stat = 2;
+		return;
+	}
+	this->excutor = it->second;
+	this->args[0] = (char *) excutor.c_str();
+	this->args[1] = (char *) script_path.c_str();
+	this->args[2] = NULL;
+
 }
 
 void Cgi::cgi_run()
 {
 	if (child_stat == 0)
 	{
-		char *args[3];
-		switch (this->type)
-		{
-			case python:
-				args[0] = (char *)("/usr/bin/python3");
-				break;
-			case shell:
-				args[0] = (char *)("/bin/bash");
-				break;
-			case ruby:
-				args[0] = (char *)("/usr/bin/ruby");
-				break;
-			case php:
-				args[0] = (char *)("/usr/bin/php");
-				break;
-			case binary:
-				args[0] = (char *)(script_path.c_str());
-				break;
-			default:
-				code = 500;
-				child_stat = 2;
-				return;
-		}
-		args[1] = (char *)script_path.c_str();
-		args[2] = NULL;
-
 		this->outfile = tmpfile();
 		this->infile  = tmpfile();
 		if (outfile == NULL || infile == NULL)
@@ -74,7 +53,6 @@ void Cgi::cgi_run()
 			child_stat = 2;
 			return;
 		}
-
 
 		write(fileno(infile), request_body.c_str(), request_body.size());
 		lseek(fileno(infile), 0, SEEK_SET);
@@ -85,6 +63,7 @@ void Cgi::cgi_run()
 		{
 			perror("fork() failed");
 			code = 500;
+			child_stat = 2;
 			return;
 		}
 
@@ -98,6 +77,7 @@ void Cgi::cgi_run()
 			close(fileno(infile));
 			close(fileno(outfile));
 			execve(args[0], args, env);
+			perror("execve() failed");
 			exit(1);
 		}
 
@@ -152,20 +132,23 @@ bool Cgi::is_cgi_ready()
 	return (false);
 }
 
-Cgi::Cgi(string _scriptpath, string _request_body, map<string, string> env_map, string key, loc_details current_loc)
+Cgi::Cgi(string _scriptpath, string _request_body, map<string, string> env_map, string key, loc_details &current_loc)
  :	response(""),
 	script_path(_scriptpath),
 	code(0),
-	type(),
 	child_stat(0),
 	env(new char *[env_map.size() + 1]),
+	args(),
 	request_body(_request_body),
 	outfile(NULL),
 	infile(NULL),
-	forked(0)
+	forked(0),
+	key_path(key),
+	location(current_loc),
+	excutor("")
 {
-	(void)key;
-	(void)current_loc;
+	load_cgi_script();
+
 	int i = 0;
 	for (map<string, string>::iterator it = env_map.begin(); it != env_map.end(); ++it)
 	{
@@ -178,7 +161,6 @@ Cgi::Cgi(string _scriptpath, string _request_body, map<string, string> env_map, 
 	}
 
 	this->env[i] = NULL;
-	get_script_type();
 }
 
 
@@ -190,12 +172,18 @@ Cgi::~Cgi()
 	}
 	delete[] env;
 
-	int fd = fileno(infile);
-	if (fd != -1)
-		close(fd);
-	fclose(infile);
-	fd = fileno(outfile);
-	if (fd != -1)
-		close(fd);
-	fclose(outfile);
+	if (infile)
+	{
+		int fd = fileno(infile);
+		if (fd != -1)
+			close(fd);
+		fclose(infile);
+	}
+	if (outfile)
+	{
+		int fd = fileno(outfile);
+		if (fd != -1)
+			close(fd);
+		fclose(outfile);
+	}
 }

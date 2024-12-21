@@ -12,7 +12,7 @@ print("""
 </html>
 """)
 
-# Infinite loop (does nothing, runs forever)
+# Infinite loop (does nothing, runs forevew)
 while True:
     pass
  

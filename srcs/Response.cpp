@@ -2,6 +2,8 @@
 #include <algorithm>
 #include "utils.hpp"
 
+string fix_slash(string base, string file);
+
 string response::get_script_path()
 {
 	return (this->resource_path);
@@ -37,7 +39,7 @@ bool response::prep_cgi()
     if (!_is_cgi)
     {
         _is_cgi = true;
-        _cgi = new Cgi(resource_path, _body, prepare_env_cgi(), this->correct_loc_name, current_loc);
+        _cgi = new Cgi(resource_path, _body, prepare_env_cgi(), this->correct_loc_name, this->locations["default"]);
     }
     
     if (!_cgi->is_cgi_ready())

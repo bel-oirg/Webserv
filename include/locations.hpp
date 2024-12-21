@@ -3,96 +3,116 @@
 
 #include "webserv.hpp"
 
+using namespace std;
+
 struct server_info
 {
-	string	server_name;
-	string	server_port;
-	string	remote_addr;
+	string server_name;
+	string server_port;
+	string remote_addr;
 };
-
 
 struct loc_details
 {
-    map<int, string>		error_pages;
-    vector<string>			allowed_methods;
-	vector<string>			cgi_extentions;
-	string					index_path; // index_path
-    string					root;
-    string					redir_to; // redir_to
-	string					upload_path;
-    bool					auto_index;
-	bool					enable_upload;
-    bool					has_cgi;
-    bool					has_slash;
-	int						status_code;
-    uint64_t				client_max_body_size;
-
+	map<int, string> error_pages;
+	map<string, string> cgi_excutor;
+	vector<string> allowed_methods;
+	vector<string> cgi_extentions;
+	string index_path; // index_path
+	string root;
+	string redir_to; // redir_to
+	string upload_path;
+	bool auto_index;
+	bool enable_upload;
+	bool has_cgi;
+	bool has_slash;
+	int status_code;
+	uint64_t client_max_body_size;
 
 	loc_details() : error_pages(),
-          allowed_methods(),
-		  cgi_extentions(),
-          index_path(""),
-          root(""),
-          redir_to(""),
-          upload_path(""),
-          auto_index(false),
-          enable_upload(false),
-          has_cgi(false),
-          has_slash(false),
-          status_code(0),
-          client_max_body_size(0) {}
+					allowed_methods(),
+					cgi_extentions(),
+					index_path(""),
+					root(""),
+					redir_to(""),
+					upload_path(""),
+					auto_index(false),
+					enable_upload(false),
+					has_cgi(false),
+					has_slash(false),
+					status_code(0),
+					client_max_body_size(0) {}
 
+	void print() const
+	{
+		cout << BLUE << "----------------------------------------------------------------------" << RESET << endl;
+		cout << BLUE << "Location Details:" << RESET << endl;
 
+		cout << GREEN << "    Status Code: " << WHITE << status_code << RESET << endl;
+		cout << GREEN << "    Index Path: " << WHITE << index_path << RESET << endl;
 
+		cout << GREEN << "    Allowed Methods: ";
+		if (allowed_methods.empty())
+		{
+			cout << RED << "None" << RESET << endl;
+		}
+		else
+		{
+			for (size_t i = 0; i < allowed_methods.size(); ++i)
+			{
+				cout << CYAN << allowed_methods[i] << RESET;
+				if (i != allowed_methods.size() - 1)
+					cout << ", ";
+			}
+			cout << endl;
+		}
 
-   void print() const {
-    cout << "----------------------------------------------------------------------" << std::endl;
-    cout << "Location Details:" << std::endl;
-    cout << "    Status Code: " << status_code << std::endl;
-    cout << "    Index Path: " << index_path << std::endl;
+		cout << GREEN << "    Autoindex: " << WHITE << (auto_index ? "true" : "false") << RESET << endl;
+		cout << GREEN << "    Has CGI: " << WHITE << (has_cgi ? "true" : "false") << RESET << endl;
+		cout << GREEN << "    Root: " << WHITE << root << RESET << endl;
+		cout << GREEN << "    Redirection Path: " << WHITE << (redir_to.empty() ? "None" : redir_to) << RESET << endl;
+		cout << GREEN << "    Client Max Body Size: " << WHITE << client_max_body_size << " bytes" << RESET << endl;
 
-    cout << "    Allowed Methods: ";
-    if (allowed_methods.empty()) {
-        cout << "None" << std::endl;
-    } else {
-        for (size_t i = 0; i < allowed_methods.size(); ++i) {
-            cout << allowed_methods[i];
-            if (i != allowed_methods.size() - 1)
-                cout << ", ";
-        }
-        cout << std::endl;
-    }
+		cout << GREEN << "    Error Pages:" << RESET << endl;
+		if (error_pages.empty())
+		{
+			cout << RED << "        None" << RESET << endl;
+		}
+		else
+		{
+			for (map<int, string>::const_iterator it = error_pages.begin(); it != error_pages.end(); ++it)
+			{
+				cout << CYAN << "        " << it->first << ": " << it->second << RESET << endl;
+			}
+		}
 
-    cout << "    Autoindex: " << (auto_index ? "true" : "false") << std::endl;
-    cout << "    Has CGI: " << (has_cgi ? "true" : "false") << std::endl;
-    cout << "    Root: " << root << std::endl;
-    cout << "    Redirection Path: " << (redir_to.empty() ? "None" : redir_to) << std::endl;
-    cout << "    Client Max Body Size: " << client_max_body_size << " bytes" << std::endl;
+		cout << GREEN << "    CGI Extensions:" << RESET << endl;
+		if (cgi_extentions.empty())
+		{
+			cout << RED << "        None" << RESET << endl;
+		}
+		else
+		{
+			for (vector<string>::const_iterator it = cgi_extentions.begin(); it != cgi_extentions.end(); ++it)
+			{
+				cout << CYAN << "        " << *it << RESET << endl;
+			}
+		}
 
-    cout << "    Error Pages:" << std::endl;
-    if (error_pages.empty()) {
-        cout << "        None" << std::endl;
-    } else {
-        for (std::map<int, std::string>::const_iterator it = error_pages.begin(); it != error_pages.end(); ++it) {
-            cout << "        " << it->first << ": " << it->second << std::endl;
-        }
-    }
-
-	cout << " Cgi extentions:" << std::endl;
-    if (cgi_extentions.empty()) {
-        cout << "        None" << std::endl;
-    } else {
-        for (std::vector<string>::const_iterator it = cgi_extentions.begin(); it != cgi_extentions.end(); ++it) {
-            cout << *it << ",";
-        }
-    }
-	cout << endl;
-
-    cout << "    Has Slash: " << (has_slash ? "true" : "false") << std::endl;
-    // cout << "----------------------------------------------------------------------" << std::endl;
-}
-
+		cout << GREEN << "    CGI Excutors:" << RESET << endl;
+		if (cgi_excutor.empty())
+		{
+			cout << RED << "        None" << RESET << endl;
+		}
+		else
+		{
+			for (map<string, string>::const_iterator it = cgi_excutor.begin(); it != cgi_excutor.end(); ++it)
+			{
+				cout << CYAN << "         [" << it->first << "] :" << it->second << RESET << endl;
+			}
+		}
+		cout << BLUE << "----------------------------------------------------------------------" << RESET << endl;
+	}
 };
-
 
 #endif /* LOCATIONS_HPP */
