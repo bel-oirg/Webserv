@@ -39,7 +39,7 @@ bool response::prep_cgi()
     if (!_is_cgi)
     {
         _is_cgi = true;
-        _cgi = new Cgi(resource_path, _body, prepare_env_cgi(), this->correct_loc_name, this->locations["default"]);
+        _cgi = new Cgi(resource_path, _body, prepare_env_cgi(), this->current_loc, this->locations["default"]);
     }
     
     if (!_cgi->is_cgi_ready())

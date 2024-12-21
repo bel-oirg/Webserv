@@ -27,13 +27,22 @@ void Cgi::load_cgi_script()
 
 	extention = script_path.substr(dot_pos + 1);
 
-	map<string, string>::iterator it = location.cgi_excutor.find(extention);
-	if (it == location.cgi_excutor.end())
+	map<string, string>::iterator it = defa_ult.cgi_excutor.find(extention);
+	if (it == defa_ult.cgi_excutor.end())
 	{
 		code = 500;
 		child_stat = 2;
 		return;
 	}
+
+	if (find(location.cgi_extentions.begin(), location.cgi_extentions.end(), extention) 
+			!= location.cgi_extentions.end())
+		{
+			code = 500; // TODO code for the extention no impl..
+			child_stat = 2;
+			return;
+		}
+
 	this->excutor = it->second;
 	this->args[0] = (char *) excutor.c_str();
 	this->args[1] = (char *) script_path.c_str();
@@ -70,7 +79,7 @@ void Cgi::cgi_run()
 		if (forked == 0)
 		{
 			// char const * *argv = args;
-			alarm(2); // Set timeout for CGI execution
+			// alarm(10); // Set timeout for CGI execution
 
 			dup2(fileno(infile), STDIN_FILENO);
 			dup2(fileno(outfile), STDOUT_FILENO);
@@ -132,7 +141,7 @@ bool Cgi::is_cgi_ready()
 	return (false);
 }
 
-Cgi::Cgi(string _scriptpath, string _request_body, map<string, string> env_map, string key, loc_details &current_loc)
+Cgi::Cgi(string _scriptpath, string _request_body, map<string, string> env_map, loc_details &cur_loc, loc_details &def_loc)
  :	response(""),
 	script_path(_scriptpath),
 	code(0),
@@ -143,8 +152,8 @@ Cgi::Cgi(string _scriptpath, string _request_body, map<string, string> env_map, 
 	outfile(NULL),
 	infile(NULL),
 	forked(0),
-	key_path(key),
-	location(current_loc),
+	location(cur_loc),
+	defa_ult(def_loc),
 	excutor("")
 {
 	load_cgi_script();

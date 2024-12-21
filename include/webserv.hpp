@@ -1,5 +1,5 @@
-#define	ERR_DIR "/Users/bel-oirg/Desktop/mergeddd/Error_pages/"
-#define UPLOAD_DIR "/Users/bel-oirg/Desktop/mergeddd/UPLOAD/"
+#define	ERR_DIR "/Users/abennar/Desktop/to_merge/Error_pages/"
+#define UPLOAD_DIR "/Users/abennar/Desktop/to_merge/UPLOAD/"
 
 #define CHUNK_SIZE 1024
 #define MAX_URI_SIZE 2048

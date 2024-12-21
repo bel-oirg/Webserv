@@ -425,7 +425,7 @@ int request::process_multipart(std::string &current_part) //____UPLOAD_REQ_
         if (file_name.find("/") != std::string::npos)
             return (err_("Invalid file name") ,0);
 
-        outfile.open(UPLOAD_DIR + file_name, std::ios::out | std::ios::binary);
+        outfile.open(this->locations["default"].upload_path + file_name, std::ios::out | std::ios::binary);
         if (!outfile)
             return (err_("Failed to open the upload_file"), 0);
 

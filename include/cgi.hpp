@@ -29,11 +29,12 @@ class Cgi
 		int			forked;
 		string		key_path;
 		loc_details &location;
+		loc_details &defa_ult;
 		string		excutor;
 		// bool	is_cgi;
 
 	public:
-		Cgi(string _scriptpath, string _request_body, map<string, string> env_map, string key, loc_details &current_loc);
+		Cgi(string _scriptpath, string _request_body, map<string, string> env_map, loc_details &cur_loc, loc_details &def_loc);
 		void 	cgi_run();
 		void	load_cgi_script();
 		int 	cgi_get_code();

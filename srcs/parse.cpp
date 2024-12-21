@@ -181,6 +181,10 @@ void Parse::defaults(std::map<string, string>::iterator iter, Server &server, lo
  			loc.cgi_excutor[extention] = path;
 		}
 	}
+	else if (key == "upload_path")
+	{
+		loc.upload_path = non_empty(key, value);
+	}
 	else
 	{
 		throw runtime_error("[Error] Unknown argument: '" + key + "'. Check 'webserv -h' for valid options.");
@@ -229,10 +233,6 @@ void Parse::locations(map<string, string>::iterator loc, loc_details &dest)
 	else if (key == "cgi_pass")
 	{
 		dest.has_cgi = bool_type_parse(key, value);
-	}
-	else if (key == "upload_path")
-	{
-		dest.upload_path = non_empty(key, value);
 	}
 	else if (key == "upload_enable")
 	{	
