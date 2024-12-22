@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Keep-Alive Demo</title>
+</head>
+<body>
+  <h1>Keep-Alive HTTP Requests</h1>
+  <button id="sendRequests">Send Requests</button>
+  <p id="result"></p>
+  
+  <script>
+    document.getElementById('sendRequests').addEventListener('click', async () => {
+      const resultElement = document.getElementById('result');
+      resultElement.textContent = "Sending requests...";
+
+      const requestOptions = {
+        method: 'GET',
+        headers: {
+          'Connection': 'keep-alive' // Setting Keep-Alive header
+        }
+      };
+
+      try {
+        // First request
+        const response1 = await fetch('/', requestOptions);
+        if (!response1.ok) {
+          throw new Error(`First request failed: ${response1.statusText}`);
+        }
+        const data1 = await response1.text();
+
+        // Second request
+        const response2 = await fetch('/', requestOptions);
+        if (!response2.ok) {
+          throw new Error(`Second request failed: ${response2.statusText}`);
+        }
+        const data2 = await response2.text();
+
+        // Displaying results
+        resultElement.textContent = `First request result: ${data1}, Second request result: ${data2}`;
+      } catch (error) {
+        // Handling and displaying error
+        resultElement.textContent = `Error: ${error.message}`;
+      }
+    });
+  </script>
+</body>
+</html>

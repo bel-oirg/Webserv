@@ -39,6 +39,7 @@ bool response::prep_cgi()
     if (!_is_cgi)
     {
         _is_cgi = true;
+		cout << RED << "CGI FORKED" << RESET << endl;
         _cgi = new Cgi(resource_path, _body, prepare_env_cgi(), this->current_loc, this->locations["default"]);
     }
     
@@ -393,7 +394,7 @@ response::response(std::string req, std::map<string, loc_details> locations, ser
 {
     this->_eof = false;
     this->_is_cgi = false;
-	this->_is_closed = true;
+	this->_is_closed = false;
     _content_length = 0;
 	_cgi = NULL;
 	this->_server_info = info;

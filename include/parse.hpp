@@ -20,6 +20,7 @@ class Parse
 		static vector<string>	allowed_methods(string &value);
 		static void defaults(std::map<string, string>::iterator iter, Server &server, loc_details &loc);
 		static void locations(map<string, string>::iterator loc, loc_details &dest);
+		static void	check_consistency(std::vector<Server> &servers);
 };
 
 

@@ -1,4 +1,6 @@
-http://127.0.0.1:8002/cgi-bin/rpn_calc.py?expression=1+2+%2B
+
+http://127.0.0.1:8002/cgi-bin/big.php
+http://127.0.0.1:8002/cgi-bin/calc.py
+http://127.0.0.1:8002/cgi-bin/rpn_calc.py
 http://127.0.0.1:8002/cgi-bin/shape.py
-http://127.0.0.1:8002/
-http://127.0.0.1:8002/WWW/
+http://127.0.0.1:8002/cgi-bin/testenv.php

@@ -78,10 +78,22 @@ class Client
 		void		register_interaction();
 		clock_t		get_last_interaction();
         void        change_event(int);
+		void		reset()
+		{
+			if (_response)
+				delete _response;
+			_response = NULL;
+			_headers_sended = false;
+			first_response_read = true;
+			_last_interaction = 0;
+			_buff_num = 0;
+			tmp_request.clear();
+		}
 		
 		~Client()
 		{
-			delete _response;
+			if (_response)
+				delete _response;
 		}
 };
 

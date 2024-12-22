@@ -17,7 +17,6 @@ std::string hostToString(in_addr_t host)
 	return inet_ntoa(addr);
 }
 
-
 // check if a line starts with "server" and is valid
 bool Parse::is_server(const std::string &line)
 {
@@ -263,46 +262,51 @@ std::vector<Server> Parse::config2server(std::vector<Config> configs)
 {
 	std::vector<Server> servers;
 
-	try
-	{
 		// reserve size for number of servers
-		servers.reserve(configs.size());
+	servers.reserve(configs.size());
 
-		// loop over all configs and check syntax and parameters
-		for (std::vector<Config>::iterator it = configs.begin(); it != configs.end(); ++it)
-		{
-			Server cur_server;
-			// iterate over all all defaults in one server
-			loc_details server_default;
-			for (std::map<std::string, std::string>::iterator iter = it->defaults.begin();
-				 iter != it->defaults.end(); ++iter)
-			{
-				defaults(iter, cur_server, server_default);
-			}
-			cur_server.locations["default"] = server_default;
-			for (std::map<string, std::map<string, string> >::iterator iter = it->location.begin();
-				 iter != it->location.end(); ++iter)
-			{
-				loc_details tmp;
-				// cout << " Location : "  << iter->first << endl;
-				for (std::map<string, string>::iterator keys_iterator = iter->second.begin();
-					 keys_iterator != iter->second.end(); ++keys_iterator)
-				{
-					locations(keys_iterator, tmp);
-				}
-				std::vector<string> paths = wbs::split(iter->first, " ");
-				for (size_t i = 0; i < paths.size(); i++)
-				{
-					cur_server.locations[paths[i]] = tmp;
-				}
-			}
-			servers.push_back(cur_server);
-		}
-	}
-	catch (std::exception &e)
+	// loop over all configs and check syntax and parameters
+	for (std::vector<Config>::iterator it = configs.begin(); it != configs.end(); ++it)
 	{
-		cerr << e.what() << endl;
-		exit(1);
+		Server cur_server;
+		// iterate over all all defaults in one server
+		loc_details server_default;
+		for (std::map<std::string, std::string>::iterator iter = it->defaults.begin();
+				iter != it->defaults.end(); ++iter)
+		{
+			defaults(iter, cur_server, server_default);
+		}
+		cur_server.locations["default"] = server_default;
+		for (std::map<string, std::map<string, string> >::iterator iter = it->location.begin();
+				iter != it->location.end(); ++iter)
+		{
+			loc_details tmp;
+			// cout << " Location : "  << iter->first << endl;
+			for (std::map<string, string>::iterator keys_iterator = iter->second.begin();
+					keys_iterator != iter->second.end(); ++keys_iterator)
+			{
+				locations(keys_iterator, tmp);
+			}
+			std::vector<string> paths = wbs::split(iter->first, " ");
+			for (size_t i = 0; i < paths.size(); i++)
+			{
+				cur_server.locations[paths[i]] = tmp;
+			}
+		}
+
+		if (cur_server.host == static_cast<in_addr_t> (-1))
+			throw std::runtime_error("[Error] Host is required: A valid host must be specified for the server configuration.");
+		if (cur_server.port == static_cast<uint32_t> (-1))
+			throw std::runtime_error("[Error] Port is required: A valid port must be specified for the server configuration.");
+		if (cur_server.locations["default"].root.empty())
+			throw std::runtime_error("[Error] Root directory is required: Please specify a valid root path for the server.");
+
+		for (size_t i = 0; i < servers.size(); ++i)
+		{
+			if (servers[i].port == cur_server.port)
+				throw std::runtime_error("[Error] Port: " + std::to_string(cur_server.port) + " is already used by another server.");
+		}
+		servers.push_back(cur_server);
 	}
 	return servers;
 }
@@ -423,6 +427,7 @@ std::vector<Server> Parse::get_servers(std::string file_name)
 			}
 			else
 				throw runtime_error("Syntax Error: Missing ';' at the end of the line.");
+				continue;
 			// end cc
 		}
 

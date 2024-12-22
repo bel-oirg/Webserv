@@ -188,6 +188,7 @@ void ServersManager::remove_client(int fd)
 	std::map<int, Client * >::iterator it = client_pool.find(fd);
 	if (it != client_pool.end())
 	{
+		cout << "Closing Connection with : " << fd << endl;
 		delete it->second;
 		client_pool.erase(it);
 	}
@@ -251,7 +252,16 @@ void ServersManager::send_response(pollfd &pfd)
 	if (cur_client->_response->_eof || wr_ret < 0)
 	{
 		if (cur_client->_response->_is_closed)
+		{
 			remove_client(pfd.fd);
+			cout << RED  << "Close Conn" << RESET <<endl;
+		}
+		else
+		{
+			cur_client->reset();
+			cur_client->change_event(1); // REMOVE THIS
+			cout << GREEN  << "Keep Alive" << RESET <<endl;
+		}
 	}
 
 }

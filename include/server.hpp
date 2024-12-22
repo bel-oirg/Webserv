@@ -8,12 +8,13 @@ std::string hostToString(in_addr_t host);
 class Client;
 class ServersManager;
 
+
 class	Server
 {
 	public :
 		std::vector<pollfd>				server_fds;
 		std::map<string, loc_details>	locations;
-		uint64_t						port;
+		uint32_t						port;
 		string							server_name;
 		in_addr_t						host;
 		int 							socket_fd;
