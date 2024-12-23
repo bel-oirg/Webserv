@@ -237,21 +237,21 @@ void Parse::locations(map<string, string>::iterator loc, loc_details &dest)
 	{	
 		dest.enable_upload = bool_type_parse(key, value);
 	}
-	// else if (key == "cgi_ext")
-	// {
-	// 	vector<string> splited  = wbs::split(value, " ");
-	// 	for_each(splited.begin(), splited.end(), wbs::trim_line);
-	// 	for (size_t i = 0; i < splited.size(); ++i)
-	// 	{
-	// 		if (	splited[i] != "py" 
-	// 			&&	splited[i] != "ruby" && splited[i] != "rb"
-	// 			&&	splited[i] != "sh"
-	// 			&&	splited[i] != "php" 
-	// 			&&	splited[i] != "out")
-	// 				throw runtime_error("[Error] Invalid value for 'cgi_ext': '" + splited[i] + ":" + wbs::to_string(splited[i].size()) +  "'. Unimplemented extention");
-	// 	}
-	// 	dest.cgi_extentions = splited;
-	// }
+	else if (key == "cgi_ext")
+	{
+		vector<string> splited  = wbs::split(value, " ");
+		for_each(splited.begin(), splited.end(), wbs::trim_line);
+		// for (size_t i = 0; i < splited.size(); ++i)
+		// {
+		// 	// if (	splited[i] != "py" 
+		// 	// 	&&	splited[i] != "ruby" && splited[i] != "rb"
+		// 	// 	&&	splited[i] != "sh"
+		// 	// 	&&	splited[i] != "php" 
+		// 	// 	&&	splited[i] != "out")
+		// 	// 		throw runtime_error("[Error] Invalid value for 'cgi_ext': '" + splited[i] + ":" + wbs::to_string(splited[i].size()) +  "'. Unimplemented extention");
+		// }
+		dest.cgi_extentions = splited;
+	}
 	else
 	{
 		throw runtime_error("[Error] Unknown argument for location directive: '" + key + "'. Check 'webserv -h'");
@@ -303,7 +303,7 @@ std::vector<Server> Parse::config2server(std::vector<Config> configs)
 
 		for (size_t i = 0; i < servers.size(); ++i)
 		{
-			if (servers[i].port == cur_server.port)
+			if (servers[i].port == cur_server.port && servers[i].host == cur_server.host)
 				throw std::runtime_error("[Error] Port: " + std::to_string(cur_server.port) + " is already used by another server.");
 		}
 		servers.push_back(cur_server);

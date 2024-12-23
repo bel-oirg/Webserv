@@ -13,41 +13,38 @@ string Cgi::cgi_get_response()
 
 void Cgi::load_cgi_script()
 {
-	string	extention;
-	size_t	dot_pos;
+	string extention;
+	size_t dot_pos;
 
 	dot_pos = script_path.find('.');
 	if (dot_pos == string::npos)
-	{
-		code = 500;
-		child_stat =2;
-		return;
-	}
-
-
-	extention = script_path.substr(dot_pos + 1);
-
-	map<string, string>::iterator it = defa_ult.cgi_excutor.find(extention);
-	if (it == defa_ult.cgi_excutor.end())
 	{
 		code = 500;
 		child_stat = 2;
 		return;
 	}
 
-	if (find(location.cgi_extentions.begin(), location.cgi_extentions.end(), extention) 
-			!= location.cgi_extentions.end())
-		{
-			code = 500; // TODO code for the extention no impl..
-			child_stat = 2;
-			return;
-		}
+	extention = script_path.substr(dot_pos + 1);
+
+	map<string, string>::iterator it = defa_ult.cgi_excutor.find(extention);
+	if (it == defa_ult.cgi_excutor.end())
+	{
+		code = 502;
+		child_stat = 2;
+		return;
+	}
+
+	if (find(location.cgi_extentions.begin(), location.cgi_extentions.end(), extention) == location.cgi_extentions.end())
+	{
+		code = 403; // TODO code for the extention no impl..
+		child_stat = 2;
+		return;
+	}
 
 	this->excutor = it->second;
-	this->args[0] = (char *) excutor.c_str();
-	this->args[1] = (char *) script_path.c_str();
+	this->args[0] = (char *)excutor.c_str();
+	this->args[1] = (char *)script_path.c_str();
 	this->args[2] = NULL;
-
 }
 
 void Cgi::cgi_run()
@@ -55,7 +52,7 @@ void Cgi::cgi_run()
 	if (child_stat == 0)
 	{
 		this->outfile = tmpfile();
-		this->infile  = tmpfile();
+		this->infile = tmpfile();
 		if (outfile == NULL || infile == NULL)
 		{
 			code = 500;
@@ -89,7 +86,6 @@ void Cgi::cgi_run()
 			perror("execve() failed");
 			exit(1);
 		}
-
 	}
 	else if (child_stat == 1)
 	{
@@ -142,19 +138,19 @@ bool Cgi::is_cgi_ready()
 }
 
 Cgi::Cgi(string _scriptpath, string _request_body, map<string, string> env_map, loc_details &cur_loc, loc_details &def_loc)
- :	response(""),
-	script_path(_scriptpath),
-	code(0),
-	child_stat(0),
-	env(new char *[env_map.size() + 1]),
-	args(),
-	request_body(_request_body),
-	outfile(NULL),
-	infile(NULL),
-	forked(0),
-	location(cur_loc),
-	defa_ult(def_loc),
-	excutor("")
+	: response(""),
+	  script_path(_scriptpath),
+	  code(0),
+	  child_stat(0),
+	  env(new char *[env_map.size() + 1]),
+	  args(),
+	  request_body(_request_body),
+	  outfile(NULL),
+	  infile(NULL),
+	  forked(0),
+	  location(cur_loc),
+	  defa_ult(def_loc),
+	  excutor("")
 {
 	load_cgi_script();
 
@@ -171,7 +167,6 @@ Cgi::Cgi(string _scriptpath, string _request_body, map<string, string> env_map, 
 
 	this->env[i] = NULL;
 }
-
 
 Cgi::~Cgi()
 {
