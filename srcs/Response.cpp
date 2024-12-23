@@ -21,6 +21,7 @@ std::string response::set_status(int stat_code)
     status_map[201] = std::string("201 Created"); //mainly it returns json of the uploaded data
     status_map[204] = std::string("204 No Content");
     status_map[301] = std::string("301 Moved Permanently");
+    status_map[302] = std::string("302 Found");
     status_map[400] = std::string("400 Bad Request");
     status_map[403] = std::string("403 Forbidden");
     status_map[404] = std::string("404 Not Found");
@@ -357,11 +358,11 @@ void response::_40X_50X()
 void response::set_body()
 {
     _body = "";
-    if (this->stat_code == 301 || this->stat_code == -1)
-        return;
 
     if (this->stat_code / 400)
         _40X_50X();
+    else if (this->stat_code / 300 || this->stat_code == -1)
+        return ;
     else if (this->stat_code / 200)
         _20X();
 	else

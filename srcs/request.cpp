@@ -131,7 +131,8 @@ int request::is_req_well_formed() //REQ
     if (this->URI.size() > MAX_URI_SIZE)
         return (414);
     std::getline(l1, this->HTTP, '\r');
-
+    if (this->HTTP != "HTTP/1.1")
+        return (err_("Invalid HTTP version"), 400);
     //LINE 2
     //locate the second line to \r\n
     size_t head_beg = req.find("\r\n");
@@ -222,7 +223,7 @@ bool request::is_location_have_redir() //REQ
         return (err_("invalid int in redir_to"), false);
     current_loc.redir_to = current_loc.redir_to.substr(space_pos + 1, current_loc.redir_to.size() - space_pos - 1);
 
-    return (current_loc.status_code == 301);
+    return (current_loc.status_code == 301 || current_loc.status_code == 302);
 }
 
 bool request::is_method_allowed_in_loc() //REQ
@@ -387,7 +388,7 @@ int     request::init_parse_req()
         return (err_("BODY > CLIENT_MAX_BODY _SIZE"), 413);
 
     if (is_location_have_redir())
-        return (301);
+        return (current_loc.status_code); //301 || 302
 
     if (!is_method_allowed_in_loc())
         return (405);
