@@ -5,6 +5,9 @@
 request::request(std::string raw_req, std::map<std::string, loc_details> locations) : req(raw_req), locations(locations)
 {
 	upload_eof = false;
+    chunked = false;
+    add_slash = false;
+    body = "";
 
     this->stat_code = init_parse_req();
     if (!this->stat_code)
@@ -318,10 +321,12 @@ int     request::GET()
 
 int     request::POST()
 {
-    if (current_loc.enable_upload)
+    //TODO CHUNK still need some work
+    if (headers["Transfer-Encoding"] == "chunked" && !unchunk_body())
+        return (400);
+
+    if (headers["Content-Type"].rfind("multipart/form-data") != string::npos)
         return (if_loc_support_upload());
-    else if (length)
-        return (err_("The upload is not enabled on the config file"), 403);
 
     resource_type = get_request_resource();
     if (resource_type <= 0)
@@ -383,8 +388,9 @@ int     request::init_parse_req()
     if (!get_matched_loc_for_req_uri())
         return (404);
 
+    //TODO should i check client_max on every location or only on default
     is_valid_size_t(this->headers["Content-Length"], length);
-    if (length > current_loc.client_max_body_size)
+    if (length > locations["default"].client_max_body_size)
         return (err_("BODY > CLIENT_MAX_BODY _SIZE"), 413);
 
     if (is_location_have_redir())
@@ -410,9 +416,23 @@ inline bool    request::get_auto_index()
     return (current_loc.auto_index);
 }
 
+//TODO recheck ``the server should work if one of the configurations isn't functional. Keep going.``
+
+bool create_dir_if_not_exist(string path)
+{
+    struct stat metadata;
+
+    //CREATING ONLY LVL 1 OF DIR (NO SUBDIRS)
+    if (stat(path.c_str(), &metadata))
+    {
+        if (mkdir(path.c_str(), 0777))
+            return (false);
+    }
+    return (true);
+}
+
 int request::process_multipart(std::string &current_part) //____UPLOAD_REQ_
 {
-    ttt
     if (file_name.empty())
     {
         uploaded_size = 0;
@@ -425,6 +445,9 @@ int request::process_multipart(std::string &current_part) //____UPLOAD_REQ_
         file_name = current_part.substr(file_beg + 10, file_end - file_beg - 10);
         if (file_name.find("/") != std::string::npos)
             return (err_("Invalid file name") ,0);
+
+        if (!create_dir_if_not_exist(this->locations["default"].upload_path))
+            return (err_("Error creating the upload_dir"), 0);
 
         outfile.open(this->locations["default"].upload_path + file_name, std::ios::out | std::ios::binary);
         if (!outfile)
@@ -471,12 +494,13 @@ bool request::unchunk_body()
         if (end_part == std::string::npos)
             return (err_("Error end_part on chunked npos"), false);
         new_part = unchunked.substr(end_hex + 2, end_part - end_hex - 2);
-        if (!part_size)
+        if (!part_size || !test)
         {
-            if (!new_part.empty())
+            if (new_part != "0")
                 return (err_("Bad ending of chunked data"), false);
             break;
         }
+        // pp "||| " << test << "|" << new_part.size() << " -- " << part_size << "\n" << new_part  << "|||" << endl;
         if (new_part.size() != part_size)
             return (err_("Invalid unchunked size"), false);
 
@@ -484,22 +508,20 @@ bool request::unchunk_body()
         next = end_part + 2;
     }
     body = unchunked_body;
+    chunked = true;
     return (true);
 }
 
 //POST
 int request::if_loc_support_upload()
 {        
-    if (headers["Content-Type"].rfind("multipart/form-data") == std::string::npos)
-        return (err_("multipart/form not found on loc_support_upload"), 415);
-
-    if (headers["Transfer-Encoding"] == "chunked")
-        if (!unchunk_body())
-            return (400);
-
+    if (!current_loc.enable_upload)
+        return (err_("Upload is not supported on this location"), 403);
+    
     size_t bound_beg = headers["Content-Type"].find("boundary=");
     if (bound_beg == string::npos)
         return (err_("boundary beg not found"), 400);
+    
     size_t bound_end = headers["Content-Type"].size();
     if (bound_end == string::npos)
         return (err_("boundary end not found"), 400);
@@ -507,6 +529,7 @@ int request::if_loc_support_upload()
 
     if (!process_multipart(body))
         return (err_("process_multipart err"), 400);
+
     return (204);
 }
 

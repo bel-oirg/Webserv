@@ -1,5 +1,4 @@
 #define	ERR_DIR "/Users/bel-oirg/Desktop/websss/Error_pages/"
-#define UPLOAD_DIR "/Users/bel-oirg/Desktop/websss/UPLOAD/"
 
 #define CHUNK_SIZE 1024
 #define MAX_URI_SIZE 2048

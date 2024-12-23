@@ -40,8 +40,7 @@ bool response::prep_cgi()
     if (!_is_cgi)
     {
         _is_cgi = true;
-		cout << RED << "CGI FORKED" << RESET << endl;
-        _cgi = new Cgi(resource_path, _body, prepare_env_cgi(), this->current_loc, this->locations["default"]);
+        _cgi = new Cgi(resource_path, body, prepare_env_cgi(), this->current_loc, this->locations["default"]);
     }
     
     if (!_cgi->is_cgi_ready())
@@ -49,9 +48,8 @@ bool response::prep_cgi()
 
     this->stat_code = _cgi->cgi_get_code();
     if (this->stat_code / 400)
-    {
         return (_40X_50X(), true);
-    }
+
     _server = "CGI-2.0";
     _content_length = lseek(_cgi->get_outfd(), 0, SEEK_END);
     lseek(_cgi->get_outfd(), 0, SEEK_SET); //CHANGE HERE
@@ -65,11 +63,14 @@ bool response::prep_cgi()
         return(false);
     }
     this->_cgi_str = string(buff, readen);
-    size_t cgi_head_end = this->_cgi_str.find("\r\n\r\n");
-    if (cgi_head_end != string::npos && cgi_head_end)
+    //TODO the headers your providing of cgi does not ends with /r/n
+    //sometimes it includes 200 OK 
+    //check the second arg on if below
+    size_t cgi_head_end = this->_cgi_str.find("\n\n");
+    if (cgi_head_end != string::npos && cgi_head_end == this->_cgi_str.find("\n"))
     {
         this->_cgi_head = this->_cgi_str.substr(0, cgi_head_end);
-        this->_cgi_str = this->_cgi_str.substr(cgi_head_end + 4);
+        this->_cgi_str = this->_cgi_str.substr(cgi_head_end + 2);
         _content_type = "";
         _content_length -= readen;
     }
@@ -266,7 +267,7 @@ bool response::prep_body(const std::string &path)
     if (!_body.empty())
         return (true);
     infile.open(path, std::ios::binary);
-    pp "{" << path << "}" << endl;
+    pp "{ " << path << " }" << endl;
     if (!infile)
     {
         this->stat_code = 500;

@@ -4,33 +4,32 @@
 #include "server.hpp"
 #include "webserv.hpp"
 
-//TODO change UPLOAD_DIR based on config file
-
 class request
 {
     private:
         string boundary;
         string file_name;
         std::fstream outfile;
-        std::string HTTP;
-        std::string req;
+        string HTTP;
+        string req;
         size_t uploaded_size;
         size_t length;
 
     protected:
-        std::map<std::string, std::string> headers;
-        std::map<std::string, loc_details> locations;
+        std::map<string, string> headers;
+        std::map<string, loc_details> locations;
         loc_details current_loc;
 
-        std::string resource_path;
-        std::string method;
-        std::string URI;
-        std::string body;
-        std::string query;
-        std::string correct_loc_name;
+        string resource_path;
+        string method;
+        string URI;
+        string body;
+        string query;
+        string correct_loc_name;
         int         stat_code;
         int         resource_type;
         bool        add_slash;
+        bool        chunked;
 
     public:
 		bool		upload_eof;

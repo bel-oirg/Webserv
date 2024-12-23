@@ -154,6 +154,10 @@ Cgi::Cgi(string _scriptpath, string _request_body, map<string, string> env_map, 
 {
 	load_cgi_script();
 
+	/*
+		FIXME POST REQUEST ON CGI WITH A BODY DOES NOT WORK, try cgi-bin/name.py
+	*/
+
 	int i = 0;
 	for (map<string, string>::iterator it = env_map.begin(); it != env_map.end(); ++it)
 	{
