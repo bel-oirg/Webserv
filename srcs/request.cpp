@@ -179,7 +179,7 @@ bool request::get_matched_loc_for_req_uri() //REQ
     std::vector<std::string> potential_locations;
     for (std::map<std::string, loc_details>::iterator it = locations.begin(); it != locations.end(); ++it)
     {
-        if (URI.rfind(it->first) == 0)
+        if (URI.rfind(fix_slash(it->first, "/")) == 0)
             potential_locations.push_back(it->first);
     }
     if (!potential_locations.size())
@@ -241,12 +241,15 @@ int request::get_request_resource() //get_resource_type()
 {
     
     if (correct_loc_name != "default")
+    {
+        pp BLUE << current_loc.root << " -- " << this->URI << " -- " << correct_loc_name << RESET << endl;
         this->resource_path = fix_slash(current_loc.root, this->URI.substr(correct_loc_name.size(), URI.size() - correct_loc_name.size()));
+    }
     else
         this->resource_path = fix_slash(current_loc.root, this->URI);
 
     struct stat s;
-	// cout << MAGENTA << resource_path << RESET << endl;
+	cout << MAGENTA << resource_path << RESET << endl;
     if (!stat(this->resource_path.c_str(), &s))
     {
         if (S_ISDIR(s.st_mode))
@@ -396,6 +399,10 @@ int     request::init_parse_req()
     if (is_location_have_redir())
         return (current_loc.status_code); //301 || 302
 
+    vector<string> vec = current_loc.allowed_methods;
+    if (find(vec.begin(), vec.end(), "NON") != vec.end())
+        return (403);
+        
     if (!is_method_allowed_in_loc())
         return (405);
     return (0);

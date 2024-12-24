@@ -41,12 +41,13 @@ void Cgi::load_cgi_script()
 		return;
 	}
 
-	if (find(location.cgi_extentions.begin(), location.cgi_extentions.end(), extention) == location.cgi_extentions.end())
-	{
-		code = 403; // TODO code for the extention no impl..
-		child_stat = 2;
-		return;
-	}
+	//FIXME this if statement does not work on linux
+	// if (find(location.cgi_extentions.begin(), location.cgi_extentions.end(), extention) == location.cgi_extentions.end())
+	// {
+	// 	code = 403; // TODO code for the extention no impl..
+	// 	child_stat = 2;
+	// 	return;
+	// }
 
 	this->excutor = it->second;
 	this->args[0] = (char *)excutor.c_str();
@@ -167,12 +168,6 @@ Cgi::Cgi(string _scriptpath, string _request_body, map<string, string> env_map, 
 	  excutor("")
 {
 	load_cgi_script();
-
-	/*
-		FIXME POST REQUEST ON CGI WITH A BODY DOES NOT WORK, try cgi-bin/name.py
-	*/
-	// pp _request_body << " : " <<  env_map["CONTENT_LENGTH"] << endl;
-
 
 	int i = 0;
 	for (map<string, string>::iterator it = env_map.begin(); it != env_map.end(); ++it)

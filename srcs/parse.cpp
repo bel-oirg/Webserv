@@ -417,8 +417,10 @@ std::vector<Server> Parse::get_servers(std::string file_name)
 					throw runtime_error("Syntax Error: Key-value pair outside of valid block.");
 			}
 			else
+			{
 				throw runtime_error("Syntax Error: Missing ';' at the end of the line.");
 				continue;
+			}
 			// end cc
 		}
 
