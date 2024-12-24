@@ -40,6 +40,7 @@ bool response::prep_cgi()
     if (!_is_cgi)
     {
         _is_cgi = true;
+
         _cgi = new Cgi(resource_path, body, prepare_env_cgi(), this->current_loc, this->locations["default"]);
     }
     
@@ -377,7 +378,10 @@ std::map<std::string, std::string>    response::prepare_env_cgi()
     environ_vars["SERVER_NAME"] = this->_server_info.server_name;
     environ_vars["SCRIPT_NAME"] = this->URI ;
     environ_vars["CONTENT_TYPE"] = this->_content_type;
+
+    _content_length = body.size();
     environ_vars["CONTENT_LENGTH"] = wbs::to_string(this->_content_length); //BUG CPP11 TODO THIS IS WRONG
+    
     environ_vars["SCRIPT_FILENAME"] = this->resource_path;
     environ_vars["HTTP_USER_AGENT"] = this->headers["User-Agent"];
     environ_vars["HTTP_COOKIE"] = this->_cookies;

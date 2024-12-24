@@ -25,6 +25,13 @@ void Cgi::load_cgi_script()
 	}
 
 	extention = script_path.substr(dot_pos + 1);
+	cout << "EXTENTION : " << extention << endl;
+
+	cout << YELLOW << "sz : " << defa_ult.cgi_extentions.size() << RESET << endl;
+	for (size_t i = 0; i < defa_ult.cgi_extentions.size(); i++)
+	{
+		cout << WHITE << defa_ult.cgi_extentions[i] << RESET << endl;
+	}
 
 	map<string, string>::iterator it = defa_ult.cgi_excutor.find(extention);
 	if (it == defa_ult.cgi_excutor.end())
@@ -46,6 +53,13 @@ void Cgi::load_cgi_script()
 	this->args[1] = (char *)script_path.c_str();
 	this->args[2] = NULL;
 }
+
+// cout << BLUE << "file : " << RESET << endl;
+			// string line;
+			// while (getline(cin, line))
+			// {
+			// 	cout << WHITE << line << RESET << endl;
+			// }
 
 void Cgi::cgi_run()
 {
@@ -76,7 +90,7 @@ void Cgi::cgi_run()
 		if (forked == 0)
 		{
 			// char const * *argv = args;
-			alarm(3); // Set timeout for CGI execution
+			alarm(10); // Set timeout for CGI execution
 
 			dup2(fileno(infile), STDIN_FILENO);
 			dup2(fileno(outfile), STDOUT_FILENO);
@@ -157,6 +171,8 @@ Cgi::Cgi(string _scriptpath, string _request_body, map<string, string> env_map, 
 	/*
 		FIXME POST REQUEST ON CGI WITH A BODY DOES NOT WORK, try cgi-bin/name.py
 	*/
+	// pp _request_body << " : " <<  env_map["CONTENT_LENGTH"] << endl;
+
 
 	int i = 0;
 	for (map<string, string>::iterator it = env_map.begin(); it != env_map.end(); ++it)

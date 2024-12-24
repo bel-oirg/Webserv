@@ -239,17 +239,8 @@ void Parse::locations(map<string, string>::iterator loc, loc_details &dest)
 	}
 	else if (key == "cgi_ext")
 	{
-		vector<string> splited  = wbs::split(value, " ");
+		vector<string> splited  = wbs::split(value, " ,");
 		for_each(splited.begin(), splited.end(), wbs::trim_line);
-		// for (size_t i = 0; i < splited.size(); ++i)
-		// {
-		// 	// if (	splited[i] != "py" 
-		// 	// 	&&	splited[i] != "ruby" && splited[i] != "rb"
-		// 	// 	&&	splited[i] != "sh"
-		// 	// 	&&	splited[i] != "php" 
-		// 	// 	&&	splited[i] != "out")
-		// 	// 		throw runtime_error("[Error] Invalid value for 'cgi_ext': '" + splited[i] + ":" + wbs::to_string(splited[i].size()) +  "'. Unimplemented extention");
-		// }
 		dest.cgi_extentions = splited;
 	}
 	else
