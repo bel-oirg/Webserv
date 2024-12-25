@@ -400,8 +400,8 @@ int     request::init_parse_req()
         return (current_loc.status_code); //301 || 302
 
     vector<string> vec = current_loc.allowed_methods;
-    if (find(vec.begin(), vec.end(), "NON") != vec.end())
-        return (403);
+    if (find(vec.begin(), vec.end(), "NONE") != vec.end())
+        return (405); // TODO i changed this from 403 to 405
         
     if (!is_method_allowed_in_loc())
         return (405);

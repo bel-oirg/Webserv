@@ -86,10 +86,11 @@ std::vector<string>	Parse::allowed_methods(string &value)
 
 	for (size_t i = 0; i < methodes.size(); ++i)
 	{
-		if (	methodes[i] != "GET"	&&
-			 	methodes[i] != "POST"	&&
-				methodes[i] != "DELETE")
-			throw runtime_error("[Error] Invalid method: '" + methodes[i] + "'. Allowed methods are: GET, POST, DELETE.");
+		if ((	methodes[i] != "GET"      && 
+				  methodes[i] != "POST"     && 
+		      		methodes[i] != "DELETE")  && 
+			(methodes.size() > 1 || methodes[i] != "NONE"))
+		throw runtime_error("[Error] Invalid method: '" + methodes[i] + "'. Allowed methods are: GET, POST, DELETE or NONE.");
 	}
 	return (methodes);
 }
@@ -417,10 +418,7 @@ std::vector<Server> Parse::get_servers(std::string file_name)
 					throw runtime_error("Syntax Error: Key-value pair outside of valid block.");
 			}
 			else
-			{
 				throw runtime_error("Syntax Error: Missing ';' at the end of the line.");
-				continue;
-			}
 			// end cc
 		}
 
