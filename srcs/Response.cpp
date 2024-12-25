@@ -86,7 +86,7 @@ void response::debug()
     size_t last_sp = now.rfind(" ");
     size_t first_sp = now.rfind(" ", last_sp - 1);
     now = now.substr(first_sp + 1, last_sp - first_sp - 1);
-    pp BLUE << "[" << now << "] " << WHITE << " " << this->URI << " " << YELLOW << set_status(stat_code) << BLUE << " " << _content_length << RESET << endl;
+    pp BLUE << "[" << now << "] " << WHITE << " " << this-> method << " " << this->URI << " " << YELLOW << set_status(stat_code) << BLUE << " " << _content_length << RESET << endl;
 }
 
 std::string response::get_response_header() //_____SEND__RESP__HEAD

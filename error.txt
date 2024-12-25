@@ -1,3 +1,0 @@
-
-browse  : http://localhost:8002/cgi-bin/shape.py
-out     : [-] Resource not found/home/bel-oirg/Desktop/to_merrrr/cgi-bin/-bin/shape.py

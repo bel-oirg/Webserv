@@ -156,8 +156,8 @@ int request::is_req_well_formed() //REQ
     {
         this->body = req.substr(head_end + 4);
         
-        if (this->method != "POST")
-            return (err_("there is body but non-POST method is used"), 400);
+        if (this->method == "GET")
+            return (err_("there is body but GET method is used"), 400);
 
     }
 
@@ -380,7 +380,7 @@ int     request::DELETE()
     if (!if_location_has_cgi()) // file
     {
         remove(this->resource_path.c_str());
-        return (pp "File deleted succesfully", 204);
+        return (pp "File deleted succesfully\n", 204);
     }
     return (-1);
 }
