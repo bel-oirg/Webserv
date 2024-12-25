@@ -40,6 +40,7 @@ class response : public request
         void set_transfer_encoding();
         void set_connection();
         void set_content_type();
+        void debug();
 
         bool prep_body(const string &path);
         void _20X();

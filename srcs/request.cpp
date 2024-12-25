@@ -83,7 +83,7 @@ bool    request::is_valid_URI()
         if (allowed_URI.find(URI[index]) == std::string::npos)
             return (false);
     }
-    size_t query_pos = URI.find("?");
+    size_t query_pos = URI.rfind("?");
     if (query_pos != std::string::npos)
     {
         this->query = URI.substr(query_pos + 1);
@@ -179,7 +179,7 @@ bool request::get_matched_loc_for_req_uri() //REQ
     std::vector<std::string> potential_locations;
     for (std::map<std::string, loc_details>::iterator it = locations.begin(); it != locations.end(); ++it)
     {
-        if (URI.rfind(fix_slash(it->first, "/")) == 0)
+        if (URI.find(fix_slash(it->first, "/")) == 0)
             potential_locations.push_back(it->first);
     }
     if (!potential_locations.size())
@@ -242,14 +242,12 @@ int request::get_request_resource() //get_resource_type()
     
     if (correct_loc_name != "default")
     {
-        pp BLUE << current_loc.root << " -- " << this->URI << " -- " << correct_loc_name << RESET << endl;
         this->resource_path = fix_slash(current_loc.root, this->URI.substr(correct_loc_name.size(), URI.size() - correct_loc_name.size()));
     }
     else
         this->resource_path = fix_slash(current_loc.root, this->URI);
 
     struct stat s;
-	cout << MAGENTA << resource_path << RESET << endl;
     if (!stat(this->resource_path.c_str(), &s))
     {
         if (S_ISDIR(s.st_mode))
@@ -290,7 +288,11 @@ bool request::is_dir_has_index_path()
 
 bool request::if_location_has_cgi()
 {
-    return (current_loc.has_cgi);
+    if (!current_loc.has_cgi)
+        return (false);
+    string ext = this->resource_path.substr(this->resource_path.rfind(".") + 1);
+    vector<string>::iterator it = find(current_loc.cgi_extentions.begin(), current_loc.cgi_extentions.end(), ext);
+    return (it != current_loc.cgi_extentions.end());
 }
 
 void    request::display_req()
@@ -328,7 +330,7 @@ int     request::POST()
     if (headers["Transfer-Encoding"] == "chunked" && !unchunk_body())
         return (400);
 
-    if (headers["Content-Type"].rfind("multipart/form-data") != string::npos)
+    if (headers["Content-Type"].rfind("multipart/form-data") != string::npos) //TODO change it to find
         return (if_loc_support_upload());
 
     resource_type = get_request_resource();
@@ -401,7 +403,7 @@ int     request::init_parse_req()
 
     vector<string> vec = current_loc.allowed_methods;
     if (find(vec.begin(), vec.end(), "NONE") != vec.end())
-        return (405); // TODO i changed this from 403 to 405
+        return (405);
         
     if (!is_method_allowed_in_loc())
         return (405);

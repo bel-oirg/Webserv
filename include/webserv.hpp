@@ -1,4 +1,4 @@
-#define	ERR_DIR "/Users/abennar/Desktop/webserv/Error_pages/"
+#define	ERR_DIR "/home/bel-oirg/Desktop/to_merrrr/Error_pages/"
 
 #define CHUNK_SIZE 1024
 #define MAX_URI_SIZE 2048
@@ -18,6 +18,7 @@
 
 #include <string>
 #include <limits>
+#include <ctime>
 #include <cstdlib>
 #include <stdint.h>
 #include <map>

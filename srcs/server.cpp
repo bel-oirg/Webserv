@@ -175,7 +175,7 @@ void Server::accept_connections(ServersManager &manager)
 			return;
 	}
 
-	cout << "New client accepted with fd: " << client_fd << std::endl;
+	// cout << "New client accepted with fd: " << client_fd << std::endl;
 	Client *client = new Client(*this, client_fd);
 	client->register_interaction();
 
@@ -188,7 +188,7 @@ void ServersManager::remove_client(int fd)
 	std::map<int, Client * >::iterator it = client_pool.find(fd);
 	if (it != client_pool.end())
 	{
-		cout << "Closing Connection with : " << fd << endl;
+		// cout << "Closing Connection with : " << fd << endl;
 		delete it->second;
 		client_pool.erase(it);
 	}
@@ -254,7 +254,7 @@ void ServersManager::send_response(pollfd &pfd)
 		if (cur_client->_response->_is_closed)
 		{
 			remove_client(pfd.fd);
-			cout << RED  << "Close Conn" << RESET <<endl;
+			// cout << RED  << "Close Conn" << RESET <<endl;
 		}
 		else
 		{

@@ -16,7 +16,7 @@ void Cgi::load_cgi_script()
 	string extention;
 	size_t dot_pos;
 
-	dot_pos = script_path.find('.');
+	dot_pos = script_path.rfind('.');
 	if (dot_pos == string::npos)
 	{
 		code = 500;
@@ -27,7 +27,7 @@ void Cgi::load_cgi_script()
 	extention = script_path.substr(dot_pos + 1);
 	cout << "EXTENTION : " << extention << endl;
 
-	cout << YELLOW << "sz : " << defa_ult.cgi_extentions.size() << RESET << endl;
+	// cout << YELLOW << "sz : " << defa_ult.cgi_extentions.size() << RESET << endl;
 	for (size_t i = 0; i < defa_ult.cgi_extentions.size(); i++)
 	{
 		cout << WHITE << defa_ult.cgi_extentions[i] << RESET << endl;
@@ -42,12 +42,12 @@ void Cgi::load_cgi_script()
 	}
 
 	//FIXME this if statement does not work on linux
-	if (find(location.cgi_extentions.begin(), location.cgi_extentions.end(), extention) == location.cgi_extentions.end())
-	{
-		code = 403; // TODO code for the extention no impl..
-		child_stat = 2;
-		return;
-	}
+	// if (find(location.cgi_extentions.begin(), location.cgi_extentions.end(), extention) == location.cgi_extentions.end())
+	// {
+	// 	code = 403; // TODO code for the extention no impl..
+	// 	child_stat = 2;
+	// 	return;
+	// }
 
 	this->excutor = it->second;
 	this->args[0] = (char *)excutor.c_str();

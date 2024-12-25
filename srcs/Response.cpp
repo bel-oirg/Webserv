@@ -78,6 +78,17 @@ bool response::prep_cgi()
     return (true);
 }
 
+void response::debug()
+{
+    time_t timestamp;
+    time(&timestamp);
+    string now = ctime(&timestamp);
+    size_t last_sp = now.rfind(" ");
+    size_t first_sp = now.rfind(" ", last_sp - 1);
+    now = now.substr(first_sp + 1, last_sp - first_sp - 1);
+    pp BLUE << "[" << now << "] " << WHITE << " " << this->URI << " " << YELLOW << set_status(stat_code) << BLUE << " " << _content_length << RESET << endl;
+}
+
 std::string response::get_response_header() //_____SEND__RESP__HEAD
 {
 	if(headers["Connection"] != "Keep-Alive")
@@ -117,6 +128,7 @@ std::string response::get_response_header() //_____SEND__RESP__HEAD
     if (!this->_cgi_str.empty())
         line << this->_cgi_str;
 
+    debug();
     return (line.str());
 }
 
@@ -268,7 +280,6 @@ bool response::prep_body(const std::string &path)
     if (!_body.empty())
         return (true);
     infile.open(path, std::ios::binary);
-    pp "{ " << path << " }" << endl;
     if (!infile)
     {
         this->stat_code = 500;
@@ -348,6 +359,7 @@ void response::_40X_50X()
 {
     if (current_loc.error_pages.find(this->stat_code) != current_loc.error_pages.end())
     {
+        pp GREEN << current_loc.error_pages[this->stat_code] << RESET << endl;
         if (current_loc.error_pages[this->stat_code].size())
             prep_body(fix_slash(current_loc.root, current_loc.error_pages[this->stat_code])); //BUG CPP11
         else
