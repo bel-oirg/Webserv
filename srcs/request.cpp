@@ -425,8 +425,6 @@ inline bool    request::get_auto_index()
     return (current_loc.auto_index);
 }
 
-//TODO recheck ``the server should work if one of the configurations isn't functional. Keep going.``
-
 bool create_dir_if_not_exist(string path)
 {
     struct stat metadata;
