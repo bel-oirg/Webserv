@@ -17,7 +17,7 @@ std::string hostToString(in_addr_t host)
 	return inet_ntoa(addr);
 }
 
-// check if a line starts with "server" and is valid
+
 bool Parse::is_server(const std::string &line)
 {
 	std::string trimmed = wbs::trim_line(line);
@@ -34,28 +34,25 @@ bool Parse::is_server(const std::string &line)
 	return false;
 }
 
-// check if a line starts with "location" and ends with "{"
+
 bool Parse::is_location(const std::string &line, string &path)
 {
 	size_t pos = line.find("location");
 	if (pos != std::string::npos)
 	{
 		size_t openBracket = line.find("{", pos);
+		if (openBracket == string::npos)
+			throw std::runtime_error("[Error] Invalid syntax in 'location' directive. Expected opening bracket or EOF declaration.");
 		path = line.substr(pos + 8, openBracket - (pos + 8));
+		path = wbs::trim_line(path);
+		if (path.empty())
+			throw std::runtime_error("[Error] Syntax error in 'location' directive. Expected value after location declaration.");
 		path.erase(0, path.find_first_not_of(" \t"));
 		path.erase(path.find_last_not_of(" \t") + 1);
 		return (!path.empty() && openBracket == line.length() - 1);
 	}
 	return false;
 }
-
-// void	locations_syntax(loc_details &loc)
-// {
-// 	if (loc.root.empty())
-// 	{
-
-// 	}
-// }
 
 string	Parse::non_empty(string &key, string &value)
 {
@@ -295,7 +292,7 @@ std::vector<Server> Parse::config2server(std::vector<Config> configs)
 
 		for (size_t i = 0; i < servers.size(); ++i)
 		{
-			if (servers[i].port == cur_server.port && servers[i].host == cur_server.host)
+			if (servers[i].port == cur_server.port)
 				throw std::runtime_error("[Error] Port: " + std::to_string(cur_server.port) + " is already used by another server.");
 		}
 		servers.push_back(cur_server);
@@ -394,10 +391,10 @@ std::vector<Server> Parse::get_servers(std::string file_name)
 			// end bb
 
 			// cc Handle the keys and there value
-
+			
 			size_t semicolonPos = line.find(';');
 			size_t firstspace = line.find_first_of(" \t");
-			if (semicolonPos != std::string::npos)
+			if (semicolonPos != std::string::npos && line.back() == ';')
 			{
 				std::string key = wbs::trim_line(line.substr(0, firstspace));
 				std::string value = wbs::trim_line(line.substr(firstspace + 1));
@@ -440,7 +437,7 @@ std::vector<Server> Parse::get_servers(std::string file_name)
 	{
 		cerr << "webserv : `" << configFile.name() << "' " << e.what() << endl;
 		configFile.close();
-		std::exit(1);
+		std::exit(EXIT_FAILURE);
 	}
 
 	return (servers);

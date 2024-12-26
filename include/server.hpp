@@ -69,7 +69,7 @@ class ServersManager
 		void		print();
 		void		run();
 		bool		is_server(int fd);
-		void		accept_connections();
+		void 		accept_connections(pollfd &fd);
 		void		get_request(pollfd &pfd);
 		void		send_response(pollfd &pfd);
 		void		remove_client(int fd);

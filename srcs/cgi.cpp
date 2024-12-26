@@ -41,13 +41,12 @@ void Cgi::load_cgi_script()
 		return;
 	}
 
-	//FIXME this if statement does not work on linux
-	// if (find(location.cgi_extentions.begin(), location.cgi_extentions.end(), extention) == location.cgi_extentions.end())
-	// {
-	// 	code = 403; // TODO code for the extention no impl..
-	// 	child_stat = 2;
-	// 	return;
-	// }
+	if (find(location.cgi_extentions.begin(), location.cgi_extentions.end(), extention) == location.cgi_extentions.end())
+	{
+		code = 403; // TODO code for the extention no impl..
+		child_stat = 2;
+		return;
+	}
 
 	this->excutor = it->second;
 	this->args[0] = (char *)excutor.c_str();

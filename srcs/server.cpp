@@ -80,9 +80,18 @@ void ServersManager::setup()
 {
 	for (size_t i = 0; i < servers.size(); i++)
 	{
-		servers[i].setup();
-		pollfd tmp = {.fd = servers[i].socket_fd, .events = POLLIN, .revents = 0};
-		servers_pollfds.push_back(tmp);
+      try 
+      {
+         servers[i].setup();
+         pollfd tmp = {.fd = servers[i].socket_fd, .events = POLLIN, .revents = 0};
+         servers_pollfds.push_back(tmp);
+      }
+      catch (runtime_error &e)
+      {
+         cerr << "webserv: [" << RED "ERROR" RESET << "] on server [" WHITE << i + 1 << RESET "], " << e.what() << "." << endl;
+         cerr << "Skipping...\n" << endl;
+         continue;
+      }
 	}
 }
 
@@ -117,49 +126,67 @@ bool ServersManager::is_server(int fd)
 
 void Server::setup()
 {
-	this->socket_fd = socket(AF_INET, SOCK_STREAM, 0);
-	if (this->socket_fd == -1)
-	{
-		perror("socket() failed");
-		exit(EXIT_FAILURE);
-	}
+   this->socket_fd = socket(AF_INET, SOCK_STREAM, 0);
+   if (this->socket_fd == -1)
+      throw runtime_error(string("socket() failed: ") + strerror(errno));
 
-	int fd_flags = fcntl(this->socket_fd, F_GETFL, 0);
-	if (fd_flags == -1)
-		perror("fcntl( F_GETFL ) failed");
-	 fd_flags = fcntl(this->socket_fd, F_SETFL, fd_flags | O_NONBLOCK);
-	if (fd_flags == -1)
-		perror("fcntl( F_SETFL ) failed"); // TODO maybe skip creating the server
+   int fd_flags = fcntl(this->socket_fd, F_GETFL, 0);
+   if (fd_flags == -1)
+      throw runtime_error(string("fcntl( F_GETFL ) failed: ") + strerror(errno));
+   fd_flags = fcntl(this->socket_fd, F_SETFL, fd_flags | O_NONBLOCK);
+   if (fd_flags == -1)
+      throw runtime_error(string("fcntl( F_SETFL ) failed: ") + strerror(errno));
 
-	this->address.sin_family = AF_INET;
-	this->address.sin_port = htons(this->port);
-	this->address.sin_addr.s_addr = this->host;
+   this->address.sin_family = AF_INET;
+   this->address.sin_port = htons(this->port);
+   this->address.sin_addr.s_addr = this->host;
 
-	const int enable = 1;
-	if (setsockopt(this->socket_fd, SOL_SOCKET, SO_REUSEADDR, &enable, sizeof(int)) < 0)
-    	std::cerr << "setsockopt(SO_REUSEADDR) failed" << endl;
+   const int enable = 1;
+   if (setsockopt(this->socket_fd, SOL_SOCKET, SO_REUSEADDR, &enable, sizeof(int)) < 0)
+      throw runtime_error(string("setsockopt(SO_REUSEADDR) failed: ") + strerror(errno));
 
-	int bind_t = ::bind(this->socket_fd, (const struct sockaddr *)&(this->address), sizeof(this->address));
-	if (bind_t == -1)
-	{
-		perror("dind() failed");
-		exit(EXIT_FAILURE);
-	}
+   {
+      int i = 0;
+      int bind_t = -1;
+      int  tmp_err = 0;
+      do
+      {
+         bind_t = ::bind(this->socket_fd, (const struct sockaddr *)&(this->address), sizeof(this->address));
+         tmp_err = errno;
+         if (bind_t == -1)
+         {
+            cerr << "webserv: [" GRAY << "LOG" RESET "]" << " bind() : Attempt " << i + 1 << " failed: " << strerror(errno) << "." << std::endl;
+            ::usleep(400000);
+         }
+      } while (bind_t == -1 && i++ < 5);
 
-	int listen_t = listen(this->socket_fd, SOMAXCONN);
-	if (listen_t == -1)
-	{
-		perror("listen() failed");
-		exit(EXIT_FAILURE);
-	}
+      if (bind_t == -1)
+         throw runtime_error(string("bind() failed after 6 attempts: ") + std::string(strerror(tmp_err)));
 
-	this->_server_info.remote_addr = hostToString(this->host);
-	this->_server_info.server_name = this->server_name;
-	this->_server_info.server_port = wbs::to_string(this->port);
+      i = 0;
+      int listen_t = -1;
+      do {
+         listen_t = ::listen(this->socket_fd, SOMAXCONN);
+         tmp_err = errno;
+         if (listen_t == -1)
+         {
+            cerr << "webserv: [" GRAY << "LOG" RESET "]" << " listen() : Attempt " << i + 1 << " failed: "  
+                  << strerror(errno) << "." << std::endl;
+               ::usleep(400000);
+         }
+      } while (listen_t == -1  && i++ < 5);
+      if (listen_t == -1)
+         throw runtime_error(string("listen() failed after 6 attempts: ") + std::string(strerror(tmp_err)));
+   }
+      
 
-	this->_pfd.events = POLLIN;
-	this->_pfd.revents = 0;
-	this->_pfd.fd = this->socket_fd;
+   this->_server_info.remote_addr = hostToString(this->host);
+   this->_server_info.server_name = this->server_name;
+   this->_server_info.server_port = wbs::to_string(this->port);
+
+   this->_pfd.events = POLLIN;
+   this->_pfd.revents = 0;
+   this->_pfd.fd = this->socket_fd;
 }
 
 
@@ -170,7 +197,7 @@ void Server::accept_connections(ServersManager &manager)
 	if (client_fd < 0)
 	{
 		if (errno == EAGAIN || errno == EWOULDBLOCK)
-			return ;// break; // No more clients 
+			return ;
 		perror("accept() failed");
 			return;
 	}
@@ -234,7 +261,6 @@ void ServersManager::send_response(pollfd &pfd)
 	if (!cur_client->_headers_sended)
 	{
 		response = cur_client->_response->get_response_header();
-		// pp RED << "-->" << response << RESET << endl;
 		if (!response.empty())
 		{
 			cur_client->_headers_sended = true;
@@ -243,7 +269,6 @@ void ServersManager::send_response(pollfd &pfd)
 	else
 	{
 		response = cur_client->_response->get_to_send();
-		// pp MAGENTA << "-->" << response << RESET << endl;
 	}
 
 	cur_client->register_interaction();
@@ -254,12 +279,12 @@ void ServersManager::send_response(pollfd &pfd)
 		if (cur_client->_response->_is_closed)
 		{
 			remove_client(pfd.fd);
-			// cout << RED  << "Close Conn" << RESET <<endl;
+			cout << RED  << "Close Conn" << RESET <<endl;
 		}
 		else
 		{
 			cur_client->reset();
-			cur_client->change_event(1); // REMOVE THIS
+			cur_client->change_event(1);
 			cout << GREEN  << "Keep Alive" << RESET <<endl;
 		}
 	}
@@ -288,6 +313,18 @@ void ServersManager::check_timeout(pollfd& fd)
 }
 
 
+void ServersManager::accept_connections(pollfd &fd)
+{
+	for (size_t j = 0; j < servers.size(); j++)
+	{
+		if (servers[j].socket_fd == fd.fd)
+		{
+			servers[j].accept_connections(*this);
+			break;
+		}
+	}
+}
+
 void ServersManager::run()
 {
 	while (true)
@@ -304,16 +341,9 @@ void ServersManager::run()
 		{
 			if (fds[i].revents & POLLIN)
 			{
-				if (is_server(fds[i].fd)) // TODO may remove this
+				if (/*fds.size() < 100 &&*/ is_server(fds[i].fd)) // TODO may remove this
 				{
-					for (size_t j = 0; j < servers.size(); j++)
-					{
-						if (servers[j].socket_fd == fds[i].fd)
-						{
-							servers[j].accept_connections(*this);
-							break;
-						}
-					}
+					accept_connections(fds[i]);
 				}
 				else
 				{

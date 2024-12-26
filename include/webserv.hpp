@@ -1,4 +1,4 @@
-#define	ERR_DIR "/home/bel-oirg/Desktop/to_merrrr/Error_pages/"
+#define	ERR_DIR "/Users/abennar/Desktop/last_push/Error_pages/"
 
 #define CHUNK_SIZE 1024
 #define MAX_URI_SIZE 2048
@@ -8,6 +8,7 @@
 
 
 #define RESET   "\033[0m"
+#define GRAY    "\033[90m" 
 #define RED     "\033[31m"
 #define GREEN   "\033[32m"
 #define YELLOW  "\033[33m"
