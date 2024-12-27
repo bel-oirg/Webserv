@@ -23,6 +23,8 @@ class	Server
 		pollfd							_pfd;
 		uint64_t						_timeout;
 		server_info						_server_info;
+		bool							_is_up = false;
+		int  							_err = 0;
 
 	public :
 		Server();

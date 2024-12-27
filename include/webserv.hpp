@@ -1,4 +1,4 @@
-#define	ERR_DIR "/Users/abennar/Desktop/webserv/Error_pages/"
+#define	ERR_DIR "/home/abennar/Desktop/WebservError_pages/"
 
 #define CHUNK_SIZE 1024
 #define MAX_URI_SIZE 2048
@@ -18,10 +18,12 @@
 #define WHITE  "\033[1;37m"
 
 #include <string>
+#include <algorithm>
 #include <limits>
 #include <ctime>
 #include <cstdlib>
 #include <stdint.h>
+#include <iomanip>
 #include <map>
 #include <iostream>
 #include <sys/socket.h>

@@ -81,15 +81,25 @@ void ServersManager::setup()
 			servers[i].setup();
 			pollfd tmp = {.fd = servers[i].socket_fd, .events = POLLIN, .revents = 0};
 			servers_pollfds.push_back(tmp);
+			servers[i]._is_up = true;
 		}
 		catch (runtime_error &e)
 		{
-			cerr << "webserv: [" << RED "ERROR" RESET << "] on server [" WHITE << i + 1 << RESET "], " << e.what() << "." << endl;
+			cerr << "webserv: " << RED "error" RESET << " on server [" WHITE << i + 1 << RESET "] => " << e.what() << "." << endl;
 			cerr << "Skipping...\n"
 				 << endl;
 			continue;
 		}
 	}
+	cout << "Servers: " << endl;
+	for (size_t i = 0; i < servers.size(); i++) {
+        std::string status = servers[i]._is_up ? GREEN "running" RESET : RED "failed" RESET;
+
+        std::cout << "    http://" << servers[i]._server_info.remote_addr 
+                  << ":" << servers[i]._server_info.server_port 
+                  << std::setw(35 - (servers[i]._server_info.remote_addr.length() + servers[i]._server_info.server_port.length())) 
+                  << status << std::endl;
+    }
 }
 
 void ServersManager::print()
@@ -123,6 +133,11 @@ bool ServersManager::is_server(int fd)
 
 void Server::setup()
 {
+	this->_server_info.remote_addr = hostToString(this->host);
+	this->_server_info.server_name = this->server_name;
+	this->_server_info.server_port = wbs::to_string(this->port);
+
+
 	this->socket_fd = socket(AF_INET, SOCK_STREAM, 0);
 	if (this->socket_fd == -1)
 		throw runtime_error(string("socket() failed: ") + strerror(errno));
@@ -142,44 +157,14 @@ void Server::setup()
 	if (setsockopt(this->socket_fd, SOL_SOCKET, SO_REUSEADDR, &enable, sizeof(int)) < 0)
 		throw runtime_error(string("setsockopt(SO_REUSEADDR) failed: ") + strerror(errno));
 
-	{
-		int i = 0;
-		int bind_t = -1;
-		int tmp_err = 0;
-		do
-		{
-			bind_t = ::bind(this->socket_fd, (const struct sockaddr *)&(this->address), sizeof(this->address));
-			tmp_err = errno;
-			if (bind_t == -1)
-			{
-				cerr << "webserv: [" GRAY << "LOG" RESET "]" << " bind() : Attempt " << i + 1 << " failed: " << strerror(errno) << "." << std::endl;
-				::usleep(400000);
-			}
-		} while (bind_t == -1 && i++ < 5);
+	int bind_t = ::bind(this->socket_fd, (const struct sockaddr *)&(this->address), sizeof(this->address));
+	if (bind_t == -1)
+			throw runtime_error(string("bind() failed: ") + std::string(strerror(errno)));
+	
+	int listen_t = ::listen(this->socket_fd, SOMAXCONN);
+	if (listen_t == -1)
+		throw runtime_error(string("listen() failed: ") + std::string(strerror(errno)));
 
-		if (bind_t == -1)
-			throw runtime_error(string("bind() failed after 6 attempts: ") + std::string(strerror(tmp_err)));
-
-		i = 0;
-		int listen_t = -1;
-		do
-		{
-			listen_t = ::listen(this->socket_fd, SOMAXCONN);
-			tmp_err = errno;
-			if (listen_t == -1)
-			{
-				cerr << "webserv: [" GRAY << "LOG" RESET "]" << " listen() : Attempt " << i + 1 << " failed: "
-					 << strerror(errno) << "." << std::endl;
-				::usleep(400000);
-			}
-		} while (listen_t == -1 && i++ < 5);
-		if (listen_t == -1)
-			throw runtime_error(string("listen() failed after 6 attempts: ") + std::string(strerror(tmp_err)));
-	}
-
-	this->_server_info.remote_addr = hostToString(this->host);
-	this->_server_info.server_name = this->server_name;
-	this->_server_info.server_port = wbs::to_string(this->port);
 
 	this->_pfd.events = POLLIN;
 	this->_pfd.revents = 0;
@@ -212,7 +197,7 @@ void ServersManager::remove_client(int fd)
 	{
 		// cout << "Closing Connection with : " << fd << endl;
 		delete it->second;
-		client_pool.erase(it);
+		client_pool.erase(it); 
 	}
 	close(fd);
 }

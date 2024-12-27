@@ -18,7 +18,8 @@ int	main(/*int argc, char **argv*/)
 		servers = Parse::get_servers(filename);
 
 		manager.init_servers(servers);
-		manager.print();
+		// manager.print();
+		cout << "\033[2J\033[H" << endl;
 		manager.setup();
 		manager.run();
 }
