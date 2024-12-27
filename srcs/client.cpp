@@ -16,7 +16,7 @@ Client::Client(Server &server, int fd)
 	_pfd.revents = 0;
 }
 
-bool	headers_complet(string &request)
+bool headers_complet(string &request)
 {
 	if (request.find("boundary=") != string::npos)
 	{
@@ -25,7 +25,11 @@ bool	headers_complet(string &request)
 		else
 			return false;
 	}
-	return (true);
+	else if (request.find("\r\n\r\n") != string::npos)
+	{
+		return (true);
+	}
+	return (false);
 }
 
 void Client::save_request(string request)
@@ -73,11 +77,7 @@ clock_t Client::get_last_interaction()
 }
 
 Client::Client(const Client &other)
-	: _server(other._server)
-	, _request(other._request)
-	, _pfd(other._pfd)
-	, _headers_sended(other._headers_sended)
-	, _last_interaction(other._last_interaction)
+	: _server(other._server), _request(other._request), _pfd(other._pfd), _headers_sended(other._headers_sended), _last_interaction(other._last_interaction)
 {
 }
 

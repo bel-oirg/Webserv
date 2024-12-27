@@ -1,32 +1,28 @@
 #include "webserv.hpp"
 #include "locations.hpp"
-// #include "config.hpp"
 #include "clients.hpp"
 #include "server.hpp"
 #include "utils.hpp"
-
 
 std::map<string, loc_details> &Server::get_locations()
 {
 	return (this->locations);
 }
 
+Server::Server() : server_fds(),
+				   locations(),
+				   port(-1),
+				   server_name(),
+				   host(-1),
+				   socket_fd(-1),
+				   address(),
+				   index(0),
+				   _pfd(),
+				   _timeout(10) // TIMEOUT
+{
+}
 
-
-Server::Server():
-	server_fds(),
-	locations(),
-	port(-1),   
-	server_name(),
-	host(-1),
-	socket_fd(-1),
-	address(),
-	index(0),
-	_pfd(),
-	_timeout(10) // TIMEOUT
-{}
-
-Server::Server(const Server& cpy)
+Server::Server(const Server &cpy)
 {
 	*this = cpy;
 }
@@ -80,18 +76,19 @@ void ServersManager::setup()
 {
 	for (size_t i = 0; i < servers.size(); i++)
 	{
-      try 
-      {
-         servers[i].setup();
-         pollfd tmp = {.fd = servers[i].socket_fd, .events = POLLIN, .revents = 0};
-         servers_pollfds.push_back(tmp);
-      }
-      catch (runtime_error &e)
-      {
-         cerr << "webserv: [" << RED "ERROR" RESET << "] on server [" WHITE << i + 1 << RESET "], " << e.what() << "." << endl;
-         cerr << "Skipping...\n" << endl;
-         continue;
-      }
+		try
+		{
+			servers[i].setup();
+			pollfd tmp = {.fd = servers[i].socket_fd, .events = POLLIN, .revents = 0};
+			servers_pollfds.push_back(tmp);
+		}
+		catch (runtime_error &e)
+		{
+			cerr << "webserv: [" << RED "ERROR" RESET << "] on server [" WHITE << i + 1 << RESET "], " << e.what() << "." << endl;
+			cerr << "Skipping...\n"
+				 << endl;
+			continue;
+		}
 	}
 }
 
@@ -106,7 +103,7 @@ void ServersManager::print()
 std::vector<pollfd> &ServersManager::get_fds()
 {
 	manager_fds.clear();
-	for (std::map<int , Client* >::iterator it = client_pool.begin(); it != client_pool.end(); ++it)
+	for (std::map<int, Client *>::iterator it = client_pool.begin(); it != client_pool.end(); ++it)
 	{
 		manager_fds.push_back(it->second->get_fd());
 	}
@@ -126,69 +123,68 @@ bool ServersManager::is_server(int fd)
 
 void Server::setup()
 {
-   this->socket_fd = socket(AF_INET, SOCK_STREAM, 0);
-   if (this->socket_fd == -1)
-      throw runtime_error(string("socket() failed: ") + strerror(errno));
+	this->socket_fd = socket(AF_INET, SOCK_STREAM, 0);
+	if (this->socket_fd == -1)
+		throw runtime_error(string("socket() failed: ") + strerror(errno));
 
-   int fd_flags = fcntl(this->socket_fd, F_GETFL, 0);
-   if (fd_flags == -1)
-      throw runtime_error(string("fcntl( F_GETFL ) failed: ") + strerror(errno));
-   fd_flags = fcntl(this->socket_fd, F_SETFL, fd_flags | O_NONBLOCK);
-   if (fd_flags == -1)
-      throw runtime_error(string("fcntl( F_SETFL ) failed: ") + strerror(errno));
+	int fd_flags = fcntl(this->socket_fd, F_GETFL, 0);
+	if (fd_flags == -1)
+		throw runtime_error(string("fcntl( F_GETFL ) failed: ") + strerror(errno));
+	fd_flags = fcntl(this->socket_fd, F_SETFL, fd_flags | O_NONBLOCK);
+	if (fd_flags == -1)
+		throw runtime_error(string("fcntl( F_SETFL ) failed: ") + strerror(errno));
 
-   this->address.sin_family = AF_INET;
-   this->address.sin_port = htons(this->port);
-   this->address.sin_addr.s_addr = this->host;
+	this->address.sin_family = AF_INET;
+	this->address.sin_port = htons(this->port);
+	this->address.sin_addr.s_addr = this->host;
 
-   const int enable = 1;
-   if (setsockopt(this->socket_fd, SOL_SOCKET, SO_REUSEADDR, &enable, sizeof(int)) < 0)
-      throw runtime_error(string("setsockopt(SO_REUSEADDR) failed: ") + strerror(errno));
+	const int enable = 1;
+	if (setsockopt(this->socket_fd, SOL_SOCKET, SO_REUSEADDR, &enable, sizeof(int)) < 0)
+		throw runtime_error(string("setsockopt(SO_REUSEADDR) failed: ") + strerror(errno));
 
-   {
-      int i = 0;
-      int bind_t = -1;
-      int  tmp_err = 0;
-      do
-      {
-         bind_t = ::bind(this->socket_fd, (const struct sockaddr *)&(this->address), sizeof(this->address));
-         tmp_err = errno;
-         if (bind_t == -1)
-         {
-            cerr << "webserv: [" GRAY << "LOG" RESET "]" << " bind() : Attempt " << i + 1 << " failed: " << strerror(errno) << "." << std::endl;
-            ::usleep(400000);
-         }
-      } while (bind_t == -1 && i++ < 5);
+	{
+		int i = 0;
+		int bind_t = -1;
+		int tmp_err = 0;
+		do
+		{
+			bind_t = ::bind(this->socket_fd, (const struct sockaddr *)&(this->address), sizeof(this->address));
+			tmp_err = errno;
+			if (bind_t == -1)
+			{
+				cerr << "webserv: [" GRAY << "LOG" RESET "]" << " bind() : Attempt " << i + 1 << " failed: " << strerror(errno) << "." << std::endl;
+				::usleep(400000);
+			}
+		} while (bind_t == -1 && i++ < 5);
 
-      if (bind_t == -1)
-         throw runtime_error(string("bind() failed after 6 attempts: ") + std::string(strerror(tmp_err)));
+		if (bind_t == -1)
+			throw runtime_error(string("bind() failed after 6 attempts: ") + std::string(strerror(tmp_err)));
 
-      i = 0;
-      int listen_t = -1;
-      do {
-         listen_t = ::listen(this->socket_fd, SOMAXCONN);
-         tmp_err = errno;
-         if (listen_t == -1)
-         {
-            cerr << "webserv: [" GRAY << "LOG" RESET "]" << " listen() : Attempt " << i + 1 << " failed: "  
-                  << strerror(errno) << "." << std::endl;
-               ::usleep(400000);
-         }
-      } while (listen_t == -1  && i++ < 5);
-      if (listen_t == -1)
-         throw runtime_error(string("listen() failed after 6 attempts: ") + std::string(strerror(tmp_err)));
-   }
-      
+		i = 0;
+		int listen_t = -1;
+		do
+		{
+			listen_t = ::listen(this->socket_fd, SOMAXCONN);
+			tmp_err = errno;
+			if (listen_t == -1)
+			{
+				cerr << "webserv: [" GRAY << "LOG" RESET "]" << " listen() : Attempt " << i + 1 << " failed: "
+					 << strerror(errno) << "." << std::endl;
+				::usleep(400000);
+			}
+		} while (listen_t == -1 && i++ < 5);
+		if (listen_t == -1)
+			throw runtime_error(string("listen() failed after 6 attempts: ") + std::string(strerror(tmp_err)));
+	}
 
-   this->_server_info.remote_addr = hostToString(this->host);
-   this->_server_info.server_name = this->server_name;
-   this->_server_info.server_port = wbs::to_string(this->port);
+	this->_server_info.remote_addr = hostToString(this->host);
+	this->_server_info.server_name = this->server_name;
+	this->_server_info.server_port = wbs::to_string(this->port);
 
-   this->_pfd.events = POLLIN;
-   this->_pfd.revents = 0;
-   this->_pfd.fd = this->socket_fd;
+	this->_pfd.events = POLLIN;
+	this->_pfd.revents = 0;
+	this->_pfd.fd = this->socket_fd;
 }
-
 
 void Server::accept_connections(ServersManager &manager)
 {
@@ -197,9 +193,9 @@ void Server::accept_connections(ServersManager &manager)
 	if (client_fd < 0)
 	{
 		if (errno == EAGAIN || errno == EWOULDBLOCK)
-			return ;
-		perror("accept() failed");
 			return;
+		perror("accept() failed");
+		return;
 	}
 
 	// cout << "New client accepted with fd: " << client_fd << std::endl;
@@ -209,10 +205,9 @@ void Server::accept_connections(ServersManager &manager)
 	manager.client_pool[client_fd] = client;
 }
 
-
 void ServersManager::remove_client(int fd)
 {
-	std::map<int, Client * >::iterator it = client_pool.find(fd);
+	std::map<int, Client *>::iterator it = client_pool.find(fd);
 	if (it != client_pool.end())
 	{
 		// cout << "Closing Connection with : " << fd << endl;
@@ -227,7 +222,7 @@ void ServersManager::get_request(pollfd &pfd)
 	char buffer[REQUEST_MAX_SIZE] = {0};
 
 	int valread;
-	valread = recv(pfd.fd, buffer, REQUEST_MAX_SIZE , 0);
+	valread = recv(pfd.fd, buffer, REQUEST_MAX_SIZE, 0);
 	if (valread <= 0)
 	{
 		cout << "Client disconnected" << std::endl;
@@ -238,19 +233,11 @@ void ServersManager::get_request(pollfd &pfd)
 	Client *cur_client = client_pool[pfd.fd];
 	cur_client->register_interaction();
 
-	try
-    {
-        cur_client->save_request(std::string(buffer, valread));
-		if (cur_client->tmp_request.empty() && cur_client->_response->upload_eof)
-		{
-			cur_client->change_event();
-		}
-    }
-    catch (const std::exception &e)
-    {
-        std::cerr << "Error in save_request: " << e.what() << std::endl;
-		this->remove_client(pfd.fd); // Clean up if save_request fails
-    }
+	cur_client->save_request(std::string(buffer, valread));
+	if (cur_client->tmp_request.empty() && cur_client->_response->upload_eof)
+	{
+		cur_client->change_event();
+	}
 }
 
 void ServersManager::send_response(pollfd &pfd)
@@ -279,39 +266,37 @@ void ServersManager::send_response(pollfd &pfd)
 		if (cur_client->_response->_is_closed)
 		{
 			remove_client(pfd.fd);
-			cout << RED  << "Close Conn" << RESET <<endl;
+			cout << RED << "Close Conn" << RESET << endl;
 		}
 		else
 		{
 			cur_client->reset();
 			cur_client->change_event(1);
-			cout << GREEN  << "Keep Alive" << RESET <<endl;
+			cout << GREEN << "Keep Alive" << RESET << endl;
 		}
 	}
-
 }
 
 // server core
 
-void ServersManager::check_timeout(pollfd& fd)
+void ServersManager::check_timeout(pollfd &fd)
 {
-    if (is_server(fd.fd))
-        return;
+	if (is_server(fd.fd))
+		return;
 
-    Client* client = client_pool[fd.fd];
+	Client *client = client_pool[fd.fd];
 
-    time_t last_inter = client->get_last_interaction();
-    time_t time_now = time(NULL);
+	time_t last_inter = client->get_last_interaction();
+	time_t time_now = time(NULL);
 
-    double elapsed_time = difftime(time_now, last_inter);
+	double elapsed_time = difftime(time_now, last_inter);
 
-    if (elapsed_time >= client->_server._timeout)
-    {
-        std::clog << "Time-out client by : " << elapsed_time  << " expected action : " << client->_server._timeout  << std::endl;
-        this->remove_client(fd.fd);
-    }
+	if (elapsed_time >= client->_server._timeout)
+	{
+		std::clog << "Time-out client by : " << elapsed_time << " expected action : " << client->_server._timeout << std::endl;
+		this->remove_client(fd.fd);
+	}
 }
-
 
 void ServersManager::accept_connections(pollfd &fd)
 {
