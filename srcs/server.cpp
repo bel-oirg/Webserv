@@ -113,6 +113,7 @@ void ServersManager::print()
 std::vector<pollfd> &ServersManager::get_fds()
 {
 	manager_fds.clear();
+	manager_fds.reserve(client_pool.size() + servers_pollfds.size());
 	for (std::map<int, Client *>::iterator it = client_pool.begin(); it != client_pool.end(); ++it)
 	{
 		manager_fds.push_back(it->second->get_fd());
@@ -142,10 +143,10 @@ void Server::setup()
 	if (this->socket_fd == -1)
 		throw runtime_error(string("socket() failed: ") + strerror(errno));
 
-	int fd_flags = fcntl(this->socket_fd, F_GETFL, 0);
+	int fd_flags = ::fcntl(this->socket_fd, F_GETFL, 0);
 	if (fd_flags == -1)
 		throw runtime_error(string("fcntl( F_GETFL ) failed: ") + strerror(errno));
-	fd_flags = fcntl(this->socket_fd, F_SETFL, fd_flags | O_NONBLOCK);
+	fd_flags = ::fcntl(this->socket_fd, F_SETFL, fd_flags | O_NONBLOCK);
 	if (fd_flags == -1)
 		throw runtime_error(string("fcntl( F_SETFL ) failed: ") + strerror(errno));
 
@@ -207,7 +208,7 @@ void ServersManager::get_request(pollfd &pfd)
 	char buffer[REQUEST_MAX_SIZE] = {0};
 
 	int valread;
-	valread = recv(pfd.fd, buffer, REQUEST_MAX_SIZE, 0);
+	valread = recv(pfd.fd, buffer, REQUEST_MAX_SIZE, MSG_NOSIGNAL);
 	if (valread <= 0)
 	{
 		cout << "Client disconnected" << std::endl;
@@ -244,22 +245,22 @@ void ServersManager::send_response(pollfd &pfd)
 	}
 
 	cur_client->register_interaction();
-
-	int wr_ret = send(pfd.fd, (void *)response.c_str(), response.size(), 0);
-	if (cur_client->_response->_eof || wr_ret < 0)
+	int wr_ret = 1;
+	if (!response.empty())
+		wr_ret = send(pfd.fd, (void *)response.c_str(), response.size(), MSG_NOSIGNAL);
+	if (cur_client->_response->_eof || wr_ret <= 0)
 	{
-		if (cur_client->_response->_is_closed)
+		if (cur_client->_response->_is_closed || wr_ret <= 0)
 		{
 			remove_client(pfd.fd);
-			cout << RED << "Close Conn" << RESET << endl;
 		}
 		else
 		{
 			cur_client->reset();
-			cur_client->change_event(1);
-			cout << GREEN << "Keep Alive" << RESET << endl;
+			cur_client->change_event(1); // change event to POLLOIN again
 		}
 	}
+
 }
 
 // server core

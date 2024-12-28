@@ -69,6 +69,7 @@ struct loc_details
 
 		cout << GREEN << "    Autoindex: " << WHITE << (auto_index ? "true" : "false") << RESET << endl;
 		cout << GREEN << "    Has CGI: " << WHITE << (has_cgi ? "true" : "false") << RESET << endl;
+		cout << GREEN << "    Upload-enable: " << WHITE << (enable_upload ? "true" : "false") << RESET << endl;
 		cout << GREEN << "    Root: " << WHITE << root << RESET << endl;
 		cout << GREEN << "    Redirection Path: " << WHITE << (redir_to.empty() ? "None" : redir_to) << RESET << endl;
 		cout << GREEN << "    Client Max Body Size: " << WHITE << client_max_body_size << " bytes" << RESET << endl;

@@ -432,7 +432,12 @@ response::~response()
 {
     infile.close();
 	if (_cgi)
+    {
+        int child_pid = _cgi->get_pid();
+        if (child_pid)
+            kill(_cgi->get_pid(), SIGKILL);
 		delete _cgi;
+    }
 }
 
 /*

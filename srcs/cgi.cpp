@@ -25,13 +25,6 @@ void Cgi::load_cgi_script()
 	}
 
 	extention = script_path.substr(dot_pos + 1);
-	cout << "EXTENTION : " << extention << endl;
-
-	// cout << YELLOW << "sz : " << defa_ult.cgi_extentions.size() << RESET << endl;
-	for (size_t i = 0; i < defa_ult.cgi_extentions.size(); i++)
-	{
-		cout << WHITE << defa_ult.cgi_extentions[i] << RESET << endl;
-	}
 
 	map<string, string>::iterator it = defa_ult.cgi_excutor.find(extention);
 	if (it == defa_ult.cgi_excutor.end())
@@ -41,7 +34,8 @@ void Cgi::load_cgi_script()
 		return;
 	}
 
-	if (find(location.cgi_extentions.begin(), location.cgi_extentions.end(), extention) == location.cgi_extentions.end())
+	if (find(location.cgi_extentions.begin(), location.cgi_extentions.end(), extention) 
+			== location.cgi_extentions.end())
 	{
 		code = 403; // TODO code for the extention no impl..
 		child_stat = 2;
@@ -54,12 +48,6 @@ void Cgi::load_cgi_script()
 	this->args[2] = NULL;
 }
 
-// cout << BLUE << "file : " << RESET << endl;
-			// string line;
-			// while (getline(cin, line))
-			// {
-			// 	cout << WHITE << line << RESET << endl;
-			// }
 
 void Cgi::cgi_run()
 {
@@ -146,6 +134,7 @@ bool Cgi::is_cgi_ready()
 	cgi_run();
 	if (child_stat == 2)
 	{
+		forked = 0;
 		return (true);
 	}
 	return (false);
@@ -193,15 +182,13 @@ Cgi::~Cgi()
 	if (infile)
 	{
 		int fd = fileno(infile);
-		if (fd != -1)
-			close(fd);
+		close(fd);
 		fclose(infile);
 	}
 	if (outfile)
 	{
 		int fd = fileno(outfile);
-		if (fd != -1)
-			close(fd);
+		close(fd);
 		fclose(outfile);
 	}
 }

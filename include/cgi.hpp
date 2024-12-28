@@ -46,9 +46,11 @@ class Cgi
 				return (fileno(outfile));
 			return -1;
 		}
+		int get_pid()
+		{
+			return forked;
+		}
 		~Cgi();
-
-		// ~Cgi();
 };
 
 

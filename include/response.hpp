@@ -23,11 +23,11 @@ class response : public request
 		server_info		_server_info;
         
         Cgi             *_cgi;
-        bool            _is_cgi;
         string          _cgi_head;
         string          _cgi_str;
     
     public:
+        bool            _is_cgi;
 		bool			_is_closed;
         bool            _eof;
         response(string req, std::map<string, loc_details> locations, server_info);
