@@ -279,7 +279,7 @@ bool response::prep_body(const std::string &path)
 {
     if (!_body.empty())
         return (true);
-    infile.open(path, std::ios::binary);
+    infile.open(path.c_str(), std::ios::binary);
     if (!infile)
     {
         this->stat_code = 500;

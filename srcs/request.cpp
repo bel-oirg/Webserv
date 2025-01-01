@@ -56,7 +56,7 @@ bool    request::valid_elem(std::string elem)
 
     if (isdigit(field[0]))
         return (false);
-    for (size_t index = 0; index < field.size() ; index++)
+    for (size_t index = 0; index < field.size() ; ++index)
     {
         if (allowed_field.find(field[index]) == std::string::npos)
             return (false);
@@ -67,7 +67,7 @@ bool    request::valid_elem(std::string elem)
     if (value.empty() || value[value.size() - 1] != '\r')
         return (false);
     
-    for (size_t index = 0; index < value.size() - 1 ; index++)
+    for (size_t index = 0; index < value.size() - 1 ; ++index)
     {
         if (value[index] <= 31 || value[index] >= 127)
             return (false);
@@ -456,7 +456,7 @@ int request::process_multipart(std::string &current_part) //____UPLOAD_REQ_
         if (!create_dir_if_not_exist(this->locations["default"].upload_path))
             return (err_("Error creating the upload_dir"), 0);
 
-        outfile.open(this->locations["default"].upload_path + file_name, std::ios::out | std::ios::binary);
+        outfile.open((this->locations["default"].upload_path + file_name).c_str(), std::ios::out | std::ios::binary);
         if (!outfile)
             return (err_("Failed to open the upload_file"), 0);
 

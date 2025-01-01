@@ -23,8 +23,7 @@ class	Server
 		pollfd							_pfd;
 		uint64_t						_timeout;
 		server_info						_server_info;
-		bool							_is_up = false;
-		int  							_err = 0;
+		bool							_is_up;
 
 	public :
 		Server();
@@ -36,7 +35,6 @@ class	Server
 		void setup();
 		static void run(std::vector<Server> &servers);
 		void	accept_connections(ServersManager &manager);
-		// void accept_connections();
 		void print() const;
 		pollfd& get_poll();
 		std::vector<pollfd>	get_fds();

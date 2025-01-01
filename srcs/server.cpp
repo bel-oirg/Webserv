@@ -18,7 +18,8 @@ Server::Server() : server_fds(),
 				   address(),
 				   index(0),
 				   _pfd(),
-				   _timeout(10) // TIMEOUT
+				   _timeout(10),
+				   _is_up(false)
 {
 }
 
@@ -49,7 +50,7 @@ void Server::print() const
 {
 	cout << "Server Name: " << server_name << std::endl;
 	cout << "Port: " << port << std::endl;
-	cout << "Host: " << hostToString(host) << std::endl;
+	cout << "Host: " << wbs::host2string(host) << std::endl;
 	cout << "Timeout: " << _timeout << endl;
 	cout << "Locations:" << std::endl;
 	for (std::map<std::string, loc_details>::const_iterator it = locations.begin(); it != locations.end(); ++it)
@@ -66,7 +67,7 @@ void ServersManager::init_servers(Server server)
 
 void ServersManager::init_servers(std::vector<Server> &new_servers)
 {
-	for (size_t i = 0; i < new_servers.size(); i++)
+	for (size_t i = 0; i < new_servers.size(); ++i)
 	{
 		servers.push_back(new_servers[i]);
 	}
@@ -74,7 +75,7 @@ void ServersManager::init_servers(std::vector<Server> &new_servers)
 
 void ServersManager::setup()
 {
-	for (size_t i = 0; i < servers.size(); i++)
+	for (size_t i = 0; i < servers.size(); ++i)
 	{
 		try
 		{
@@ -92,7 +93,7 @@ void ServersManager::setup()
 		}
 	}
 	cout << "Servers: " << endl;
-	for (size_t i = 0; i < servers.size(); i++) {
+	for (size_t i = 0; i < servers.size(); ++i) {
         std::string status = servers[i]._is_up ? GREEN "running" RESET : RED "failed" RESET;
 
         std::cout << "    http://" << servers[i]._server_info.remote_addr 
@@ -104,7 +105,7 @@ void ServersManager::setup()
 
 void ServersManager::print()
 {
-	for (size_t i = 0; i < servers.size(); i++)
+	for (size_t i = 0; i < servers.size(); ++i)
 	{
 		servers[i].print();
 	}
@@ -124,7 +125,7 @@ std::vector<pollfd> &ServersManager::get_fds()
 
 bool ServersManager::is_server(int fd)
 {
-	for (size_t i = 0; i < servers.size(); i++)
+	for (size_t i = 0; i < servers.size(); ++i)
 	{
 		if (servers_pollfds[i].fd == fd)
 			return true;
@@ -134,7 +135,7 @@ bool ServersManager::is_server(int fd)
 
 void Server::setup()
 {
-	this->_server_info.remote_addr = hostToString(this->host);
+	this->_server_info.remote_addr = wbs::host2string(this->host);
 	this->_server_info.server_name = this->server_name;
 	this->_server_info.server_port = wbs::to_string(this->port);
 
@@ -184,7 +185,6 @@ void Server::accept_connections(ServersManager &manager)
 		return;
 	}
 
-	// cout << "New client accepted with fd: " << client_fd << std::endl;
 	Client *client = new Client(*this, client_fd);
 	client->register_interaction();
 
@@ -196,7 +196,6 @@ void ServersManager::remove_client(int fd)
 	std::map<int, Client *>::iterator it = client_pool.find(fd);
 	if (it != client_pool.end())
 	{
-		// cout << "Closing Connection with : " << fd << endl;
 		delete it->second;
 		client_pool.erase(it); 
 	}
@@ -211,7 +210,6 @@ void ServersManager::get_request(pollfd &pfd)
 	valread = recv(pfd.fd, buffer, REQUEST_MAX_SIZE, MSG_NOSIGNAL);
 	if (valread <= 0)
 	{
-		cout << "Client disconnected" << std::endl;
 		this->remove_client(pfd.fd);
 		return;
 	}
@@ -279,14 +277,13 @@ void ServersManager::check_timeout(pollfd &fd)
 
 	if (elapsed_time >= client->_server._timeout)
 	{
-		std::clog << "Time-out client by : " << elapsed_time << " expected action : " << client->_server._timeout << std::endl;
 		this->remove_client(fd.fd);
 	}
 }
 
 void ServersManager::accept_connections(pollfd &fd)
 {
-	for (size_t j = 0; j < servers.size(); j++)
+	for (size_t j = 0; j < servers.size(); ++j)
 	{
 		if (servers[j].socket_fd == fd.fd)
 		{
@@ -305,14 +302,13 @@ void ServersManager::run()
 		if (ret == -1)
 		{
 			perror("poll() failed");
-			exit(EXIT_FAILURE);
 		}
 
-		for (size_t i = 0; i < fds.size(); i++)
+		for (size_t i = 0; i < fds.size(); ++i)
 		{
 			if (fds[i].revents & POLLIN)
 			{
-				if (/*fds.size() < 100 &&*/ is_server(fds[i].fd)) // TODO may remove this
+				if (is_server(fds[i].fd))
 				{
 					accept_connections(fds[i]);
 				}

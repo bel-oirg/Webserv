@@ -35,6 +35,7 @@
 #include <sys/wait.h>
 #include <assert.h>
 #include <netinet/in.h>
+#include <set>
 #include <cstring>
 #include <iostream>
 #include <unistd.h>
