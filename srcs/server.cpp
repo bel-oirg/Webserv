@@ -135,11 +135,6 @@ bool ServersManager::is_server(int fd)
 
 void Server::setup()
 {
-	this->_server_info.remote_addr = wbs::host2string(this->host);
-	this->_server_info.server_name = this->server_name;
-	this->_server_info.server_port = wbs::to_string(this->port);
-
-
 	this->socket_fd = socket(AF_INET, SOCK_STREAM, 0);
 	if (this->socket_fd == -1)
 		throw runtime_error(string("socket() failed: ") + strerror(errno));
@@ -155,9 +150,12 @@ void Server::setup()
 	this->address.sin_port = htons(this->port);
 	this->address.sin_addr.s_addr = this->host;
 
-	const int enable = 1;
+	int enable = 1;
 	if (setsockopt(this->socket_fd, SOL_SOCKET, SO_REUSEADDR, &enable, sizeof(int)) < 0)
 		throw runtime_error(string("setsockopt(SO_REUSEADDR) failed: ") + strerror(errno));
+	enable = 1;
+	if (setsockopt(socket_fd, SOL_SOCKET, SO_NOSIGPIPE, &enable, sizeof(enable)) < 0)
+              throw runtime_error(string("setsockopt(SO_NOSIGPIPE) failed: ") + strerror(errno));
 
 	int bind_t = ::bind(this->socket_fd, (const struct sockaddr *)&(this->address), sizeof(this->address));
 	if (bind_t == -1)
@@ -167,6 +165,16 @@ void Server::setup()
 	if (listen_t == -1)
 		throw runtime_error(string("listen() failed: ") + std::string(strerror(errno)));
 
+
+	sockaddr_in	socket_info;
+	socklen_t 	socket_len = sizeof(socket_info);
+	int socket_name_t = getsockname(this->socket_fd, (sockaddr *)(&socket_info), &socket_len);
+	if (socket_name_t == -1)
+		throw runtime_error(string("getsockname() failed: ") + std::string(strerror(errno)));
+
+	this->_server_info.remote_addr = wbs::host2string(this->host);
+	this->_server_info.server_name = this->server_name;
+	this->_server_info.server_port = wbs::to_string(ntohs(socket_info.sin_port));
 
 	this->_pfd.events = POLLIN;
 	this->_pfd.revents = 0;
@@ -207,8 +215,8 @@ void ServersManager::get_request(pollfd &pfd)
 	char buffer[REQUEST_MAX_SIZE] = {0};
 
 	int valread;
-	valread = recv(pfd.fd, buffer, REQUEST_MAX_SIZE, MSG_NOSIGNAL);
-	if (valread <= 0)
+	valread = recv(pfd.fd, buffer, REQUEST_MAX_SIZE, SO_NOSIGPIPE);
+	if (valread < 0)
 	{
 		this->remove_client(pfd.fd);
 		return;
@@ -229,33 +237,42 @@ void ServersManager::send_response(pollfd &pfd)
 	Client *cur_client = client_pool[pfd.fd];
 	string response;
 
+	cur_client->register_interaction();
 	if (!cur_client->_headers_sended)
 	{
 		response = cur_client->_response->get_response_header();
-		if (!response.empty())
-		{
-			cur_client->_headers_sended = true;
-		}
+		if (response.empty())
+			return ;
+		cur_client->_headers_sended = true;
 	}
 	else
 	{
 		response = cur_client->_response->get_to_send();
 	}
 
-	cur_client->register_interaction();
-	int wr_ret = 1;
-	if (!response.empty())
-		wr_ret = send(pfd.fd, (void *)response.c_str(), response.size(), MSG_NOSIGNAL);
-	if (cur_client->_response->_eof || wr_ret <= 0)
+	if (response == "\177")
+		return ;
+
+	int wr_ret = send(pfd.fd, (void *)response.c_str(), response.size(), SO_NOSIGPIPE);
+	if (wr_ret < 0)
 	{
-		if (cur_client->_response->_is_closed || wr_ret <= 0)
+		remove_client(pfd.fd);
+		return;
+	}
+
+	if (cur_client->_response->_eof)
+	{
+		if (cur_client->_response->_is_closed)
 		{
 			remove_client(pfd.fd);
 		}
-		else
+		else // BUG keep-alive not working properly 
 		{
-			cur_client->reset();
-			cur_client->change_event(1); // change event to POLLOIN again
+			// cout << GREEN "is keep-alive"  RESET << endl; 
+			// // cur_client->reset();
+			// Client *new_client = new Client(cur_client->_server, pfd.fd);
+			// client_pool[pfd.fd] = new_client;
+			// delete cur_client;
 		}
 	}
 

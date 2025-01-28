@@ -91,7 +91,7 @@ void response::debug()
 
 std::string response::get_response_header() //_____SEND__RESP__HEAD
 {
-	if(headers["Connection"] != "Keep-Alive")
+	if(headers["Connection"] != "Keep-alive")
 		_is_closed = true;
     if (this->stat_code == -1 && !prep_cgi())
         return ("");
@@ -298,14 +298,14 @@ string response::get_to_send() //_____RESP_BODY_SEND__
     if (_is_cgi)
     { 
         if (!_cgi->is_cgi_ready())
-            return "";
+            return "\177";
         stat_code = _cgi->cgi_get_code();
         if (stat_code == 200)
         {
             char buff[2001];
             int readen = read(_cgi->get_outfd(), buff, 2000);
             if (readen > 0)
-                return (buff[readen] = 0, string(buff, readen));
+                return (string(buff, readen));
             return (this->_eof = true,  "");
         }
     }
