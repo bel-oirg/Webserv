@@ -179,8 +179,10 @@ bool request::get_matched_loc_for_req_uri() //REQ
     std::vector<std::string> potential_locations;
     for (std::map<std::string, loc_details>::iterator it = locations.begin(); it != locations.end(); ++it)
     {
-        if (URI.find(fix_slash(it->first, "/")) == 0)
+        if (URI.find(it->first) == 0)
+        {
             potential_locations.push_back(it->first);
+        }
     }
     if (!potential_locations.size())
     {
@@ -239,7 +241,7 @@ bool request::is_method_allowed_in_loc() //REQ
 
 int request::get_request_resource() //get_resource_type()
 {
-    
+    pp "CORRECT -> " << correct_loc_name << endl;
     if (correct_loc_name != "default")
     {
         this->resource_path = fix_slash(current_loc.root, this->URI.substr(correct_loc_name.size(), URI.size() - correct_loc_name.size()));
@@ -258,7 +260,7 @@ int request::get_request_resource() //get_resource_type()
             return (err_("get_request_resource"), -1);
     }
     else
-        return (err_("Resource not found" + resource_path), 0);
+        return (err_("Resource not found " + resource_path), 0);
     return (err_("Error on getcwd"), -2);
 }
 
