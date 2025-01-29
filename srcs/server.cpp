@@ -117,7 +117,8 @@ std::vector<pollfd> &ServersManager::get_fds()
 	manager_fds.reserve(client_pool.size() + servers_pollfds.size());
 	for (std::map<int, Client *>::iterator it = client_pool.begin(); it != client_pool.end(); ++it)
 	{
-		manager_fds.push_back(it->second->get_fd());
+		if (it->second)
+			manager_fds.push_back(it->second->get_fd());
 	}
 	manager_fds.insert(manager_fds.end(), servers_pollfds.begin(), servers_pollfds.end());
 	return manager_fds;
@@ -223,10 +224,15 @@ void ServersManager::get_request(pollfd &pfd)
 	}
 
 	Client *cur_client = client_pool[pfd.fd];
+	if (!cur_client)
+	{
+		this->remove_client(pfd.fd);
+		return ;
+	}
 	cur_client->register_interaction();
 
 	cur_client->save_request(std::string(buffer, valread));
-	if (cur_client->tmp_request.empty() && cur_client->_response->upload_eof)
+	if (cur_client->tmp_request.empty() && (cur_client->_response && cur_client->_response->upload_eof))
 	{
 		cur_client->change_event();
 	}
@@ -238,6 +244,8 @@ void ServersManager::send_response(pollfd &pfd)
 	string response;
 
 	cur_client->register_interaction();
+	if (!cur_client->_response)
+		return ;
 	if (!cur_client->_headers_sended)
 	{
 		response = cur_client->_response->get_response_header();
@@ -266,13 +274,11 @@ void ServersManager::send_response(pollfd &pfd)
 		{
 			remove_client(pfd.fd);
 		}
-		else // BUG keep-alive not working properly 
+		else
 		{
-			// cout << GREEN "is keep-alive"  RESET << endl; 
-			// // cur_client->reset();
-			// Client *new_client = new Client(cur_client->_server, pfd.fd);
-			// client_pool[pfd.fd] = new_client;
-			// delete cur_client;
+			Client *new_client = new Client(cur_client->_server, pfd.fd);
+			client_pool[pfd.fd] = new_client;
+			delete cur_client;
 		}
 	}
 
@@ -286,6 +292,8 @@ void ServersManager::check_timeout(pollfd &fd)
 		return;
 
 	Client *client = client_pool[fd.fd];
+	if (!client)
+		return ;
 
 	time_t last_inter = client->get_last_interaction();
 	time_t time_now = time(NULL);

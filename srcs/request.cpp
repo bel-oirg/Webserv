@@ -475,7 +475,7 @@ int request::process_multipart(std::string &current_part) //____UPLOAD_REQ_
     {
         outfile << current_part.substr(0, this->length - uploaded_size);
         outfile.close();
-        return (pp "file uploaded successfuly\n", upload_eof = true);
+        return (pp "file uploaded successfully\n", upload_eof = true);
     }
     outfile << current_part;
     uploaded_size += current_part.size();

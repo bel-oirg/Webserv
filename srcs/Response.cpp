@@ -100,8 +100,9 @@ void response::debug()
 
 std::string response::get_response_header() //_____SEND__RESP__HEAD
 {
-	if(headers["Connection"] != "Keep-alive")
-		_is_closed = true;
+	if(headers["Connection"] != "keep-alive")
+        this->_is_closed = true;
+
     if (this->stat_code == -1 && !prep_cgi())
         return ("");
 
