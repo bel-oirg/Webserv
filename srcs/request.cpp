@@ -30,6 +30,7 @@ string fix_slash(string base, string file)
     return (base + file);
 }
 
+//TODO there is two trim_line
 std::string trim_line(const std::string &line)
 {
     size_t first = line.find_first_not_of(" \t");
@@ -181,6 +182,7 @@ bool request::get_matched_loc_for_req_uri() //REQ
     {
         if (URI.find(it->first) == 0)
         {
+            pp it->first << endl;
             potential_locations.push_back(it->first);
         }
     }
@@ -241,7 +243,6 @@ bool request::is_method_allowed_in_loc() //REQ
 
 int request::get_request_resource() //get_resource_type()
 {
-    pp "CORRECT -> " << correct_loc_name << endl;
     if (correct_loc_name != "default")
     {
         this->resource_path = fix_slash(current_loc.root, this->URI.substr(correct_loc_name.size(), URI.size() - correct_loc_name.size()));

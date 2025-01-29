@@ -1,8 +1,9 @@
-#!/usr/bin/php-cgi
+#!/opt/homebrew/bin/php-cgi
 <?php
 if (!isset($_COOKIE["username"])) {
 	setcookie("username", "Hamza", time() + 30); // Cookie expires in 30s
 }
+echo 'fff';
 ?>
 
 <!DOCTYPE html>

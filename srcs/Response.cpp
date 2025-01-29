@@ -3,6 +3,7 @@
 #include "utils.hpp"
 
 string fix_slash(string base, string file);
+string trim_line(const std::string &line);
 
 string response::get_script_path()
 {
@@ -18,7 +19,7 @@ std::string response::set_status(int stat_code)
 {
     static std::map<int, std::string> status_map;
     status_map[200] = std::string("200 OK");
-    status_map[201] = std::string("201 Created"); //mainly it returns json of the uploaded data
+    status_map[201] = std::string("201 Created");
     status_map[204] = std::string("204 No Content");
     status_map[301] = std::string("301 Moved Permanently");
     status_map[302] = std::string("302 Found");
@@ -40,7 +41,6 @@ bool response::prep_cgi()
     if (!_is_cgi)
     {
         _is_cgi = true;
-
         _cgi = new Cgi(resource_path, body, prepare_env_cgi(), this->current_loc, this->locations["default"]);
     }
     
@@ -64,16 +64,25 @@ bool response::prep_cgi()
         return(false);
     }
     this->_cgi_str = string(buff, readen);
-    //TODO the headers your providing of cgi does not ends with /r/n
+
+    //TODO the headers your providing of cgi does not ends with /r/n ? me or bennar
     //sometimes it includes 200 OK 
     //check the second arg on if below
     size_t cgi_head_end = this->_cgi_str.find("\n\n");
-    if (cgi_head_end != string::npos && cgi_head_end == this->_cgi_str.find("\n"))
+    if (cgi_head_end != string::npos)
     {
-        this->_cgi_head = this->_cgi_str.substr(0, cgi_head_end);
-        this->_cgi_str = this->_cgi_str.substr(cgi_head_end + 2);
-        _content_type = "";
-        _content_length -= readen;
+        _content_length -= cgi_head_end + 2;
+        std::string tmp_line, field, value;
+        std::stringstream cgi_headers_raw(_cgi_str.substr(0, cgi_head_end + 1));
+        _cgi_str = _cgi_str.substr(cgi_head_end + 2);
+
+        while(std::getline(cgi_headers_raw, tmp_line, '\n'))
+        {
+            std::stringstream raw(tmp_line);
+            std::getline(raw, field, ':');
+            std::getline(raw, value, '\r');
+            this->_cgi_headers.insert(std::make_pair(field, trim_line(value)));
+        }
     }
     return (true);
 }
@@ -109,19 +118,24 @@ std::string response::get_response_header() //_____SEND__RESP__HEAD
     
     line << "Server: " << this->_server << "\r\n";
     
-    if (!this->_content_type.empty())
+    if (!this->_content_type.empty() && _cgi_headers["Content-type"].empty())
         line << "Content-Type: " << this->_content_type << "\r\n";
-        
-    if (this->_content_length == -1)
-        line << "Transfer-Encoding: " << this->_transfer_encoding << "\r\n";
-    else
-        line << "Content-Length: " << this->_content_length << "\r\n";
-
-    if (!_cookies.empty())
-        line << "Set-Cookie: " << _cookies << "\r\n";
+    
+    if (_cgi_headers.find("Content-Length") == _cgi_headers.end())
+    {
+        if (this->_content_length == -1)
+            line << "Transfer-Encoding: " << this->_transfer_encoding << "\r\n";
+        else
+            line << "Content-Length: " << this->_content_length << "\r\n";
+    }
     
     if (!_location.empty())
         line << "Location: " << _location << "\r\n";
+
+    for (map<string, string>::iterator it = _cgi_headers.begin(); it != _cgi_headers.end() ; it++)
+    {
+        line << it->first << ": " << it->second << "\r\n";
+    }
 
     line << "\r\n";
 
@@ -304,8 +318,9 @@ string response::get_to_send() //_____RESP_BODY_SEND__
         {
             char buff[2001];
             int readen = read(_cgi->get_outfd(), buff, 2000);
+            // pp string(buff, readen) << endl;
             if (readen > 0)
-                return (string(buff, readen));
+                return (buff[readen] = 0, string(buff, readen));
             return (this->_eof = true,  "");
         }
     }
@@ -418,7 +433,8 @@ response::response(std::string req, std::map<string, loc_details> locations, ser
 	this->_server_info = info;
     set_connection();
     set_server();
-    set_cookies();
+    // set_cookies();
+    // set_cgi_head()
     set_location();
     set_body();
     set_content_type();

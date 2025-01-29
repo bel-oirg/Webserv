@@ -2,6 +2,7 @@
 
 import sys
 import os
+print("Content-type: text/html\n")
 
 request_method = os.environ['REQUEST_METHOD']
 
@@ -25,7 +26,7 @@ if request_method == 'POST':
 # If it's a GET request, display a form to enter the name
 elif request_method == 'GET':
     print('<h1>Enter your name</h1>')
-    print('<form action="/cgi-bin/name.py" method="POST">')
+    print('<form action="/cgi/name.py" method="POST">')
     print('<label for="name">Name: </label>')
     print('<input type="text" id="name" name="name">')
     print('<button type="submit">Submit</button>')
