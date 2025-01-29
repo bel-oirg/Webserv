@@ -215,7 +215,7 @@ void ServersManager::get_request(pollfd &pfd)
 	char buffer[REQUEST_MAX_SIZE] = {0};
 
 	int valread;
-	valread = recv(pfd.fd, buffer, REQUEST_MAX_SIZE, SO_NOSIGPIPE);
+	valread = recv(pfd.fd, buffer, REQUEST_MAX_SIZE, 0);
 	if (valread < 0)
 	{
 		this->remove_client(pfd.fd);
@@ -253,7 +253,7 @@ void ServersManager::send_response(pollfd &pfd)
 	if (response == "\177")
 		return ;
 
-	int wr_ret = send(pfd.fd, (void *)response.c_str(), response.size(), SO_NOSIGPIPE);
+	int wr_ret = send(pfd.fd, (void *)response.c_str(), response.size(), 0);
 	if (wr_ret < 0)
 	{
 		remove_client(pfd.fd);
