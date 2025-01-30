@@ -174,6 +174,12 @@ int request::is_req_well_formed() //REQ
     return (0);
 }
 
+bool is_file_exist(const string &file)
+{
+    struct stat buffer;
+    return (stat(file.c_str(), &buffer) == 0);
+}
+
 bool request::get_matched_loc_for_req_uri() //REQ
 {
     size_t tmp_size = 0;
@@ -181,10 +187,7 @@ bool request::get_matched_loc_for_req_uri() //REQ
     for (std::map<std::string, loc_details>::iterator it = locations.begin(); it != locations.end(); ++it)
     {
         if (URI.find(it->first) == 0)
-        {
-            pp it->first << endl;
             potential_locations.push_back(it->first);
-        }
     }
     if (!potential_locations.size())
     {
@@ -195,6 +198,8 @@ bool request::get_matched_loc_for_req_uri() //REQ
     }
     for (std::vector<std::string>::iterator it = potential_locations.begin(); it != potential_locations.end(); ++it)
     {
+        if (is_file_exist(locations[*it].root + URI))
+            return (current_loc = this->locations[*it], true);
         if (tmp_size < it->size())
         {
             tmp_size = it->size();
@@ -406,10 +411,9 @@ int     request::init_parse_req()
 
     vector<string> vec = current_loc.allowed_methods;
     if (find(vec.begin(), vec.end(), "NONE") != vec.end())
-        return (405);
-        
+        return (pp "NONE method\n", 405);
     if (!is_method_allowed_in_loc())
-        return (405);
+        return (pp "method not allowed\n", 405);
     return (0);
 }
 

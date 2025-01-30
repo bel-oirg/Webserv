@@ -34,12 +34,12 @@ void Cgi::load_cgi_script()
 		return ;
 	}
 
-	if (access(excutor.c_str(), X_OK))
-	{
-		code = 500;
-		child_stat = 2;
-		return ;
-	}
+	// if (access(excutor.c_str(), X_OK))
+	// {
+	// 	code = 500;
+	// 	child_stat = 2;
+	// 	return ;
+	// }
 
 
 	if (find(location.cgi_extentions.begin(), location.cgi_extentions.end(), extention) 

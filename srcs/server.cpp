@@ -155,8 +155,8 @@ void Server::setup()
 	if (setsockopt(this->socket_fd, SOL_SOCKET, SO_REUSEADDR, &enable, sizeof(int)) < 0)
 		throw runtime_error(string("setsockopt(SO_REUSEADDR) failed: ") + strerror(errno));
 	enable = 1;
-	if (setsockopt(socket_fd, SOL_SOCKET, SO_NOSIGPIPE, &enable, sizeof(enable)) < 0)
-              throw runtime_error(string("setsockopt(SO_NOSIGPIPE) failed: ") + strerror(errno));
+	// if (setsockopt(socket_fd, SOL_SOCKET, SO_NOSIGPIPE, &enable, sizeof(enable)) < 0) TODO 
+    //           throw runtime_error(string("setsockopt(SO_NOSIGPIPE) failed: ") + strerror(errno));
 
 	int bind_t = ::bind(this->socket_fd, (const struct sockaddr *)&(this->address), sizeof(this->address));
 	if (bind_t == -1)
