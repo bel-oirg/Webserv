@@ -4,8 +4,8 @@
 #include "clients.hpp"
 #include "parse.hpp"
 
-
 using namespace std;
+
 
 int	main(int argc, char **argv)
 {
@@ -14,12 +14,8 @@ int	main(int argc, char **argv)
 		std::string		filename(argv[1]);
 		std::vector<Server>	servers;
 		ServersManager		manager;
-		// size_t dot_pos = filename.rfind(".");
 
-		// if ( dot_pos == string::npos || filename.substr(dot_pos) != "conf") ;;
-
-			servers = Parse::get_servers(filename);
-
+		servers = Parse::get_servers(filename);
 
 		{
 			manager.init_servers(servers);

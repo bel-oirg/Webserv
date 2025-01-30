@@ -11,7 +11,7 @@ string Cgi::cgi_get_response()
 	return this->response;
 }
 
-void Cgi::load_cgi_script()
+void	Cgi::load_cgi_script()
 {
 	string extention;
 	size_t dot_pos;
@@ -34,14 +34,6 @@ void Cgi::load_cgi_script()
 		return ;
 	}
 
-	// if (access(excutor.c_str(), X_OK))
-	// {
-	// 	code = 500;
-	// 	child_stat = 2;
-	// 	return ;
-	// }
-
-
 	if (find(location.cgi_extentions.begin(), location.cgi_extentions.end(), extention) 
 			== location.cgi_extentions.end())
 	{
@@ -49,9 +41,15 @@ void Cgi::load_cgi_script()
 		child_stat = 2;
 		return;
 	}
-
-
 	this->excutor = it->second;
+
+	if (access(excutor.c_str(), X_OK))
+	{
+		code = 500;
+		child_stat = 2;
+		return ;
+	}
+
 	this->args[0] = (char *)excutor.c_str();
 	this->args[1] = (char *)script_path.c_str();
 	this->args[2] = NULL;
@@ -62,7 +60,7 @@ void Cgi::cgi_run()
 {
 	if (child_stat == 0)
 	{
-		this->outfile = tmpfile();
+		this->outfile = tmpfile(); // BUG maybe this not safe 
 		this->infile = tmpfile();
 		if (outfile == NULL || infile == NULL)
 		{
@@ -86,7 +84,6 @@ void Cgi::cgi_run()
 
 		if (forked == 0)
 		{
-			// char const * *argv = args;
 			alarm(10); // Set timeout for CGI execution
 
 			dup2(fileno(infile), STDIN_FILENO);
@@ -173,7 +170,7 @@ Cgi::Cgi(string _scriptpath, string _request_body, map<string, string> env_map, 
 
 		combined = it->first + "=" + it->second;
 		this->env[i] = new char[combined.size() + 1];
-		strcpy(env[i], combined.c_str());
+		strlcpy(env[i], combined.c_str(), combined.size() + 1);
 		i++;
 	}
 

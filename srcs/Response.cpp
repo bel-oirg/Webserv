@@ -328,7 +328,7 @@ string response::get_to_send() //_____RESP_BODY_SEND__
     if (!_body.empty()) //in this case i am sure that the body is small (indexing a dir / ..)
         return (this->_eof = true, _body);
 
-    char buff[REQUEST_MAX_SIZE + 1] = {0};
+    char buff[REQUEST_MAX_SIZE + 1] = {0}; // BUG change this to a dynamic array
     infile.read(buff, REQUEST_MAX_SIZE);
     size_t readden = infile.gcount();
 

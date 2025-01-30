@@ -9,17 +9,18 @@ std::map<string, loc_details> &Server::get_locations()
 	return (this->locations);
 }
 
-Server::Server() : server_fds(),
-				   locations(),
-				   port(-1),
-				   server_name(),
-				   host(-1),
-				   socket_fd(-1),
-				   address(),
-				   index(0),
-				   _pfd(),
-				   _timeout(10),
-				   _is_up(false)
+Server::Server() : 
+	server_fds(),
+	locations(),
+	port(-1),
+	server_name(),
+	host(-1),
+	socket_fd(-1),
+	address(),
+	index(0),
+	_pfd(),
+	_timeout(30),
+	_is_up(false)
 {
 }
 
@@ -32,16 +33,16 @@ Server &Server::operator=(const Server &cpy)
 {
 	if (this != &cpy)
 	{
-		server_fds = cpy.server_fds;
-		locations = cpy.locations;
-		port = cpy.port;
-		server_name = cpy.server_name;
-		host = cpy.host;
-		socket_fd = cpy.socket_fd;
-		address = cpy.address;
-		index = cpy.index;
-		_pfd = cpy._pfd;
-		_timeout = cpy._timeout;
+		server_fds    = cpy.server_fds;
+		locations     = cpy.locations;
+		port          = cpy.port;
+		server_name   = cpy.server_name;
+		host          = cpy.host;
+		socket_fd     = cpy.socket_fd;
+		address       = cpy.address;
+		index         = cpy.index;
+		_pfd          = cpy._pfd;
+		_timeout      = cpy._timeout;
 	}
 	return *this;
 }
@@ -93,14 +94,17 @@ void ServersManager::setup()
 		}
 	}
 	cout << "Servers: " << endl;
-	for (size_t i = 0; i < servers.size(); ++i) {
-        std::string status = servers[i]._is_up ? GREEN "running" RESET : RED "failed" RESET;
+	for (size_t i = 0; i < servers.size(); ++i)
+	{
+		std::string status = servers[i]._is_up ? GREEN "running" RESET : RED "failed" RESET;
 
-        std::cout << "    http://" << servers[i]._server_info.remote_addr 
-                  << ":" << servers[i]._server_info.server_port 
-                  << std::setw(35 - (servers[i]._server_info.remote_addr.length() + servers[i]._server_info.server_port.length())) 
-                  << status << std::endl;
-    }
+		string host = wbs::host2string(servers[i].host);
+		string port = wbs::to_string(servers[i].port);
+		std::cout << "    http://" << host
+				  << ":" << port
+				  << std::setw(35 - (host.size() + port.size()))
+				  << status << std::endl;
+	}
 }
 
 void ServersManager::print()
@@ -155,20 +159,19 @@ void Server::setup()
 	if (setsockopt(this->socket_fd, SOL_SOCKET, SO_REUSEADDR, &enable, sizeof(int)) < 0)
 		throw runtime_error(string("setsockopt(SO_REUSEADDR) failed: ") + strerror(errno));
 	enable = 1;
-	// if (setsockopt(socket_fd, SOL_SOCKET, SO_NOSIGPIPE, &enable, sizeof(enable)) < 0) TODO 
-    //           throw runtime_error(string("setsockopt(SO_NOSIGPIPE) failed: ") + strerror(errno));
+	if (setsockopt(socket_fd, SOL_SOCKET, SO_NOSIGPIPE, &enable, sizeof(enable)) < 0)
+		throw runtime_error(string("setsockopt(SO_NOSIGPIPE) failed: ") + strerror(errno));
 
 	int bind_t = ::bind(this->socket_fd, (const struct sockaddr *)&(this->address), sizeof(this->address));
 	if (bind_t == -1)
-			throw runtime_error(string("bind() failed: ") + std::string(strerror(errno)));
-	
+		throw runtime_error(string("bind() failed: ") + std::string(strerror(errno)));
+
 	int listen_t = ::listen(this->socket_fd, SOMAXCONN);
 	if (listen_t == -1)
 		throw runtime_error(string("listen() failed: ") + std::string(strerror(errno)));
 
-
-	sockaddr_in	socket_info;
-	socklen_t 	socket_len = sizeof(socket_info);
+	sockaddr_in socket_info;
+	socklen_t socket_len = sizeof(socket_info);
 	int socket_name_t = getsockname(this->socket_fd, (sockaddr *)(&socket_info), &socket_len);
 	if (socket_name_t == -1)
 		throw runtime_error(string("getsockname() failed: ") + std::string(strerror(errno)));
@@ -206,7 +209,7 @@ void ServersManager::remove_client(int fd)
 	if (it != client_pool.end())
 	{
 		delete it->second;
-		client_pool.erase(it); 
+		client_pool.erase(it);
 	}
 	close(fd);
 }
@@ -227,7 +230,7 @@ void ServersManager::get_request(pollfd &pfd)
 	if (!cur_client)
 	{
 		this->remove_client(pfd.fd);
-		return ;
+		return;
 	}
 	cur_client->register_interaction();
 
@@ -245,12 +248,12 @@ void ServersManager::send_response(pollfd &pfd)
 
 	cur_client->register_interaction();
 	if (!cur_client->_response)
-		return ;
+		return;
 	if (!cur_client->_headers_sended)
 	{
 		response = cur_client->_response->get_response_header();
 		if (response.empty())
-			return ;
+			return;
 		cur_client->_headers_sended = true;
 	}
 	else
@@ -259,7 +262,7 @@ void ServersManager::send_response(pollfd &pfd)
 	}
 
 	if (response == "\177")
-		return ;
+		return;
 
 	int wr_ret = send(pfd.fd, (void *)response.c_str(), response.size(), 0);
 	if (wr_ret < 0)
@@ -281,7 +284,6 @@ void ServersManager::send_response(pollfd &pfd)
 			delete cur_client;
 		}
 	}
-
 }
 
 // server core
@@ -293,7 +295,7 @@ void ServersManager::check_timeout(pollfd &fd)
 
 	Client *client = client_pool[fd.fd];
 	if (!client)
-		return ;
+		return;
 
 	time_t last_inter = client->get_last_interaction();
 	time_t time_now = time(NULL);
@@ -326,7 +328,7 @@ void ServersManager::run()
 		int ret = poll(fds.data(), fds.size(), 10000); // TODO check the timeout and remove all of the clients
 		if (ret == -1)
 		{
-			perror("poll() failed");
+			perror("poll() failed"); // clean all clients
 		}
 
 		for (size_t i = 0; i < fds.size(); ++i)
@@ -348,7 +350,7 @@ void ServersManager::run()
 			}
 			else
 			{
-				check_timeout(fds[i]);
+				check_timeout(fds[i]); // sometime the connection closed and the client still available
 			}
 		}
 	}

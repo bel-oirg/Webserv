@@ -8,12 +8,10 @@
 
 using namespace std;
 
-
 void	Parse::display_help()
 {
 	cout << HELP << endl;
 }
-
 
 bool Parse::is_server(const std::string &line)
 {
@@ -40,6 +38,8 @@ bool Parse::is_location(const std::string &line, string &path)
 		size_t openBracket = line.find("{", pos);
 		if (openBracket == string::npos)
 			throw std::runtime_error("Config Error: Invalid syntax in 'location' directive. Expected opening bracket or EOF declaration.");
+		if (openBracket != line.size() - 1)
+			throw std::runtime_error("Config Error: Invalid syntax in 'location' directive. Expected new line after bracket.");
 		path = line.substr(pos + 8, openBracket - (pos + 8));
 		path = wbs::trim_line(path);
 		if (path.empty())
@@ -99,18 +99,18 @@ void Parse::defaults(std::map<string, string>::iterator iter, Server &server, lo
 	if (key == "listen")
 	{
 		int port;
-		if (!for_each(value.begin(), value.end(), ::isdigit))
+		if (!wbs::all_of(value.begin(), value.end(), ::isdigit))
 			throw runtime_error("Config Error: Invalid port value: '" + value + "'. Port must be a numeric value.");
 		else
-			port = atoi(value.c_str());
-		if (port > 65535 || port < 0)
-			throw runtime_error("Config Error: Port value '" + value + "' is out of range. Valid range is 0 to 65535.");
+		{
+			istringstream cnv(value);
+			if (!(cnv >> port) || port > 65535 || port < 0)
+				throw runtime_error("Config Error: Port value '" + value + "' is out of range. Valid range is 0 to 65535.");
+		}
 		server.port = port;
 	}
 	else if (key == "server_name")
-	{
 		server.server_name = value;
-	}
 	else if (key == "host")
 	{
 		if (value == "localhost")
@@ -122,9 +122,7 @@ void Parse::defaults(std::map<string, string>::iterator iter, Server &server, lo
 		server.host = host;
 	}
 	else if (key == "index")
-	{
 		loc.index_path = non_empty(key, value);
-	}
 	else if (key == "error_page")
 	{
 		int code;
@@ -141,7 +139,7 @@ void Parse::defaults(std::map<string, string>::iterator iter, Server &server, lo
 	}
 	else if (key == "client_max_body_size")
 	{
-		if (wbs::all_of(value.begin(), value.end(), ::isdigit)) // BUG c++ 11
+		if (wbs::all_of(value.begin(), value.end(), ::isdigit))
 		{
 			uint64_t cmbs_value;
 			cmbs_value = atoll(value.c_str());
@@ -151,18 +149,12 @@ void Parse::defaults(std::map<string, string>::iterator iter, Server &server, lo
 			throw runtime_error("Config Error: Invalid value for 'client_max_body_size': '" + value + "'. Expected a numeric value.");
 	}
 	else if (key == "root")
-	{
 		loc.root = value;
-	}
 	else if (key == "allowed_methods")
-	{
 		loc.allowed_methods = allowed_methods(value);
-	}
 	else if (key == "autoindex")
-	{	
 		loc.auto_index = bool_type_parse(key, value);
-	}
-	else if (key == "cgi_executor") // POS implemented here 
+	else if (key == "cgi_executor")
 	{
 		std::vector<string> splited = wbs::split(value, ",\177");
 		for (size_t i = 0; i < splited.size(); ++i)
@@ -176,13 +168,9 @@ void Parse::defaults(std::map<string, string>::iterator iter, Server &server, lo
 		}
 	}
 	else if (key == "upload_path")
-	{
 		loc.upload_path = non_empty(key, value);
-	}
 	else
-	{
 		throw runtime_error("Config Error: Unknown argument: '" + key + "'. Check 'webserv -h' for valid options.");
-	}
 }
 
 
@@ -194,25 +182,15 @@ void Parse::locations(map<string, string>::iterator loc, loc_details &dest)
 	if (value[0] == '\177')
 		value.erase(0, 1);
 	if (key == "allowed_methods")
-	{
 		dest.allowed_methods = allowed_methods(value);
-	}
 	else if (key == "autoindex")
-	{
 		dest.auto_index = bool_type_parse(key, value);
-	}
 	else if (key == "root")
-	{
 		dest.root = non_empty(key, value);
-	}
 	else if (key == "index")
-	{
 		dest.index_path = non_empty(key, value); // TODO change this to  vector of paths;
-	}
 	else if (key == "return")
-	{
 		dest.redir_to = non_empty(key, value);
-	}
 	else if (key == "client_max_body_size") // FIXME may this nor allowed here
 	{
 		if (wbs::all_of(value.begin(), value.end(), ::isdigit))
@@ -225,13 +203,9 @@ void Parse::locations(map<string, string>::iterator loc, loc_details &dest)
 			throw runtime_error("Config Error: Invalid value for 'client_max_body_size': '" + value + "'. Expected a numeric value.");
 	}
 	else if (key == "cgi_pass")
-	{
 		dest.has_cgi = bool_type_parse(key, value);
-	}
 	else if (key == "upload_enable")
-	{	
 		dest.enable_upload = bool_type_parse(key, value);
-	}
 	else if (key == "cgi_ext")
 	{
 		vector<string> splited  = wbs::split(value, " ,");
@@ -239,9 +213,7 @@ void Parse::locations(map<string, string>::iterator loc, loc_details &dest)
 		dest.cgi_extentions = splited;
 	}
 	else
-	{
 		throw runtime_error("Config Error: Unknown argument for location directive: '" + key + "'. Check 'webserv -h'");
-	}
 }
 
 std::vector<Server> Parse::config2server(std::vector<Config> configs)
@@ -267,7 +239,6 @@ std::vector<Server> Parse::config2server(std::vector<Config> configs)
 				iter != it->location.end(); ++iter)
 		{
 			loc_details tmp;
-			// cout << " Location : "  << iter->first << endl;
 			for (std::map<string, string>::iterator keys_iterator = iter->second.begin();
 					keys_iterator != iter->second.end(); ++keys_iterator)
 			{
@@ -286,12 +257,18 @@ std::vector<Server> Parse::config2server(std::vector<Config> configs)
 			throw std::runtime_error("Config Error: Port is required: A valid port must be specified for the server configuration.");
 		if (cur_server.locations["default"].root.empty())
 			throw std::runtime_error("Config Error: Root directory is required: Please specify a valid root path for the server.");
-
-		for (size_t i = 0; i < servers.size(); ++i)
+		
+		for (map<string, loc_details>::iterator it = cur_server.locations.begin(); it != cur_server.locations.end(); ++it)
 		{
-			if (servers[i].port == cur_server.port)
-				throw std::runtime_error("Config Error: Port: " + wbs::to_string(cur_server.port) + " is already used by another server.");
+			if (it->second.enable_upload == true && cur_server.locations["default"].upload_path.empty())
+				throw std::runtime_error("Config Error: Uploading is enabled somewhere but no upload path is specifed.");
 		}
+
+		// for (size_t i = 0; i < servers.size(); ++i)
+		// {
+		// 	if (servers[i].port == cur_server.port)
+		// 		throw std::runtime_error("Config Error: Port: " + wbs::to_string(cur_server.port) + " is already used by another server.");
+		// }
 		servers.push_back(cur_server);
 	}
 	return servers;
@@ -299,7 +276,7 @@ std::vector<Server> Parse::config2server(std::vector<Config> configs)
 
 std::vector<Server> Parse::get_servers(std::string filename)
 {
-	wbs_ifstream configFile(filename);
+	ifstream configFile(filename);
 	std::vector<Server> servers;
 
 	Config	cur_config;
@@ -356,7 +333,6 @@ std::vector<Server> Parse::get_servers(std::string filename)
 			// vv Check for location block
 			if (is_location(line, cur_path))
 			{
-				// cout << "LOCATION FOUND" << "in path: " << cur_path << endl;
 				if (!inServer)
 					throw runtime_error("Syntax Error: Location block outside of server block.");
 				if (cur_config.location.find(cur_path) == cur_config.location.end())
@@ -442,12 +418,12 @@ std::vector<Server> Parse::get_servers(std::string filename)
 
 		servers = config2server(configs);
 		if (!servers.size())
-			throw runtime_error("Config Error: countain no server directive");
+			throw runtime_error("Config Error: contain no server directive");
 		configFile.close();
 	}
 	catch (runtime_error &e)
 	{
-		cerr << "webserv : `" << configFile.name() << "' " << e.what() << endl;
+		cerr << "webserv: `" << filename << "' " << e.what() << endl;
 		configFile.close();
 		std::exit(EXIT_FAILURE);
 	}

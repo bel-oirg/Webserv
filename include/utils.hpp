@@ -1,3 +1,5 @@
+#ifndef UTILS_HPP
+#define UTILS_HPP
 
 #include "webserv.hpp"
 
@@ -7,7 +9,6 @@ namespace wbs
     std::string host2string(in_addr_t host);
     std::string trim_line(const std::string &line);
     std::vector<std::string> split(const std::string &str, const std::string delimiters);
-
 
     template <typename Iterator, typename Predicate>
     bool all_of(Iterator begin, Iterator end, Predicate pred)
@@ -22,3 +23,6 @@ namespace wbs
         return true;
     }
 }
+
+
+#endif /* UTILS_HPP */

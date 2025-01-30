@@ -20,7 +20,7 @@ bool headers_complet(string &request)
 {
 	if (request.find("boundary=") != string::npos)
 	{
-		if (request.find("filename=") != string::npos)
+		if (request.find("filename=") != string::npos) 
 			return true;
 		else
 			return false;
