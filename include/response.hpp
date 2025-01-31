@@ -2,7 +2,6 @@
 #define RESPONSE_HPP
 
 #include "request.hpp"
-#include <signal.h>
 #include "cgi.hpp"
 
 void     err_(const std::string &err);

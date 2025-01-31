@@ -119,7 +119,7 @@ void Parse::defaults(std::map<string, string>::iterator iter, Server &server, lo
 		host = inet_addr(value.c_str());
 		if (host == static_cast<in_addr_t> (-1))
 			throw runtime_error("Config Error: Invalid host address: '" + value + "'. Provide a valid IPv4 address.");
-		server.host = host;
+		server.set_host(host);
 	}
 	else if (key == "index")
 		loc.index_path = non_empty(key, value);
@@ -251,7 +251,7 @@ std::vector<Server> Parse::config2server(std::vector<Config> configs)
 			}
 		}
 
-		if (cur_server.host == static_cast<in_addr_t> (-1))
+		if (cur_server.get_host() == static_cast<in_addr_t> (-1))
 			throw std::runtime_error("Config Error: Host is required: A valid host must be specified for the server configuration.");
 		if (cur_server.port == static_cast<uint32_t> (-1))
 			throw std::runtime_error("Config Error: Port is required: A valid port must be specified for the server configuration.");

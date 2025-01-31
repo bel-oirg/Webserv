@@ -149,17 +149,17 @@ bool Cgi::is_cgi_ready()
 Cgi::Cgi(string _scriptpath, string _request_body, map<string, string> env_map, loc_details &cur_loc, loc_details &def_loc)
 	: response(""),
 	  script_path(_scriptpath),
+	  request_body(_request_body),
+	  excutor(""),
 	  code(0),
 	  child_stat(0),
+	  forked(0),
 	  env(new char *[env_map.size() + 1]),
 	  args(),
-	  request_body(_request_body),
 	  outfile(NULL),
 	  infile(NULL),
-	  forked(0),
 	  location(cur_loc),
-	  defa_ult(def_loc),
-	  excutor("")
+	  defa_ult(def_loc)
 {
 	load_cgi_script();
 
@@ -197,4 +197,16 @@ Cgi::~Cgi()
 		close(fd);
 		fclose(outfile);
 	}
+}
+
+int 	Cgi::get_outfd()
+{
+	if (outfile)
+		return (fileno(outfile));
+	return -1;
+}
+
+int Cgi::get_pid()
+{
+	return forked;
 }

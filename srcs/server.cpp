@@ -9,18 +9,16 @@ std::map<string, loc_details> &Server::get_locations()
 	return (this->locations);
 }
 
-Server::Server() : 
-	server_fds(),
-	locations(),
-	port(-1),
-	server_name(),
-	host(-1),
-	socket_fd(-1),
-	address(),
-	index(0),
-	_pfd(),
-	_timeout(30),
-	_is_up(false)
+Server::Server() : locations(),
+				   server_fds(),
+				   port(-1),
+				   server_name(),
+				   _timeout(100),
+				   _host(-1),
+				   socket_fd(-1),
+				   address(),
+				   _pfd(),
+				   _is_up(false)
 {
 }
 
@@ -33,25 +31,29 @@ Server &Server::operator=(const Server &cpy)
 {
 	if (this != &cpy)
 	{
-		server_fds    = cpy.server_fds;
-		locations     = cpy.locations;
-		port          = cpy.port;
-		server_name   = cpy.server_name;
-		host          = cpy.host;
-		socket_fd     = cpy.socket_fd;
-		address       = cpy.address;
-		index         = cpy.index;
-		_pfd          = cpy._pfd;
-		_timeout      = cpy._timeout;
+		server_fds = cpy.server_fds;
+		locations = cpy.locations;
+		port = cpy.port;
+		server_name = cpy.server_name;
+		_host = cpy._host;
+		socket_fd = cpy.socket_fd;
+		address = cpy.address;
+		_pfd = cpy._pfd;
+		_timeout = cpy._timeout;
 	}
 	return *this;
+}
+
+void ServersManager::add_client_to_pool(Client *new_client)
+{
+	client_pool[new_client->get_pollfd().fd] = new_client;
 }
 
 void Server::print() const
 {
 	cout << "Server Name: " << server_name << std::endl;
 	cout << "Port: " << port << std::endl;
-	cout << "Host: " << wbs::host2string(host) << std::endl;
+	cout << "Host: " << wbs::host2string(_host) << std::endl;
 	cout << "Timeout: " << _timeout << endl;
 	cout << "Locations:" << std::endl;
 	for (std::map<std::string, loc_details>::const_iterator it = locations.begin(); it != locations.end(); ++it)
@@ -74,6 +76,28 @@ void ServersManager::init_servers(std::vector<Server> &new_servers)
 	}
 }
 
+server_info &Server::get_info()
+{
+	return (this->_server_info);
+}
+
+bool &Server::up()
+{
+	return _is_up;
+}
+int Server::socket()
+{
+	return socket_fd;
+}
+void Server::set_host(in_addr_t host)
+{
+	this->_host = host;
+}
+in_addr_t Server::get_host()
+{
+	return _host;
+}
+
 void ServersManager::setup()
 {
 	for (size_t i = 0; i < servers.size(); ++i)
@@ -81,9 +105,9 @@ void ServersManager::setup()
 		try
 		{
 			servers[i].setup();
-			pollfd tmp = {.fd = servers[i].socket_fd, .events = POLLIN, .revents = 0};
+			pollfd tmp = {.fd = servers[i].socket(), .events = POLLIN, .revents = 0};
 			servers_pollfds.push_back(tmp);
-			servers[i]._is_up = true;
+			servers[i].up() = true;
 		}
 		catch (runtime_error &e)
 		{
@@ -96,9 +120,9 @@ void ServersManager::setup()
 	cout << "Servers: " << endl;
 	for (size_t i = 0; i < servers.size(); ++i)
 	{
-		std::string status = servers[i]._is_up ? GREEN "running" RESET : RED "failed" RESET;
+		std::string status = servers[i].up() ? GREEN "running" RESET : RED "failed" RESET;
 
-		string host = wbs::host2string(servers[i].host);
+		string host = wbs::host2string(servers[i].get_host());
 		string port = wbs::to_string(servers[i].port);
 		std::cout << "    http://" << host
 				  << ":" << port
@@ -115,14 +139,14 @@ void ServersManager::print()
 	}
 }
 
-std::vector<pollfd> &ServersManager::get_fds()
+std::vector<pollfd> &ServersManager::get_targets()
 {
 	manager_fds.clear();
 	manager_fds.reserve(client_pool.size() + servers_pollfds.size());
 	for (std::map<int, Client *>::iterator it = client_pool.begin(); it != client_pool.end(); ++it)
 	{
 		if (it->second)
-			manager_fds.push_back(it->second->get_fd());
+			manager_fds.push_back(it->second->get_pollfd());
 	}
 	manager_fds.insert(manager_fds.end(), servers_pollfds.begin(), servers_pollfds.end());
 	return manager_fds;
@@ -140,7 +164,7 @@ bool ServersManager::is_server(int fd)
 
 void Server::setup()
 {
-	this->socket_fd = socket(AF_INET, SOCK_STREAM, 0);
+	this->socket_fd = ::socket(AF_INET, SOCK_STREAM, 0);
 	if (this->socket_fd == -1)
 		throw runtime_error(string("socket() failed: ") + strerror(errno));
 
@@ -153,7 +177,7 @@ void Server::setup()
 
 	this->address.sin_family = AF_INET;
 	this->address.sin_port = htons(this->port);
-	this->address.sin_addr.s_addr = this->host;
+	this->address.sin_addr.s_addr = this->get_host();
 
 	int enable = 1;
 	if (setsockopt(this->socket_fd, SOL_SOCKET, SO_REUSEADDR, &enable, sizeof(int)) < 0)
@@ -176,7 +200,7 @@ void Server::setup()
 	if (socket_name_t == -1)
 		throw runtime_error(string("getsockname() failed: ") + std::string(strerror(errno)));
 
-	this->_server_info.remote_addr = wbs::host2string(this->host);
+	this->_server_info.remote_addr = wbs::host2string(this->get_host());
 	this->_server_info.server_name = this->server_name;
 	this->_server_info.server_port = wbs::to_string(ntohs(socket_info.sin_port));
 
@@ -200,7 +224,7 @@ void Server::accept_connections(ServersManager &manager)
 	Client *client = new Client(*this, client_fd);
 	client->register_interaction();
 
-	manager.client_pool[client_fd] = client;
+	manager.add_client_to_pool(client);
 }
 
 void ServersManager::remove_client(int fd)
@@ -232,10 +256,11 @@ void ServersManager::get_request(pollfd &pfd)
 		this->remove_client(pfd.fd);
 		return;
 	}
-	cur_client->register_interaction();
 
+	cur_client->register_interaction();
 	cur_client->save_request(std::string(buffer, valread));
-	if (cur_client->tmp_request.empty() && (cur_client->_response && cur_client->_response->upload_eof))
+
+	if (cur_client->request_buffer().empty() && (cur_client->_response && cur_client->_response->upload_eof))
 	{
 		cur_client->change_event();
 	}
@@ -249,6 +274,7 @@ void ServersManager::send_response(pollfd &pfd)
 	cur_client->register_interaction();
 	if (!cur_client->_response)
 		return;
+
 	if (!cur_client->_headers_sended)
 	{
 		response = cur_client->_response->get_response_header();
@@ -279,7 +305,7 @@ void ServersManager::send_response(pollfd &pfd)
 		}
 		else
 		{
-			Client *new_client = new Client(cur_client->_server, pfd.fd);
+			Client *new_client = new Client(cur_client->server(), pfd.fd);
 			client_pool[pfd.fd] = new_client;
 			delete cur_client;
 		}
@@ -300,9 +326,9 @@ void ServersManager::check_timeout(pollfd &fd)
 	time_t last_inter = client->get_last_interaction();
 	time_t time_now = time(NULL);
 
-	double elapsed_time = difftime(time_now, last_inter);
+	time_t elapsed_time = time_now - last_inter;
 
-	if (elapsed_time >= client->_server._timeout)
+	if (elapsed_time >= client->server()._timeout)
 	{
 		this->remove_client(fd.fd);
 	}
@@ -312,7 +338,7 @@ void ServersManager::accept_connections(pollfd &fd)
 {
 	for (size_t j = 0; j < servers.size(); ++j)
 	{
-		if (servers[j].socket_fd == fd.fd)
+		if (servers[j].socket() == fd.fd)
 		{
 			servers[j].accept_connections(*this);
 			break;
@@ -324,8 +350,8 @@ void ServersManager::run()
 {
 	while (true)
 	{
-		std::vector<pollfd> &fds = this->get_fds();
-		int ret = poll(fds.data(), fds.size(), 10000); // TODO check the timeout and remove all of the clients
+		std::vector<pollfd> &fds = this->get_targets();
+		int ret = poll(fds.data(), fds.size(), 5000); // TODO check the timeout and remove all of the clients
 		if (ret == -1)
 		{
 			perror("poll() failed"); // clean all clients
@@ -348,9 +374,9 @@ void ServersManager::run()
 			{
 				send_response(fds[i]);
 			}
-			else
+			else if (!is_server(fds[i].fd))
 			{
-				check_timeout(fds[i]); // sometime the connection closed and the client still available
+				check_timeout(fds[i]);
 			}
 		}
 	}

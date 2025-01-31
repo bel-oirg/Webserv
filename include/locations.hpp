@@ -14,34 +14,40 @@ struct server_info
 
 struct loc_details
 {
-	map<int, string> error_pages;
-	map<string, string> cgi_excutor;
-	vector<string> allowed_methods;
-	vector<string> cgi_extentions;
-	string index_path; // index_path
-	string root;
-	string redir_to; // redir_to
-	string upload_path;
-	bool auto_index;
-	bool enable_upload;
-	bool has_cgi;
-	bool has_slash;
-	int status_code;
-	uint64_t client_max_body_size;
+	map<int, string>	error_pages;
+	map<string, string>	cgi_excutor;
+	vector<string>		allowed_methods;
+	vector<string>		cgi_extentions;
+	string				index_path; // index_path
+	string				root;
+	string				redir_to; // redir_to
+	string				upload_path;
+	bool				auto_index;
+	bool				enable_upload;
+	bool				has_cgi;
+	bool				has_slash;
+	int					status_code;
+	uint64_t			client_max_body_size;
 
-	loc_details() : error_pages(),
-					allowed_methods(),
-					cgi_extentions(),
-					index_path(""),
-					root(""),
-					redir_to(""),
-					upload_path(""),
-					auto_index(false),
-					enable_upload(false),
-					has_cgi(false),
-					has_slash(false),
-					status_code(0),
-					client_max_body_size(0) {}
+	loc_details()
+	:	error_pages(),
+		cgi_excutor(),
+		allowed_methods(),
+		cgi_extentions(),
+		index_path(""),
+		root(""),
+		redir_to(""),
+		upload_path(""),
+		auto_index(false),
+		enable_upload(false),
+		has_cgi(false),
+		has_slash(false),
+		status_code(0),
+		client_max_body_size(0)
+			{}
+
+
+	// TODO  TMP 
 
 	void print() const
 	{

@@ -2,7 +2,6 @@
 #define PARSE_HPP
 
 #include "webserv.hpp"
-#include "config.hpp"
 #include "server.hpp"
 
 
@@ -46,6 +45,22 @@ Directives for Location:\n\
 - cgi_pass: cgi_pass <on|off>;\n"
 
 
+typedef std::map<string, string>::iterator						default_iter;
+typedef std::map<string, std::map<string, string> >::iterator	locations_iter;
+
+struct	Config
+{
+
+	public:
+		std::map<string, string> defaults;
+		std::map<string, std::map<string, string> > location;
+
+		void	clear()
+		{
+			this->defaults.clear();
+			this->location.clear();
+		}
+};
 
 
 class Parse

@@ -3,17 +3,17 @@
 #include "response.hpp"
 
 Client::Client(Server &server, int fd)
-	: _server(server),
-	  _response(NULL),
+	: _response(NULL),
 	  _headers_sended(false),
 	  first_response_read(true),
-	  _last_interaction(0),
-	  _buff_num(0),
-	  tmp_request("")
+	  _server(server),
+	  _request_buffer(""),
+	  _last_interaction()
 {
 	_pfd.fd = fd;
 	_pfd.events = POLLIN;
 	_pfd.revents = 0;
+	this->register_interaction();
 }
 
 bool headers_complet(string &request)
@@ -34,15 +34,14 @@ bool headers_complet(string &request)
 
 void Client::save_request(string request)
 {
-	this->_buff_num++;
 	if (first_response_read)
 	{
-		tmp_request += request;
-		if (headers_complet(tmp_request))
+		_request_buffer += request;
+		if (headers_complet(_request_buffer))
 		{
-			this->_response = new response(tmp_request, this->_server.get_locations(), this->_server.get_info());
+			this->_response = new response(_request_buffer, this->_server.get_locations(), this->_server.get_info());
 			first_response_read = false;
-			tmp_request.clear();
+			_request_buffer.clear();
 		}
 	}
 	else
@@ -51,7 +50,7 @@ void Client::save_request(string request)
 	}
 }
 
-pollfd &Client::get_fd()
+pollfd &Client::get_pollfd()
 {
 	return (this->_pfd);
 }
@@ -71,22 +70,37 @@ void Client::register_interaction()
 	this->_last_interaction = time(NULL);
 }
 
-clock_t Client::get_last_interaction()
+time_t Client::get_last_interaction()
 {
 	return (this->_last_interaction);
 }
 
-Client::Client(const Client &other)
-	: _server(other._server), _request(other._request), _pfd(other._pfd), _headers_sended(other._headers_sended), _last_interaction(other._last_interaction)
+string& Client::request_buffer()
 {
+	return (_request_buffer);
 }
+
+Server&	Client::server()
+{
+	return (this->_server);
+}
+
+// Client::Client(const Client &other)
+// 	: _server(other._server), _pfd(other._pfd), _headers_sended(other._headers_sended), _last_interaction(other._last_interaction)
+// {
+// }
 
 Client &Client::operator=(const Client &other)
 {
 	if (this != &other)
 	{
-		_request = other._request;
 		_pfd = other._pfd;
 	}
 	return *this;
+}
+
+Client::~Client()
+{
+	if (_response)
+		delete _response;
 }

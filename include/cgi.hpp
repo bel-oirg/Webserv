@@ -2,55 +2,35 @@
 #define CGI_HPP
 #include "server.hpp"
 
-
-enum script_type
-{
-	unknown,
-	python = 1,
-	shell,
-	ruby,
-	php,
-	binary
-};
-
-class Cgi
+class	Cgi
 {
 	private:
-		string response;
-		string script_path;
-		int 	code;
-		// script_type type;
-		int		child_stat;
-		char	**env;
-		char	*args[3];
+		string		response;
+		string		script_path;
 		string 		request_body;
+		string		excutor;
+		int 		code;
+		int			child_stat;
+		int			forked;
+		char		**env;
+		char		*args[3];
 		FILE*		outfile;
 		FILE*		infile;
-		int			forked;
-		string		key_path;
 		loc_details &location;
 		loc_details &defa_ult;
-		string		excutor;
-		// bool	is_cgi;
 
 	public:
 		Cgi(string _scriptpath, string _request_body, map<string, string> env_map, loc_details &cur_loc, loc_details &def_loc);
+		~Cgi();
+
+
+		string 	cgi_get_response();
 		void 	cgi_run();
 		void	load_cgi_script();
 		int 	cgi_get_code();
-		string 	cgi_get_response();
+		int 	get_outfd();
+		int		get_pid();
 		bool	is_cgi_ready();
-		int 	get_outfd()
-		{
-			if (outfile)
-				return (fileno(outfile));
-			return -1;
-		}
-		int get_pid()
-		{
-			return forked;
-		}
-		~Cgi();
 };
 
 

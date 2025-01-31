@@ -1,5 +1,6 @@
 #include "response.hpp"
 #include <algorithm>
+#include <csignal>
 #include "utils.hpp"
 
 string fix_slash(string base, string file);
