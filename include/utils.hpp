@@ -7,7 +7,8 @@ namespace wbs
 {
     string to_string(int value);
     std::string host2string(in_addr_t host);
-    std::string trim_line(const std::string &line);
+    std::string get_trimed(const std::string &line);
+    void        trim_line(std::string &line);
     std::vector<std::string> split(const std::string &str, const std::string delimiters);
 
     template <typename Iterator, typename Predicate>

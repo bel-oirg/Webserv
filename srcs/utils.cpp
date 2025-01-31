@@ -11,12 +11,26 @@ namespace wbs
         return oss.str();
     }
 
-    std::string trim_line(const std::string &line)
+    void      trim_line(std::string &line)
+    {
+        size_t first = line.find_first_not_of(" \t\177");
+        size_t last = line.find_last_not_of(" \t\177");
+
+        if (first == std::string::npos)
+        {
+            return ;
+            line = "";
+        }
+        
+        line = line.substr(first, last - first + 1);
+    }
+
+    std::string get_trimed(const std::string &line)
     {
         size_t first = line.find_first_not_of(" \t\177");
         size_t last = line.find_last_not_of(" \t\177");
         if (first == std::string::npos)
-            return ("");
+            return("");
         return (line.substr(first, last - first + 1));
     }
 

@@ -1,6 +1,7 @@
 #include "response.hpp"
 #include "server.hpp"
 #include <algorithm>
+#include "utils.hpp"
  
 request::request(std::string raw_req, std::map<std::string, loc_details> locations) : req(raw_req), locations(locations)
 {
@@ -30,15 +31,15 @@ string fix_slash(string base, string file)
     return (base + file);
 }
 
-//TODO there is two trim_line
-std::string trim_line(const std::string &line)
-{
-    size_t first = line.find_first_not_of(" \t");
-    size_t last = line.find_last_not_of(" \t");
-    if (first == std::string::npos)
-        return("");
-    return (line.substr(first, last - first + 1));
-}
+//TODO there is two trim_line ,  use utils tools 
+// std::string trim_line(const std::string &line)
+// {
+//     size_t first = line.find_first_not_of(" \t");
+//     size_t last = line.find_last_not_of(" \t");
+//     if (first == std::string::npos)
+//         return("");
+//     return (line.substr(first, last - first + 1));
+// }
 
 bool    request::valid_method()
 {
@@ -64,7 +65,7 @@ bool    request::valid_elem(std::string elem)
     }
     std::getline(line, value);
 
-    value = trim_line(value);
+    value = wbs::get_trimed(value);
     if (value.empty() || value[value.size() - 1] != '\r')
         return (false);
     
@@ -123,7 +124,7 @@ int request::is_req_well_formed() //REQ
     std::stringstream ss(req);
     std::getline(ss, l1_s, '\n');
 
-    std::stringstream l1(trim_line(l1_s));
+    std::stringstream l1(wbs::get_trimed(l1_s));
 
     std::getline(l1, this->method, ' ');
     if (!valid_method())
@@ -148,7 +149,7 @@ int request::is_req_well_formed() //REQ
         std::stringstream raw(tmp_line);
         std::getline(raw, field, ':');
         std::getline(raw, value, '\r');
-        this->headers.insert(std::make_pair(field, trim_line(value)));
+        this->headers.insert(std::make_pair(field, wbs::get_trimed(value)));
     }
     if (headers.find("Host") == headers.end())
         return (err_("NO HOST FOUND"), 400);
@@ -282,13 +283,16 @@ bool request::is_dir_has_index_path()
     std::string to_check;
     struct stat s;
 
-    if (current_loc.index_path.size())
+    if (!current_loc.index_path.empty())
     {
-        to_check = fix_slash(current_loc.root, current_loc.index_path);
-        if (!stat(to_check.c_str(), &s) && S_ISREG(s.st_mode))
+        for (size_t i = 0; i < current_loc.index_path.size(); ++i)
         {
-            resource_path = to_check;
-            return (true);
+            to_check = fix_slash(current_loc.root, current_loc.index_path[i]);
+            if (!stat(to_check.c_str(), &s) && S_ISREG(s.st_mode))
+            {
+                resource_path = to_check;
+                return (true);
+            }
         }
     }
     return (false);

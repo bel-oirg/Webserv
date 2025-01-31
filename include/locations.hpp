@@ -18,7 +18,7 @@ struct loc_details
 	map<string, string>	cgi_excutor;
 	vector<string>		allowed_methods;
 	vector<string>		cgi_extentions;
-	string				index_path; // index_path
+	vector<string>		index_path; // index_path
 	string				root;
 	string				redir_to; // redir_to
 	string				upload_path;
@@ -34,7 +34,7 @@ struct loc_details
 		cgi_excutor(),
 		allowed_methods(),
 		cgi_extentions(),
-		index_path(""),
+		index_path(),
 		root(""),
 		redir_to(""),
 		upload_path(""),
@@ -55,7 +55,7 @@ struct loc_details
 		cout << BLUE << "Location Details:" << RESET << endl;
 
 		cout << GREEN << "    Status Code: " << WHITE << status_code << RESET << endl;
-		cout << GREEN << "    Index Path: " << WHITE << index_path << RESET << endl;
+		// cout << GREEN << "    Index Path: " << WHITE << index_path << RESET << endl;
 
 		cout << GREEN << "    Allowed Methods: ";
 		if (allowed_methods.empty())

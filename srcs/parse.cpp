@@ -15,13 +15,13 @@ void	Parse::display_help()
 
 bool Parse::is_server(const std::string &line)
 {
-	std::string trimmed = wbs::trim_line(line);
+	std::string trimmed = wbs::get_trimed(line);
 
 	if (trimmed.find("server") != 0)
 		return false;
 
 	std::string rem = trimmed.substr(6);
-	rem = wbs::trim_line(rem);
+	rem = wbs::get_trimed(rem);
 
 	if (rem.empty() || (rem == "{"))
 		return true;
@@ -41,7 +41,7 @@ bool Parse::is_location(const std::string &line, string &path)
 		if (openBracket != line.size() - 1)
 			throw std::runtime_error("Config Error: Invalid syntax in 'location' directive. Expected new line after bracket.");
 		path = line.substr(pos + 8, openBracket - (pos + 8));
-		path = wbs::trim_line(path);
+		path = wbs::get_trimed(path);
 		if (path.empty())
 			throw std::runtime_error("Config Error: Syntax error in 'location' directive. Expected value after location declaration.");
 		path.erase(0, path.find_first_not_of(" \t"));
@@ -91,8 +91,8 @@ std::vector<string>	Parse::allowed_methods(string &value)
 
 void Parse::defaults(std::map<string, string>::iterator iter, Server &server, loc_details &loc)
 {
-	string key = wbs::trim_line(iter->first);
-	string value = wbs::trim_line(iter->second);
+	string key = wbs::get_trimed(iter->first);
+	string value = wbs::get_trimed(iter->second);
 	if (value[0] == '\177')
 		value.erase(0, 1);
 
@@ -121,8 +121,8 @@ void Parse::defaults(std::map<string, string>::iterator iter, Server &server, lo
 			throw runtime_error("Config Error: Invalid host address: '" + value + "'. Provide a valid IPv4 address.");
 		server.set_host(host);
 	}
-	else if (key == "index")
-		loc.index_path = non_empty(key, value);
+	// else if (key == "index")
+	// 	loc.index_path = non_empty(key, value);
 	else if (key == "error_page")
 	{
 		int code;
@@ -177,8 +177,8 @@ void Parse::defaults(std::map<string, string>::iterator iter, Server &server, lo
 
 void Parse::locations(map<string, string>::iterator loc, loc_details &dest)
 {
-	string key = wbs::trim_line(loc->first);
-	string value = wbs::trim_line(loc->second);
+	string key = wbs::get_trimed(loc->first);
+	string value = wbs::get_trimed(loc->second);
 	if (value[0] == '\177')
 		value.erase(0, 1);
 	if (key == "allowed_methods")
@@ -188,7 +188,12 @@ void Parse::locations(map<string, string>::iterator loc, loc_details &dest)
 	else if (key == "root")
 		dest.root = non_empty(key, value);
 	else if (key == "index")
-		dest.index_path = non_empty(key, value); // TODO change this to  vector of paths;
+	{
+		vector<string> splited  = wbs::split(value, ",");
+		for_each(splited.begin(), splited.end(), wbs::trim_line);
+		dest.index_path = splited;
+	}
+		// dest.index_path = non_empty(key, value); // TODO change this to  vector of paths;
 	else if (key == "return")
 		dest.redir_to = non_empty(key, value);
 	else if (key == "client_max_body_size") // FIXME may this nor allowed here
@@ -302,7 +307,7 @@ std::vector<Server> Parse::get_servers(std::string filename)
 		std::string line;
 		while (std::getline(configFile, line))
 		{
-			line = wbs::trim_line(line);
+			line = wbs::get_trimed(line);
 
 			if (line.empty() || line[0] == '#')
 				continue;
@@ -321,7 +326,7 @@ std::vector<Server> Parse::get_servers(std::string filename)
 				{
 					// Expect {
 					std::getline(configFile, line);
-					line = wbs::trim_line(line);
+					line = wbs::get_trimed(line);
 					if (line != "{")
 						throw runtime_error("Syntax Error: Missing '{' after server declaration.");
 					++serverBracketCount;
@@ -377,8 +382,8 @@ std::vector<Server> Parse::get_servers(std::string filename)
 			size_t firstspace = line.find_first_of(" \t");
 			if (semicolonPos != std::string::npos && line[line.size() - 1] == ';')
 			{
-				std::string key = wbs::trim_line(line.substr(0, firstspace));
-				std::string value = wbs::trim_line(line.substr(firstspace + 1));
+				std::string key = wbs::get_trimed(line.substr(0, firstspace));
+				std::string value = wbs::get_trimed(line.substr(firstspace + 1));
 				value.resize(value.size() - 1);
 
 				if (key.empty() || value.empty())

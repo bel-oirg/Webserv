@@ -4,7 +4,6 @@
 #include "utils.hpp"
 
 string fix_slash(string base, string file);
-string trim_line(const std::string &line);
 
 string response::get_script_path()
 {
@@ -82,7 +81,7 @@ bool response::prep_cgi()
             std::stringstream raw(tmp_line);
             std::getline(raw, field, ':');
             std::getline(raw, value, '\r');
-            this->_cgi_headers.insert(std::make_pair(field, trim_line(value)));
+            this->_cgi_headers.insert(std::make_pair(field, wbs::get_trimed(value)));
         }
     }
     return (true);
@@ -179,46 +178,46 @@ void response::set_content_type()
         return ;
     static std::map<std::string, std::string> mime;
 
-    mime["html"] = "text/html";
-    mime["htm"] = "text/html";
-    mime["shtml"] = "text/html";
-    mime["css"] = "text/css";
-    mime["xml"] = "text/xml";
-    mime["gif"] = "image/gif";
-    mime["jpeg"] = "image/jpeg";
-    mime["jpg"] = "image/jpeg";
-    mime["js"] = "application/javascript";
-    mime["mjs"] = "application/javascript";
-    mime["atom"] = "application/atom+xml";
-    mime["rss"] = "application/rss+xml";
-    mime["txt"] = "text/plain";
-    mime["png"] = "image/png";
-    mime["json"] = "application/json";
-    mime["pdf"] = "application/pdf";
-    mime["zip"] = "application/zip";
-    mime["tar"] = "application/x-tar";
-    mime["mp3"] = "audio/mpeg";
-    mime["wav"] = "audio/wav";
-    mime["mp4"] = "video/mp4";
-    mime["mpeg"] = "video/mpeg";
-    mime["avi"] = "video/x-msvideo";
-    mime["webm"] = "video/webm";
-    mime["ico"] = "image/vnd.microsoft.icon";
-    mime["svg"] = "image/svg+xml";
-    mime["webp"] = "image/webp";
-    mime["otf"] = "font/otf";
-    mime["ttf"] = "font/ttf";
-    mime["woff"] = "font/woff";
-    mime["woff2"] = "font/woff2";
-    mime["3gp"] = "video/3gpp";
-    mime["3g2"] = "video/3gpp2";
-    mime["ts"] = "video/mp2t";
-    mime["eot"] = "application/vnd.ms-fontobject";
-    mime["wasm"] = "application/wasm";
-    mime["csv"] = "text/csv";
-    mime["md"] = "text/markdown";
-    mime["php"] = "application/x-httpd-php";
-    mime["exe"] = "application/octet-stream";
+    mime["html"]    = "text/html";
+    mime["htm"]     = "text/html";
+    mime["shtml"]   = "text/html";
+    mime["css"]     = "text/css";
+    mime["xml"]     = "text/xml";
+    mime["gif"]     = "image/gif";
+    mime["jpeg"]    = "image/jpeg";
+    mime["jpg"]     = "image/jpeg";
+    mime["js"]      = "application/javascript";
+    mime["mjs"]     = "application/javascript";
+    mime["atom"]    = "application/atom+xml";
+    mime["rss"]     = "application/rss+xml";
+    mime["txt"]     = "text/plain";
+    mime["png"]     = "image/png";
+    mime["json"]    = "application/json";
+    mime["pdf"]     = "application/pdf";
+    mime["zip"]     = "application/zip";
+    mime["tar"]     = "application/x-tar";
+    mime["mp3"]     = "audio/mpeg";
+    mime["wav"]     = "audio/wav";
+    mime["mp4"]     = "video/mp4";
+    mime["mpeg"]    = "video/mpeg";
+    mime["avi"]     = "video/x-msvideo";
+    mime["webm"]    = "video/webm";
+    mime["ico"]     = "image/vnd.microsoft.icon";
+    mime["svg"]     = "image/svg+xml";
+    mime["webp"]    = "image/webp";
+    mime["otf"]     = "font/otf";
+    mime["ttf"]     = "font/ttf";
+    mime["woff"]    = "font/woff";
+    mime["woff2"]   = "font/woff2";
+    mime["3gp"]     = "video/3gpp";
+    mime["3g2"]     = "video/3gpp2";
+    mime["ts"]      = "video/mp2t";
+    mime["eot"]     = "application/vnd.ms-fontobject";
+    mime["wasm"]    = "application/wasm";
+    mime["csv"]     = "text/csv";
+    mime["md"]      = "text/markdown";
+    mime["php"]     = "application/x-httpd-php";
+    mime["exe"]     = "application/octet-stream";
 
     _content_type = "text/html";
     size_t dot_p = this->URI.find_last_of('.');
