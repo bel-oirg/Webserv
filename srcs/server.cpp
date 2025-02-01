@@ -68,6 +68,16 @@ void ServersManager::init_servers(Server server)
 	servers.push_back(server);
 }
 
+ServersManager::ServersManager()
+{
+	this->reading_buffer = new char [REQUEST_MAX_SIZE];
+}
+
+ServersManager::~ServersManager()
+{
+	delete this->reading_buffer;
+}
+
 void ServersManager::init_servers(std::vector<Server> &new_servers)
 {
 	for (size_t i = 0; i < new_servers.size(); ++i)
@@ -240,10 +250,9 @@ void ServersManager::remove_client(int fd)
 
 void ServersManager::get_request(pollfd &pfd)
 {
-	char buffer[REQUEST_MAX_SIZE] = {0};
-
+	bzero(this->reading_buffer, REQUEST_MAX_SIZE);
 	int valread;
-	valread = recv(pfd.fd, buffer, REQUEST_MAX_SIZE, 0);
+	valread = recv(pfd.fd, this->reading_buffer, REQUEST_MAX_SIZE, 0);
 	if (valread < 0)
 	{
 		this->remove_client(pfd.fd);
@@ -258,7 +267,7 @@ void ServersManager::get_request(pollfd &pfd)
 	}
 
 	cur_client->register_interaction();
-	cur_client->save_request(std::string(buffer, valread));
+	cur_client->save_request(std::string(this->reading_buffer, valread));
 
 	if (cur_client->request_buffer().empty() && (cur_client->_response && cur_client->_response->upload_eof))
 	{
@@ -346,38 +355,56 @@ void ServersManager::accept_connections(pollfd &fd)
 	}
 }
 
+void ServersManager::reset_servers()
+{
+	for (map<int, Client *>::iterator it = client_pool.begin(); it != client_pool.end(); ++it)
+	{
+		close(it->first);
+		delete it->second;
+	}
+	client_pool.clear();
+	manager_fds.clear();
+}
+
 void ServersManager::run()
 {
 	while (true)
 	{
-		std::vector<pollfd> &fds = this->get_targets();
-		int ret = poll(fds.data(), fds.size(), 5000); // TODO check the timeout and remove all of the clients
-		if (ret == -1)
-		{
-			perror("poll() failed"); // clean all clients
-		}
+		try {
 
-		for (size_t i = 0; i < fds.size(); ++i)
+			std::vector<pollfd> &fds = this->get_targets();
+			int ret = poll(fds.data(), fds.size(), 5000); // TODO check the timeout and remove all of the clients
+			if (ret == -1)
+			{
+				perror("poll() failed"); // clean all clients
+			}
+
+			for (size_t i = 0; i < fds.size(); ++i)
+			{
+				if (fds[i].revents & POLLIN)
+				{
+					if (is_server(fds[i].fd))
+					{
+						accept_connections(fds[i]);
+					}
+					else
+					{
+						get_request(fds[i]);
+					}
+				}
+				else if (fds[i].revents & POLLOUT)
+				{
+					send_response(fds[i]);
+				}
+				else if (!is_server(fds[i].fd))
+				{
+					check_timeout(fds[i]);
+				}
+			}
+		}
+		catch (...)
 		{
-			if (fds[i].revents & POLLIN)
-			{
-				if (is_server(fds[i].fd))
-				{
-					accept_connections(fds[i]);
-				}
-				else
-				{
-					get_request(fds[i]);
-				}
-			}
-			else if (fds[i].revents & POLLOUT)
-			{
-				send_response(fds[i]);
-			}
-			else if (!is_server(fds[i].fd))
-			{
-				check_timeout(fds[i]);
-			}
+			this->reset_servers();
 		}
 	}
 }

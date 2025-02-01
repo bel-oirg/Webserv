@@ -1,21 +1,13 @@
 
-http://127.0.0.1:8002/WWW/Snake.html
-http://127.0.0.1:8002/WWW/Upload.html
-http://127.0.0.1:8002/WWW/calc.html
-http://127.0.0.1:8002/WWW/delete_test.html
-http://127.0.0.1:8002/WWW/keepalive.html
-http://127.0.0.1:8002/WWW/landing.html
 
 
 
-
-
-http://127.0.0.1:8003/WWW/Snake.html
-http://127.0.0.1:8003/WWW/Upload.html
-http://127.0.0.1:8003/WWW/calc.html
-http://127.0.0.1:8003/WWW/delete_test.html
-http://127.0.0.1:8003/WWW/keepalive.html
-http://127.0.0.1:8003/WWW/landing.html
+http://127.0.0.1:8003/Snake.html
+http://127.0.0.1:8003/Upload.html
+http://127.0.0.1:8003/calc.html
+http://127.0.0.1:8003/delete_test.html
+http://127.0.0.1:8003/keepalive.html
+http://127.0.0.1:8003/landing.html
 
 
 
