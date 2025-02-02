@@ -65,9 +65,6 @@ bool response::prep_cgi()
     }
     this->_cgi_str = string(buff, readen);
 
-    //TODO the headers your providing of cgi does not ends with /r/n ? me or bennar
-    //sometimes it includes 200 OK 
-    //check the second arg on if below
     size_t cgi_head_end = this->_cgi_str.find("\n\n");
     if (cgi_head_end != string::npos)
     {

@@ -31,16 +31,6 @@ string fix_slash(string base, string file)
     return (base + file);
 }
 
-//TODO there is two trim_line ,  use utils tools 
-// std::string trim_line(const std::string &line)
-// {
-//     size_t first = line.find_first_not_of(" \t");
-//     size_t last = line.find_last_not_of(" \t");
-//     if (first == std::string::npos)
-//         return("");
-//     return (line.substr(first, last - first + 1));
-// }
-
 bool    request::valid_method()
 {
     std::vector<std::string> all;
@@ -342,7 +332,7 @@ int     request::POST()
     if (headers["Transfer-Encoding"] == "chunked" && !unchunk_body())
         return (400);
 
-    if (headers["Content-Type"].rfind("multipart/form-data") != string::npos) //TODO change it to find
+    if (headers["Content-Type"].find("multipart/form-data") != string::npos)
         return (if_loc_support_upload());
 
     resource_type = get_request_resource();
@@ -405,7 +395,6 @@ int     request::init_parse_req()
     if (!get_matched_loc_for_req_uri())
         return (404);
 
-    //TODO should i check client_max on every location or only on default
     is_valid_size_t(this->headers["Content-Length"], length);
     if (length > locations["default"].client_max_body_size)
         return (err_("BODY > CLIENT_MAX_BODY _SIZE"), 413);
@@ -494,20 +483,24 @@ bool request::unchunk_body()
 {
     std::stringstream test;
     size_t part_size, next(0);
-    string unchunked_body(""), new_part, unchunked(this->body);
-
+    string unchunked_body(""), new_part, unchunked(this->body), size_str;
     while(1)
     {
         size_t beg_hex = next;
+        if (beg_hex == std::string::npos)
+            return (err_("Error on beg_hex"), false);
+        
         size_t end_hex = unchunked.find("\r\n", beg_hex);
+        if (end_hex == std::string::npos)
+            return (err_("end_hex on chunked npos"), false);
 
-        if (beg_hex == std::string::npos || end_hex == std::string::npos)
-            return (err_("Error on beg_hex || end_hex on chunked npos"), false);
-        string size_str = unchunked.substr(beg_hex, end_hex - beg_hex);
+        size_str = unchunked.substr(beg_hex, end_hex - beg_hex);
         test.clear();
         test.str("");
         test << size_str;
         test >> std::hex >> part_size;
+        if (!part_size)
+            break;
         size_t end_part = unchunked.find("\r\n", end_hex + 2);
         if (end_part == std::string::npos)
             return (err_("Error end_part on chunked npos"), false);
@@ -518,7 +511,6 @@ bool request::unchunk_body()
                 return (err_("Bad ending of chunked data"), false);
             break;
         }
-        // pp "||| " << test << "|" << new_part.size() << " -- " << part_size << "\n" << new_part  << "|||" << endl;
         if (new_part.size() != part_size)
             return (err_("Invalid unchunked size"), false);
 
