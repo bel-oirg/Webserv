@@ -23,6 +23,7 @@ class request
         string resource_path;
         string method;
         string URI;
+        string PATH_INFO;
         string body;
         string query;
         string correct_loc_name;

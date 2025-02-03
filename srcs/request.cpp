@@ -81,6 +81,17 @@ bool    request::is_valid_URI()
         this->query = URI.substr(query_pos + 1);
         this->URI = URI.substr(0, query_pos);
     }
+    size_t find_dot = URI.find(".");
+    if (find_dot != string::npos)
+    {
+        size_t find_slash = URI.find("/", find_dot);
+        if (find_slash == string::npos)
+            return (true);
+        this->PATH_INFO = URI.substr(find_slash + 1);
+        this->URI = URI.substr(0, find_slash);
+        pp "PATH INFO-> " <<  this->PATH_INFO << endl;
+        pp "QUERY-> " <<  this->query << endl;
+    }
     return (true);
 }
 
@@ -120,6 +131,7 @@ int request::is_req_well_formed() //REQ
     if (!valid_method())
         return (err_("METHOD NOT VALID"), 400);
 
+    //TODO retest this one
     std::getline(l1, this->URI, ' ');
     if (!is_valid_URI())
         return (err_("invalid URI"), 400);
@@ -129,9 +141,10 @@ int request::is_req_well_formed() //REQ
     if (this->HTTP != "HTTP/1.1")
         return (err_("Invalid HTTP version"), 400);
     //LINE 2
-    //locate the second line to \r\n
+
     size_t head_beg = req.find("\r\n");
     size_t head_end = req.find("\r\n\r\n");
+    //TODO here head_beg + 2 ?
     std::stringstream headers_raw(req.substr(head_beg, head_end - head_beg));
 
     while(std::getline(headers_raw, tmp_line, '\n'))
@@ -150,7 +163,6 @@ int request::is_req_well_formed() //REQ
         
         if (this->method == "GET")
             return (err_("there is body but GET method is used"), 400);
-
     }
 
     if (this->headers.find("Transfer-Encoding") != this->headers.end()

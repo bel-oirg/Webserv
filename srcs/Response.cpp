@@ -308,7 +308,7 @@ bool response::prep_body(const std::string &path)
 string response::get_to_send() //_____RESP_BODY_SEND__
 {
     if (_is_cgi)
-    { 
+    {
         if (!_cgi->is_cgi_ready())
             return "\177";
         stat_code = _cgi->cgi_get_code();
@@ -406,7 +406,6 @@ std::map<std::string, std::string>    response::prepare_env_cgi()
 
     _content_length = body.size();
     environ_vars["CONTENT_LENGTH"] = wbs::to_string(this->_content_length); //BUG CPP11 TODO THIS IS WRONG
-    
     environ_vars["SCRIPT_FILENAME"] = this->resource_path;
     environ_vars["HTTP_USER_AGENT"] = this->headers["User-Agent"];
     environ_vars["HTTP_COOKIE"] = this->_cookies;
@@ -417,6 +416,7 @@ std::map<std::string, std::string>    response::prepare_env_cgi()
 	environ_vars["REMOTE_ADDR"] = this->_server_info.remote_addr;
 	environ_vars["REMOTE_HOST"] = this->_server_info.server_name;
     environ_vars["QUERY_STRING"] = this->query;
+    environ_vars["PATH_INFO"] = this->PATH_INFO;
 
     return (environ_vars);
 }
