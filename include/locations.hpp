@@ -102,7 +102,7 @@ struct loc_details
 		{
 			for (vector<string>::const_iterator it = cgi_extentions.begin(); it != cgi_extentions.end(); ++it)
 			{
-				cout << CYAN << "        " << *it << RESET << endl;
+				cout << CYAN << "        " << "'" <<  *it << "'" << RESET << endl;
 			}
 		}
 

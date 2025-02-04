@@ -51,7 +51,6 @@ class response : public request
         void set_body();
 		string get_body();
         string get_to_send();
-
 		string get_script_path();
         string get_response_header();
         bool prepare_autoindex();

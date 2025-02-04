@@ -81,15 +81,28 @@ bool    request::is_valid_URI()
         this->query = URI.substr(query_pos + 1);
         this->URI = URI.substr(0, query_pos);
     }
-    size_t find_dot = URI.find(".");
+    size_t find_dot = URI.rfind(".");
     if (find_dot != string::npos)
     {
         size_t find_slash = URI.find("/", find_dot);
         if (find_slash == string::npos)
             return (true);
-        this->PATH_INFO = URI.substr(find_slash + 1);
-        this->URI = URI.substr(0, find_slash);
-        pp "PATH INFO-> " <<  this->PATH_INFO << endl;
+        string ext = URI.substr(find_dot+1, find_slash - find_dot - 1);
+        pp ext << "|"<< endl;
+        // if (find(current_loc.cgi_extentions.begin(), current_loc.cgi_extentions.end(), ext) != current_loc.cgi_extentions.end())
+        // {
+        pp current_loc.root << endl;
+        for (size_t i = 0; i < current_loc.cgi_extentions.size(); ++i)
+        {
+            pp current_loc.cgi_extentions[i];
+            if (ext == current_loc.cgi_extentions[i])
+            {
+                this->PATH_INFO = URI.substr(find_slash + 1);
+                this->URI = URI.substr(0, find_slash);
+                pp "PATH INFO-> " <<  this->PATH_INFO << endl;
+            }
+        }
+        // }
         pp "QUERY-> " <<  this->query << endl;
     }
     return (true);
@@ -318,6 +331,13 @@ void    request::display_req()
 
 int     request::GET()
 {
+
+    if (!current_loc.has_cgi && !this->PATH_INFO.empty())
+    {
+        pp "loc ->" << current_loc.root << endl;
+        this->URI += "/" + this->PATH_INFO;
+    }
+
     resource_type = get_request_resource();
     if (resource_type <= 0)
         return (404);
@@ -340,7 +360,6 @@ int     request::GET()
 
 int     request::POST()
 {
-    //TODO CHUNK still need some work
     if (headers["Transfer-Encoding"] == "chunked" && !unchunk_body())
         return (400);
 

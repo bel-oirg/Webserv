@@ -2,7 +2,7 @@
 
 import sys
 import os
-print("Content-type: text/html\n")
+print("Content-Type: text/html\n")
 
 request_method = os.environ['REQUEST_METHOD']
 

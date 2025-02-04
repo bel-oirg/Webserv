@@ -2,7 +2,7 @@
 #!/usr/bin/env python3
 import time
 
-print("Content-type: text/html\n")
+print("Content-Type: text/html\n")
 
 # time.sleep(5)
 

@@ -97,9 +97,6 @@ void response::debug()
 
 std::string response::get_response_header() //_____SEND__RESP__HEAD
 {
-	if(headers["Connection"] != "keep-alive")
-        this->_is_closed = true;
-
     if (this->stat_code == -1 && !prep_cgi())
         return ("");
 
@@ -116,7 +113,8 @@ std::string response::get_response_header() //_____SEND__RESP__HEAD
     
     line << "Server: " << this->_server << "\r\n";
     
-    if (!this->_content_type.empty() && _cgi_headers["Content-type"].empty())
+    if (!this->_content_type.empty()
+        && _cgi_headers.find("Content-Type") == _cgi_headers.end())
         line << "Content-Type: " << this->_content_type << "\r\n";
     
     if (_cgi_headers.find("Content-Length") == _cgi_headers.end())
@@ -162,7 +160,11 @@ void response::set_cookies()
 
 void response::set_connection()
 {
-    this->_connection = headers["Connection"];
+	if (headers.find("Connection") == headers.end()
+        || headers["Connection"] != "keep-alive")
+        this->_is_closed = true;
+
+    this->_connection = (_is_closed) ? "close" : "keep-alive";
 }
 
 void response::set_content_type()
@@ -295,6 +297,17 @@ bool response::prep_body(const std::string &path)
     if (!infile)
     {
         this->stat_code = 500;
+        this-> _body = "<!DOCTYPE html>\n"
+                        "<html>\n"
+                        "    <head><title>500 Internal Server Error</title></head>\n"
+                        "    <body>\n"
+                        "        <div>\n"
+                        "            <h1>500 Internal Server Error</h1>\n"
+                        "            <p>The server encountered an unexpected condition that prevented it from fulfilling the request.</p>\n"
+                        "        </div>\n"
+                        "    </body>\n"
+                        "</html>";
+        _content_length = _body.size();
         std::cerr << "Error opening " << path << std::endl;
         return (false);
     }
@@ -370,16 +383,54 @@ void response::_20X()
 
 void response::_40X_50X()
 {
-    if (current_loc.error_pages.find(this->stat_code) != current_loc.error_pages.end())
+    if (locations["default"].error_pages.find(this->stat_code) != locations["default"].error_pages.end())
+        prep_body(fix_slash(locations["default"].root,locations["default"].error_pages[this->stat_code])); //BUG CPP11
+    else //the error page not found
     {
-        pp GREEN << current_loc.error_pages[this->stat_code] << RESET << endl;
-        if (current_loc.error_pages[this->stat_code].size())
-            prep_body(fix_slash(current_loc.root, current_loc.error_pages[this->stat_code])); //BUG CPP11
-        else
-            prep_body(fix_slash(current_loc.root, locations["default"].error_pages[this->stat_code])); //BUG CPP11
+        switch (this->stat_code)
+        {
+            case 400:
+            this-> _body =  "<!DOCTYPE html>\n"
+                            "<html>\n"
+                            "    <head><title>400 Bad Request</title></head>\n"
+                            "    <body>\n"
+                            "        <div>\n"
+                            "            <h1>400 Bad Request</h1>\n"
+                            "            <p>The server could not understand the request due to invalid syntax.</p>\n"
+                            "        </div>\n"
+                            "    </body>\n"
+                            "</html>";
+            break;
+
+            case 404:
+            this-> _body =  "<!DOCTYPE html>\n"
+                            "<html>\n"
+                            "    <head><title>404 Not Found</title></head>\n"
+                            "    <body>\n"
+                            "        <div>\n"
+                            "            <h1>404 Not Found</h1>\n"
+                            "            <p>Unable to find a representation of the requested resource</p>\n"
+                            "        </div>\n"
+                            "    </body>\n"
+                            "</html>";
+            break;
+
+            //TODO maybe change the stat_code
+            default:
+            this-> _body = "<!DOCTYPE html>\n"
+                            "<html>\n"
+                            "    <head><title>500 Internal Server Error</title></head>\n"
+                            "    <body>\n"
+                            "        <div>\n"
+                            "            <h1>500 Internal Server Error</h1>\n"
+                            "            <p>The server encountered an unexpected condition that prevented it from fulfilling the request.</p>\n"
+                            "        </div>\n"
+                            "    </body>\n"
+                            "</html>";
+            break;
+        }
+        this->_content_length = _body.size();
     }
-    else
-        prep_body(fix_slash(ERR_DIR, wbs::to_string(this->stat_code)) + ".html"); //BUG CPP11
 }
 
 void response::set_body()
@@ -431,8 +482,6 @@ response::response(std::string req, std::map<string, loc_details> locations, ser
 	this->_server_info = info;
     set_connection();
     set_server();
-    // set_cookies();
-    // set_cgi_head()
     set_location();
     set_body();
     set_content_type();
@@ -453,7 +502,3 @@ response::~response()
 		delete _cgi;
     }
 }
-
-/*
-    configure where they should be saved.
-*/

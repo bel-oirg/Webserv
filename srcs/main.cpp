@@ -19,8 +19,8 @@ int	main(int argc, char **argv)
 
 		{
 			manager.init_servers(servers);
-			// manager.print();
-			cout << "\033[2J\033[H" << endl;
+			manager.print();
+			// cout << "\033[2J\033[H" << endl;
 			manager.setup();
 			manager.run();
 		}

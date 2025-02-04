@@ -1,5 +1,5 @@
 #!/usr/bin/python3
-print("Content-type: text/html\n")
+print("Content-Type: text/html\n")
 
 import os
 from urllib.parse import parse_qs
