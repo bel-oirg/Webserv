@@ -196,17 +196,17 @@ void Parse::locations(map<string, string>::iterator loc, loc_details &dest)
 		// dest.index_path = non_empty(key, value); // TODO change this to  vector of paths;
 	else if (key == "return")
 		dest.redir_to = non_empty(key, value);
-	else if (key == "client_max_body_size") // FIXME may this nor allowed here
-	{
-		if (wbs::all_of(value.begin(), value.end(), ::isdigit))
-		{
-			uint64_t cmbs_value;
-			cmbs_value = atoll(value.c_str());
-			dest.client_max_body_size = cmbs_value;
-		}
-		else
-			throw runtime_error("Config Error: Invalid value for 'client_max_body_size': '" + value + "'. Expected a numeric value.");
-	}
+	// else if (key == "client_max_body_size")
+	// {
+	// 	if (wbs::all_of(value.begin(), value.end(), ::isdigit))
+	// 	{
+	// 		uint64_t cmbs_value;
+	// 		cmbs_value = atoll(value.c_str());
+	// 		dest.client_max_body_size = cmbs_value;
+	// 	}
+	// 	else
+	// 		throw runtime_error("Config Error: Invalid value for 'client_max_body_size': '" + value + "'. Expected a numeric value.");
+	// }
 	else if (key == "cgi_pass")
 		dest.has_cgi = bool_type_parse(key, value);
 	else if (key == "upload_enable")

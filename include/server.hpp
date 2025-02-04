@@ -52,6 +52,7 @@ class ServersManager
 		std::vector<Server>				servers;
 		std::vector<pollfd>				manager_fds;
 		std::map< int, Client* >		client_pool;
+		int 							poll_timeout;
 		std::vector<pollfd>				servers_pollfds;
 		char							*reading_buffer;
 

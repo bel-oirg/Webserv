@@ -1,4 +1,4 @@
-#define	ERR_DIR "/Users/bel-oirg/Desktop/last_websss/Error_pages/"
+#define	ERR_DIR "./Error_pages/"
 
 #define CHUNK_SIZE 1024
 #define MAX_URI_SIZE 2048

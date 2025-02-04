@@ -153,6 +153,7 @@ std::vector<pollfd> &ServersManager::get_targets()
 {
 	manager_fds.clear();
 	manager_fds.reserve(client_pool.size() + servers_pollfds.size());
+	this->poll_timeout = (int)(client_pool.size() == 0) ? -1 : max((unsigned long)((2000 - (client_pool.size() * 50))), 100UL);
 	for (std::map<int, Client *>::iterator it = client_pool.begin(); it != client_pool.end(); ++it)
 	{
 		if (it->second)
@@ -337,7 +338,8 @@ void ServersManager::check_timeout(pollfd &fd)
 
 	time_t elapsed_time = time_now - last_inter;
 
-	if (elapsed_time >= client->server()._timeout)
+	time_t timeout = 5 + (this->client_pool.size() / 20);
+	if (elapsed_time >= timeout )
 	{
 		this->remove_client(fd.fd);
 	}
@@ -373,10 +375,11 @@ void ServersManager::run()
 		try {
 
 			std::vector<pollfd> &fds = this->get_targets();
-			int ret = poll(fds.data(), fds.size(), 5000); // TODO check the timeout and remove all of the clients
+			int ret = poll(fds.data(), fds.size(), this->poll_timeout);
 			if (ret == -1)
 			{
-				perror("poll() failed"); // clean all clients
+				perror("poll() failed");
+				throw runtime_error("poll future");
 			}
 
 			for (size_t i = 0; i < fds.size(); ++i)
