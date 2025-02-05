@@ -229,20 +229,19 @@ bool is_valid_int(const string &str_num, int &num)
     return (true);
 }
 
-bool request::is_location_have_redir() //REQ
+bool request::is_location_have_redir() //REQ`
 {
-    if (current_loc.redir_to.empty())
-        return (false);
+    return (!current_loc.redir_to.empty());
 
-    size_t space_pos = current_loc.redir_to.find(" ");
-    if (space_pos == string::npos || space_pos == current_loc.redir_to.size())
-        return (err_("invalid redir_to"), false);
-    string str_stat_code = current_loc.redir_to.substr(0, space_pos);
-    if (!is_valid_int(str_stat_code, current_loc.status_code))
-        return (err_("invalid int in redir_to"), false);
-    current_loc.redir_to = current_loc.redir_to.substr(space_pos + 1, current_loc.redir_to.size() - space_pos - 1);
+    // size_t space_pos = current_loc.redir_to.find(" ");
+    // if (space_pos == string::npos || space_pos == current_loc.redir_to.size())
+    //     return (err_("invalid redir_to"), false);
+    // string str_stat_code = current_loc.redir_to.substr(0, space_pos);
+    // // if (!is_valid_int(str_stat_code, current_loc.status_code))
+    // //     return (err_("invalid int in redir_to"), false);
+    // // current_loc.redir_to = current_loc.redir_to.substr(space_pos + 1, current_loc.redir_to.size() - space_pos - 1);
 
-    return (current_loc.status_code == 301 || current_loc.status_code == 302);
+    // return (current_loc.status_code == 301 || current_loc.status_code == 302);
 }
 
 bool request::is_method_allowed_in_loc() //REQ

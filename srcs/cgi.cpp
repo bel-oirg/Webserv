@@ -37,7 +37,7 @@ void	Cgi::load_cgi_script()
 	if (find(location.cgi_extentions.begin(), location.cgi_extentions.end(), extention) 
 			== location.cgi_extentions.end())
 	{
-		code = 403; // TODO code for the extention no impl..
+		code = 403;
 		child_stat = 2;
 		return;
 	}
@@ -60,7 +60,7 @@ void Cgi::cgi_run()
 {
 	if (child_stat == 0)
 	{
-		this->outfile = tmpfile(); // BUG maybe this not safe 
+		this->outfile = tmpfile();
 		this->infile = tmpfile();
 		if (outfile == NULL || infile == NULL)
 		{

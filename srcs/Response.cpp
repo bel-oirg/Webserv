@@ -239,7 +239,7 @@ void response::set_transfer_encoding()
 void response::set_location()
 {
     this->_location = "";
-    if (this->stat_code == 301)
+    if (this->stat_code == 301 || this->stat_code == 302)
     {
         if (current_loc.redir_to.empty())
         {
@@ -384,7 +384,7 @@ void response::_20X()
 void response::_40X_50X()
 {
     if (locations["default"].error_pages.find(this->stat_code) != locations["default"].error_pages.end())
-        prep_body(fix_slash(locations["default"].root,locations["default"].error_pages[this->stat_code])); //BUG CPP11
+        prep_body(fix_slash(locations["default"].root,locations["default"].error_pages[this->stat_code]));
     else //the error page not found
     {
         switch (this->stat_code)
@@ -456,7 +456,7 @@ std::map<std::string, std::string>    response::prepare_env_cgi()
     environ_vars["CONTENT_TYPE"] = this->_content_type;
 
     _content_length = body.size();
-    environ_vars["CONTENT_LENGTH"] = wbs::to_string(this->_content_length); //BUG CPP11 TODO THIS IS WRONG
+    environ_vars["CONTENT_LENGTH"] = wbs::to_string(this->_content_length);
     environ_vars["SCRIPT_FILENAME"] = this->resource_path;
     environ_vars["HTTP_USER_AGENT"] = this->headers["User-Agent"];
     environ_vars["HTTP_COOKIE"] = this->_cookies;

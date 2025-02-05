@@ -13,6 +13,17 @@ void	Parse::display_help()
 	cout << HELP << endl;
 }
 
+bool	skip_ws(istringstream &stream)
+{
+	char c = stream.peek();
+	if (::isspace(c))
+	{
+		stream >> ws;
+		return (true);
+	}
+	return (false);
+}
+
 bool Parse::is_server(const std::string &line)
 {
 	std::string trimmed = wbs::get_trimed(line);
@@ -75,8 +86,6 @@ bool	Parse::bool_type_parse(string &key, string &value)
 std::vector<string>	Parse::allowed_methods(string &value)
 {
 	vector<string> methodes = wbs::split(value, " /t");
-	// sort(methodes.begin(), methodes.end());
-	// unique(methodes.begin(), methodes.end());
 
 	for (size_t i = 0; i < methodes.size(); ++i)
 	{
@@ -93,7 +102,7 @@ void Parse::defaults(std::map<string, string>::iterator iter, Server &server, lo
 {
 	string key = wbs::get_trimed(iter->first);
 	string value = wbs::get_trimed(iter->second);
-	if (value[0] == '\177')
+	if (value[0] == ',')
 		value.erase(0, 1);
 
 	if (key == "listen")
@@ -121,18 +130,15 @@ void Parse::defaults(std::map<string, string>::iterator iter, Server &server, lo
 			throw runtime_error("Config Error: Invalid host address: '" + value + "'. Provide a valid IPv4 address.");
 		server.set_host(host);
 	}
-	// else if (key == "index")
-	// 	loc.index_path = non_empty(key, value);
 	else if (key == "error_page")
 	{
 		int code;
 		string page;
-		std::vector<string> pages = wbs::split(value, ",\177"); // TODO maybe check multipple delemeters ,,,
+		std::vector<string> pages = wbs::split(value, ",");
 		for (size_t i = 0; i < pages.size(); i++)
 		{
 			std::istringstream stream(pages[i]);
-			stream >> std::skipws;
-			if (!(stream >> code >> page && stream.eof()))
+			if (!(stream >> code && skip_ws(stream) && std::getline(stream >> std::ws, page)))
 				throw runtime_error("Config Error: Syntax error in 'error_page' directive. Expected format: '<error_code> <page_path>'.");
 			loc.error_pages.insert(make_pair(code, page));
 		}
@@ -156,7 +162,7 @@ void Parse::defaults(std::map<string, string>::iterator iter, Server &server, lo
 		loc.auto_index = bool_type_parse(key, value);
 	else if (key == "cgi_executor")
 	{
-		std::vector<string> splited = wbs::split(value, ",\177");
+		std::vector<string> splited = wbs::split(value, ",");
 		for (size_t i = 0; i < splited.size(); ++i)
 		{
 			 string extention, path;
@@ -179,7 +185,8 @@ void Parse::locations(map<string, string>::iterator loc, loc_details &dest)
 {
 	string key = wbs::get_trimed(loc->first);
 	string value = wbs::get_trimed(loc->second);
-	if (value[0] == '\177')
+
+	if (value[0] == ',')
 		value.erase(0, 1);
 	if (key == "allowed_methods")
 		dest.allowed_methods = allowed_methods(value);
@@ -193,27 +200,21 @@ void Parse::locations(map<string, string>::iterator loc, loc_details &dest)
 		for_each(splited.begin(), splited.end(), wbs::trim_line);
 		dest.index_path = splited;
 	}
-		// dest.index_path = non_empty(key, value); // TODO change this to  vector of paths;
 	else if (key == "return")
-		dest.redir_to = non_empty(key, value);
-	// else if (key == "client_max_body_size")
-	// {
-	// 	if (wbs::all_of(value.begin(), value.end(), ::isdigit))
-	// 	{
-	// 		uint64_t cmbs_value;
-	// 		cmbs_value = atoll(value.c_str());
-	// 		dest.client_max_body_size = cmbs_value;
-	// 	}
-	// 	else
-	// 		throw runtime_error("Config Error: Invalid value for 'client_max_body_size': '" + value + "'. Expected a numeric value.");
-	// }
+	{
+		std::istringstream stream(value);
+		if (!(stream >> dest.status_code && skip_ws(stream) && std::getline(stream >> std::ws, dest.redir_to)))
+			throw runtime_error("Config Error: Syntax error in 'return' directive. Expected format: '<redir_code> <url>'.");
+		if (!(dest.status_code == 301 || dest.status_code == 302))
+			throw runtime_error("Config Error: Syntax error in 'return' directive: Support only following codes [301, 302].");
+	}
 	else if (key == "cgi_pass")
 		dest.has_cgi = bool_type_parse(key, value);
 	else if (key == "upload_enable")
 		dest.enable_upload = bool_type_parse(key, value);
 	else if (key == "cgi_ext")
 	{
-		vector<string> splited  = wbs::split(value, " ,");
+		vector<string> splited  = wbs::split(value, ",");
 		for_each(splited.begin(), splited.end(), wbs::trim_line);
 		dest.cgi_extentions = splited;
 	}
@@ -224,25 +225,21 @@ void Parse::locations(map<string, string>::iterator loc, loc_details &dest)
 std::vector<Server> Parse::config2server(std::vector<Config> configs)
 {
 	std::vector<Server> servers;
-
-		// reserve size for number of servers
 	servers.reserve(configs.size());
 
-	// loop over all configs and check syntax and parameters
 	for (std::vector<Config>::iterator it = configs.begin(); it != configs.end(); ++it)
 	{
 		Server cur_server;
-		// iterate over all all defaults in one server
 		loc_details server_default;
-		for (std::map<std::string, std::string>::iterator iter = it->defaults.begin();
-				iter != it->defaults.end(); ++iter)
-		{
-			defaults(iter, cur_server, server_default);
-		}
-		cur_server.locations["default"] = server_default;
+
 		for (std::map<string, std::map<string, string> >::iterator iter = it->location.begin();
 				iter != it->location.end(); ++iter)
 		{
+			for (std::map<std::string, std::string>::iterator iter = it->defaults.begin();
+					iter != it->defaults.end(); ++iter)
+			{
+				defaults(iter, cur_server, server_default);
+			}
 			loc_details tmp;
 			for (std::map<string, string>::iterator keys_iterator = iter->second.begin();
 					keys_iterator != iter->second.end(); ++keys_iterator)
@@ -252,9 +249,12 @@ std::vector<Server> Parse::config2server(std::vector<Config> configs)
 			std::vector<string> paths = wbs::split(iter->first, " ");
 			for (size_t i = 0; i < paths.size(); ++i)
 			{
+				if (paths[i][0] != '/')
+					throw std::runtime_error("Config Error: Locations keys most bes start with as slash: `/'.");
 				cur_server.locations[paths[i]] = tmp;
 			}
 		}
+		cur_server.locations["default"] = server_default;
 
 		if (cur_server.get_host() == static_cast<in_addr_t> (-1))
 			throw std::runtime_error("Config Error: Host is required: A valid host must be specified for the server configuration.");
@@ -312,19 +312,16 @@ std::vector<Server> Parse::get_servers(std::string filename)
 			if (line.empty() || line[0] == '#')
 				continue;
 
-			// xx :Check for server block
 			if (is_server(line))
 			{
 				if (inServer)
 					throw runtime_error("Syntax Error: Nested server blocks are not allowed.");
 				inServer = true;
 
-				// Check {
 				if (line.find("{") != std::string::npos)
 					++serverBracketCount;
 				else
 				{
-					// Expect {
 					std::getline(configFile, line);
 					line = wbs::get_trimed(line);
 					if (line != "{")
@@ -333,13 +330,13 @@ std::vector<Server> Parse::get_servers(std::string filename)
 				}
 				continue;
 			}
-			// end xx
 
-			// vv Check for location block
 			if (is_location(line, cur_path))
 			{
 				if (!inServer)
 					throw runtime_error("Syntax Error: Location block outside of server block.");
+				if (inLocation)
+					throw runtime_error("Syntax Error: Nested location blocks are not allowed.");
 				if (cur_config.location.find(cur_path) == cur_config.location.end())
 						cur_config.location[cur_path];
 					else
@@ -348,9 +345,7 @@ std::vector<Server> Parse::get_servers(std::string filename)
 				++locationBracketCount;
 				continue;
 			}
-			// end vv
 
-			// bb Handle closing brackets
 			if (line == "}")
 			{
 				if (inLocation)
@@ -367,17 +362,13 @@ std::vector<Server> Parse::get_servers(std::string filename)
 						inServer = false;
 						configs.push_back(cur_config);
 						cur_config.clear();
-						// currentServer.clear();
 					}
 				}
 				else
 					throw runtime_error("Syntax Error: Unmatched closing bracket.");
 				continue;
 			}
-			// end bb
 
-			// cc Handle the keys and there value
-			
 			size_t semicolonPos = line.find(';');
 			size_t firstspace = line.find_first_of(" \t");
 			if (semicolonPos != std::string::npos && line[line.size() - 1] == ';')
@@ -392,7 +383,7 @@ std::vector<Server> Parse::get_servers(std::string filename)
 				if (inLocation)
 				{
 					if (key == "cgi_ext")
-						cur_config.location[cur_path][key] += (" " + value);
+						cur_config.location[cur_path][key] += ("," + value);
 					else if (cur_config.location[cur_path].find(key) == cur_config.location[cur_path].end())
 						cur_config.location[cur_path][key] = value;
 					else
@@ -401,21 +392,19 @@ std::vector<Server> Parse::get_servers(std::string filename)
 				else if (inServer)
 				{
 					if (key == "error_page" || key == "cgi_executor")
-						cur_config.defaults[key] += ("\177" + value);
+						cur_config.defaults[key] += ("," + value);
 					else if (cur_config.defaults.find(key) == cur_config.defaults.end())
 						cur_config.defaults[key] = value;
 					else
 						throw std::runtime_error("Config Error: '" + key + "' is already defined in server config#");
-					}
+				}
 				else
 					throw runtime_error("Syntax Error: Key-value pair outside of valid block.");
 			}
 			else
 				throw runtime_error("Syntax Error: Missing ';' at the end of the line.");
-			// end cc
 		}
 
-		// Final checks for unmatched brackets
 		if (serverBracketCount != 0)
 			throw runtime_error("Syntax Error: Unmatched brackets in server block.");
 		if (locationBracketCount != 0)
@@ -434,5 +423,4 @@ std::vector<Server> Parse::get_servers(std::string filename)
 	}
 
 	return (servers);
-	// Config Error
 }
