@@ -8,6 +8,7 @@ request::request(std::string raw_req, std::map<std::string, loc_details> locatio
 	upload_eof = false;
     chunked = false;
     add_slash = false;
+    PATH_first = false;
     body = "";
 
     this->stat_code = init_parse_req();
@@ -87,22 +88,12 @@ bool    request::is_valid_URI()
         size_t find_slash = URI.find("/", find_dot);
         if (find_slash == string::npos)
             return (true);
-        string ext = URI.substr(find_dot+1, find_slash - find_dot - 1);
-        pp ext << "|"<< endl;
-        // if (find(current_loc.cgi_extentions.begin(), current_loc.cgi_extentions.end(), ext) != current_loc.cgi_extentions.end())
-        // {
-        pp current_loc.root << endl;
-        for (size_t i = 0; i < current_loc.cgi_extentions.size(); ++i)
-        {
-            pp current_loc.cgi_extentions[i];
-            if (ext == current_loc.cgi_extentions[i])
-            {
-                this->PATH_INFO = URI.substr(find_slash + 1);
-                this->URI = URI.substr(0, find_slash);
-                pp "PATH INFO-> " <<  this->PATH_INFO << endl;
-            }
-        }
-        // }
+        // string ext = URI.substr(find_dot+1, find_slash - find_dot - 1);
+
+        this->PATH_INFO = URI.substr(find_slash + 1);
+        this->PATH_INFO_URI = URI.substr(0, find_slash);
+
+        pp "PATH INFO-> " <<  this->PATH_INFO << endl;
         pp "QUERY-> " <<  this->query << endl;
     }
     return (true);
@@ -282,7 +273,15 @@ int request::get_request_resource() //get_resource_type()
             return (err_("get_request_resource"), -1);
     }
     else
+    {
+        if (!this->PATH_INFO.empty() && current_loc.has_cgi && !PATH_first)
+        {
+            this->URI = this->PATH_INFO_URI;
+            PATH_first = true;
+            return (get_request_resource());
+        }
         return (err_("Resource not found " + resource_path), 0);
+    }
     return (err_("Error on getcwd"), -2);
 }
 
@@ -412,7 +411,8 @@ int     request::DELETE()
     }
     if (!if_location_has_cgi()) // file
     {
-        remove(this->resource_path.c_str());
+        if (remove(this->resource_path.c_str()))
+            return (pp "Failed to delete the resource\n", 500);
         return (pp "File deleted succesfully\n", 204);
     }
     return (-1);

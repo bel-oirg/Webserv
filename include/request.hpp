@@ -21,6 +21,7 @@ class request
         loc_details current_loc;
 
         string resource_path;
+        string PATH_INFO_URI;
         string method;
         string URI;
         string PATH_INFO;
@@ -30,6 +31,7 @@ class request
         int         stat_code;
         int         resource_type;
         bool        add_slash;
+        bool        PATH_first;
         bool        chunked;
 
     public:
