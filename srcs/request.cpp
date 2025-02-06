@@ -381,9 +381,9 @@ int     request::DELETE()
         if (!if_location_has_cgi())
         {
             if (delete_all_folder_content(resource_path))
-                return (204);
+                return (upload_eof = true, 204);
             if (has_write_access_on_folder())
-                return (500);
+                return (pp "Permission denied to delete file/dir\n", 500);
             return (403);
         }
         if (!is_dir_has_index_path())
@@ -394,7 +394,7 @@ int     request::DELETE()
     {
         if (remove(this->resource_path.c_str()))
             return (pp "Failed to delete the resource\n", 500);
-        return (pp "File deleted succesfully\n", 204);
+        return (pp "File deleted succesfully\n", upload_eof = true, 204);
     }
     return (-1);
 }
@@ -557,10 +557,6 @@ int request::if_loc_support_upload()
     return (204);
 }
 
-/*
-    3 prob
-        handled index ?? if there is index and autoindex check the index first
-*/
 
 bool request::delete_all_folder_content(std::string ress_path)
 {

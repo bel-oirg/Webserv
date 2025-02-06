@@ -120,13 +120,8 @@ std::string response::get_response_header() //_____SEND__RESP__HEAD
         && _cgi_headers.find("Content-Type") == _cgi_headers.end())
         line << "Content-Type: " << this->_content_type << "\r\n";
     
-    if (_cgi_headers.find("Content-Length") == _cgi_headers.end())
-    {
-        if (!this->_content_length)
-            line << "Transfer-Encoding: " << this->_transfer_encoding << "\r\n";
-        else
-            line << "Content-Length: " << this->_content_length << "\r\n";
-    }
+
+    line << "Content-Length: " << this->_content_length << "\r\n";
     
     if (!_location.empty())
         line << "Location: " << _location << "\r\n";
@@ -233,11 +228,6 @@ void response::set_content_type()
         this->_content_type = it->second;
 }
 
-void response::set_transfer_encoding()
-{
-    if (!this->_content_length)
-        this->_transfer_encoding = "chunked";
-}
 
 void response::set_location()
 {
@@ -429,6 +419,8 @@ void response::_40X_50X()
                             "        </div>\n"
                             "    </body>\n"
                             "</html>";
+
+            pp this->stat_code << " | " << "Default Internal err" << endl;
             this->stat_code = 500;
             break;
         }
@@ -489,9 +481,7 @@ response::response(std::string req, std::map<string, loc_details> locations, ser
     set_body();
     set_content_type();
     set_content_length();
-    set_transfer_encoding();
-    //TODO
-    if (stat_code != 204)
+    if (stat_code != 204) //TODO maybe just check the file_name -> means there is an upload
         this->upload_eof = true;
 }
 

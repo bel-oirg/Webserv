@@ -17,7 +17,6 @@ class response : public request
         string          _server; 
         string          _cookies; 
         string          _connection;
-        string          _transfer_encoding;
         string          _body;
         std::ifstream   infile;
 		server_info		_server_info;
@@ -38,7 +37,6 @@ class response : public request
         void set_server();
         void set_location();
         void set_cookies();
-        void set_transfer_encoding();
         void set_connection();
         void set_content_type();
         void debug();
