@@ -10,8 +10,10 @@ Client::Client(Server &server, int fd)
 	  _request_buffer(""),
 	  _last_interaction()
 {
+	this->cur_event = POLLIN;
+
 	_pfd.fd = fd;
-	_pfd.events = POLLIN;
+	_pfd.events = POLLIN | POLLOUT;
 	_pfd.revents = 0;
 	this->register_interaction();
 }
@@ -55,14 +57,10 @@ pollfd &Client::get_pollfd()
 	return (this->_pfd);
 }
 
-void Client::change_event()
+void Client::listen_to_write()
 {
+	this->cur_event = POLLOUT;
 	this->_pfd.events = POLLOUT;
-}
-
-void Client::change_event(int)
-{
-	this->_pfd.events = POLLIN;
 }
 
 void Client::register_interaction()

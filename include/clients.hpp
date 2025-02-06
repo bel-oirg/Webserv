@@ -14,6 +14,7 @@ class Client
 		response*	_response;
 		bool		_headers_sended;
 		bool		first_response_read;
+		int 		cur_event;
 
 	private :
 		Server&		_server;
@@ -33,8 +34,7 @@ class Client
 		Server&		server();
 		pollfd&		get_pollfd();
 		void		save_request(string request);
-        void        change_event(int);
-		void		change_event();
+		void		listen_to_write();
 		void		register_interaction();
 		time_t		get_last_interaction();
 		string		&request_buffer();

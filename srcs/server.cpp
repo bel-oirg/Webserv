@@ -251,17 +251,21 @@ void ServersManager::remove_client(int fd)
 
 void ServersManager::get_request(pollfd &pfd)
 {
-	bzero(this->reading_buffer, REQUEST_MAX_SIZE);
-	int valread;
-	valread = recv(pfd.fd, this->reading_buffer, REQUEST_MAX_SIZE, 0);
-	if (valread < 0)
+
+	Client *cur_client = client_pool[pfd.fd];
+	if (!cur_client)
 	{
 		this->remove_client(pfd.fd);
 		return;
 	}
 
-	Client *cur_client = client_pool[pfd.fd];
-	if (!cur_client)
+	if (cur_client->cur_event != POLLIN)
+		return ;
+
+	bzero(this->reading_buffer, REQUEST_MAX_SIZE);
+	int valread;
+	valread = recv(pfd.fd, this->reading_buffer, REQUEST_MAX_SIZE, 0);
+	if (valread <= 0)
 	{
 		this->remove_client(pfd.fd);
 		return;
@@ -272,19 +276,24 @@ void ServersManager::get_request(pollfd &pfd)
 
 	if (cur_client->request_buffer().empty() && (cur_client->_response && cur_client->_response->upload_eof))
 	{
-		cur_client->change_event();
+		cur_client->listen_to_write();
 	}
 }
 
 void ServersManager::send_response(pollfd &pfd)
 {
 	Client *cur_client = client_pool[pfd.fd];
-	string response;
+	if (!cur_client)
+	{
+		this->remove_client(pfd.fd);
+		return;
+	}
 
-	cur_client->register_interaction();
 	if (!cur_client->_response)
 		return;
 
+	cur_client->register_interaction();
+	string response;
 	if (!cur_client->_headers_sended)
 	{
 		response = cur_client->_response->get_response_header();
@@ -322,7 +331,6 @@ void ServersManager::send_response(pollfd &pfd)
 	}
 }
 
-// server core
 
 void ServersManager::check_timeout(pollfd &fd)
 {
@@ -399,7 +407,7 @@ void ServersManager::run()
 				{
 					send_response(fds[i]);
 				}
-				else if (!is_server(fds[i].fd))
+				else
 				{
 					check_timeout(fds[i]);
 				}
