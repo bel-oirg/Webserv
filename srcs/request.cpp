@@ -88,7 +88,6 @@ bool    request::is_valid_URI()
         size_t find_slash = URI.find("/", find_dot);
         if (find_slash == string::npos)
             return (true);
-        // string ext = URI.substr(find_dot+1, find_slash - find_dot - 1);
 
         this->PATH_INFO = URI.substr(find_slash + 1);
         this->PATH_INFO_URI = URI.substr(0, find_slash);
@@ -119,11 +118,6 @@ int request::is_req_well_formed() //REQ
     //LINE 1
     std::string l1_s, tmp_line, field, value;
 
-    if (req == "Internal_err")
-        return(err_("CGI_ERR"), 500);
-    if (req == "Timeout_err")
-        return(err_("CGI_ERR"), 504);
-
     if (req.empty())
         return (err_("EMPTY"), 400);
     std::stringstream ss(req);
@@ -139,7 +133,7 @@ int request::is_req_well_formed() //REQ
     std::getline(l1, this->URI, ' ');
     if (!is_valid_URI())
         return (err_("invalid URI"), 400);
-    if (this->URI.size() > MAX_URI_SIZE)
+    if (this->URI.size() + this->query.size() + this->PATH_INFO.size() > MAX_URI_SIZE)
         return (414);
     std::getline(l1, this->HTTP, '\r');
     if (this->HTTP != "HTTP/1.1")
@@ -148,8 +142,9 @@ int request::is_req_well_formed() //REQ
 
     size_t head_beg = req.find("\r\n");
     size_t head_end = req.find("\r\n\r\n");
-    //TODO here head_beg + 2 ?
-    std::stringstream headers_raw(req.substr(head_beg, head_end - head_beg));
+    if (head_beg == string::npos || head_end == string::npos)
+        return (err_("incorrect carriage"), 400);
+    std::stringstream headers_raw(req.substr(head_beg + 2, head_end - head_beg - 2));
 
     while(std::getline(headers_raw, tmp_line, '\n'))
     {
@@ -232,16 +227,6 @@ bool is_valid_int(const string &str_num, int &num)
 bool request::is_location_have_redir() //REQ`
 {
     return (!current_loc.redir_to.empty());
-
-    // size_t space_pos = current_loc.redir_to.find(" ");
-    // if (space_pos == string::npos || space_pos == current_loc.redir_to.size())
-    //     return (err_("invalid redir_to"), false);
-    // string str_stat_code = current_loc.redir_to.substr(0, space_pos);
-    // // if (!is_valid_int(str_stat_code, current_loc.status_code))
-    // //     return (err_("invalid int in redir_to"), false);
-    // // current_loc.redir_to = current_loc.redir_to.substr(space_pos + 1, current_loc.redir_to.size() - space_pos - 1);
-
-    // return (current_loc.status_code == 301 || current_loc.status_code == 302);
 }
 
 bool request::is_method_allowed_in_loc() //REQ

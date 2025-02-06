@@ -250,6 +250,8 @@ void response::set_location()
     }
 }
 
+//TODO in case wrong index you should ret 404
+
 bool response::prepare_autoindex()
 {
     std::string dir = this->resource_path;
@@ -358,11 +360,7 @@ void response::throw_err_body(string err)
 void response::_20X()
 {
     if (this->stat_code == 204)
-    {
-        _body = "File Deleted Successfully";
-        if (method != "DELETE")
-            _body = "File Uploaded Successfully";
-    }
+        return;
     else if (this->stat_code == 200)
     {
         if (resource_type == 1)
@@ -380,6 +378,8 @@ void response::_20X()
     else
         throw_err_body("20X unknown");
 }
+
+//TODO create a fifo file and test it 
 
 void response::_40X_50X()
 {
@@ -415,7 +415,6 @@ void response::_40X_50X()
                             "</html>";
             break;
 
-            //TODO maybe change the stat_code
             default:
             this-> _body = "<!DOCTYPE html>\n"
                             "<html>\n"
@@ -427,6 +426,7 @@ void response::_40X_50X()
                             "        </div>\n"
                             "    </body>\n"
                             "</html>";
+            this->stat_code = 500;
             break;
         }
         this->_content_length = _body.size();
@@ -487,8 +487,8 @@ response::response(std::string req, std::map<string, loc_details> locations, ser
     set_content_type();
     set_content_length();
     set_transfer_encoding();
-    if (stat_code != 204)
-        this->upload_eof = true;
+    // if (stat_code != 204)
+    this->upload_eof = true;
 }
 
 response::~response()
