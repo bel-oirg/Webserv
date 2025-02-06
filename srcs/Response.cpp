@@ -487,8 +487,8 @@ response::response(std::string req, std::map<string, loc_details> locations, ser
     set_content_type();
     set_content_length();
     set_transfer_encoding();
-    // if (stat_code != 204)
-    this->upload_eof = true;
+    if (stat_code != 204)
+        this->upload_eof = true;
 }
 
 response::~response()
