@@ -103,6 +103,9 @@ bool is_valid_size_t(const string &str_num, size_t &num)
     if (str_num.empty())
         return(num = 0, true);
 
+    if (str_num[0] == '-')
+        return false;
+
     std::stringstream ss(str_num);
     char c;
 
@@ -151,6 +154,12 @@ int request::is_req_well_formed() //REQ
         std::stringstream raw(tmp_line);
         std::getline(raw, field, ':');
         std::getline(raw, value, '\r');
+        value = wbs::get_trimed(value);
+        field = wbs::get_trimed(field);
+        if (field.empty())
+            return (err_("Empty field"), 400);
+        if (value.empty())
+            continue;
         this->headers.insert(std::make_pair(field, wbs::get_trimed(value)));
     }
     if (headers.find("Host") == headers.end())
@@ -209,18 +218,6 @@ bool request::get_matched_loc_for_req_uri() //REQ
         }
     }
     current_loc = this->locations[correct_loc_name];
-    return (true);
-}
-
-bool is_valid_int(const string &str_num, int &num)
-{
-    std::stringstream ss(str_num);
-    char c;
-
-    if (!(ss >> num))
-        return (false);
-    if (ss >> c)
-        return (false);
     return (true);
 }
 
@@ -410,7 +407,9 @@ int     request::init_parse_req()
     if (!get_matched_loc_for_req_uri())
         return (404);
 
-    is_valid_size_t(this->headers["Content-Length"], length);
+    if (!is_valid_size_t(this->headers["Content-Length"], length))
+        return (err_("invalid content_length"), 400);
+    pp length << endl;
     if (length > locations["default"].client_max_body_size)
         return (err_("BODY > CLIENT_MAX_BODY _SIZE"), 413);
 

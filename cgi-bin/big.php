@@ -1,7 +1,6 @@
 #!/usr/bin/env php
 <?php
-echo ('Content-Type: text/html; charset=utf-8');
-echo '\n';
+header('Content-Type: text/html; charset=utf-8');
 
 // Helper function to format bytes
 function formatBytes($bytes, $precision = 2) {

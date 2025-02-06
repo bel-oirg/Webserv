@@ -105,7 +105,10 @@ std::string response::get_response_header() //_____SEND__RESP__HEAD
     line << "HTTP/1.1 " << set_status(stat_code) << "\r\n";
 
     if (!this->_cgi_head.empty())
+    {
+        pp "CGI -> " << this->_cgi_head << endl;
         line << _cgi_head << "\r\n";
+    }
 
     if (this->_connection.empty())
         this->_connection = "close";
@@ -119,7 +122,7 @@ std::string response::get_response_header() //_____SEND__RESP__HEAD
     
     if (_cgi_headers.find("Content-Length") == _cgi_headers.end())
     {
-        if (this->_content_length == -1)
+        if (!this->_content_length)
             line << "Transfer-Encoding: " << this->_transfer_encoding << "\r\n";
         else
             line << "Content-Length: " << this->_content_length << "\r\n";
@@ -218,7 +221,7 @@ void response::set_content_type()
     mime["php"]     = "application/x-httpd-php";
     mime["exe"]     = "application/octet-stream";
 
-    _content_type = "text/html";
+    _content_type = "";
     size_t dot_p = this->URI.find_last_of('.');
     if (dot_p == std::string::npos || this->stat_code != 200)
         return ;
@@ -232,7 +235,7 @@ void response::set_content_type()
 
 void response::set_transfer_encoding()
 {
-    if (this->_content_length == -1)
+    if (!this->_content_length)
         this->_transfer_encoding = "chunked";
 }
 
@@ -487,6 +490,7 @@ response::response(std::string req, std::map<string, loc_details> locations, ser
     set_content_type();
     set_content_length();
     set_transfer_encoding();
+    //TODO
     if (stat_code != 204)
         this->upload_eof = true;
 }

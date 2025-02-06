@@ -9,7 +9,7 @@ void     err_(const std::string &err);
 class response : public request
 {
     private:
-        int _content_length; //change 
+        uint64_t _content_length;
 
         string          _status;
         string          _location; 
