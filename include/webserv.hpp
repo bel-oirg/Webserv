@@ -1,7 +1,7 @@
 #define	ERR_DIR "./Error_pages/"
 
-#define CHUNK_SIZE 1024
-#define MAX_URI_SIZE 2048
+#define CHUNK_SIZE       1024
+#define MAX_URI_SIZE     2048
 #define REQUEST_MAX_SIZE 2000
 #define pp cout << 
 #define ttt cout << CYAN << "\n\nTOUCHED TOUCHED\n\n" << RESET << endl; 

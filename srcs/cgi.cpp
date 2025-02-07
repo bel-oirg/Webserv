@@ -98,39 +98,40 @@ void Cgi::cgi_run()
 	else if (child_stat == 1)
 	{
 		int status;
-		if (waitpid(forked, &status, WNOHANG) != 0)
+		int wait_t = waitpid(forked, &status, WNOHANG);
+		if (wait_t == 0)
 		{
+			return ;
+		}
 
-			if (WIFSIGNALED(status))
+		else if (WIFSIGNALED(status))
+		{
+			int signal = WTERMSIG(status);
+			if (signal == SIGALRM)
 			{
-				if (WTERMSIG(status) == SIGALRM)
-				{
-					this->code = 504;
-					std::cerr << "CGI timeout" << std::endl;
-				}
-				else
-				{
-					this->code = 500;
-					std::cerr << "CGI killed by signal [" << WTERMSIG(status) << "]" << std::endl;
-				}
-
-				child_stat = 2;
-				return;
+				this->code = 504;
+				std::cerr << "cgi: timeout" << std::endl;
 			}
-			else if (WIFEXITED(status))
+			else
 			{
-				if (WEXITSTATUS(status) == 0)
-				{
-					code = 200;
-				}
-				else
-				{
-					std::cerr << "CGI error : exit status => [" << WEXITSTATUS(status) << "]" << std::endl;
-					code = 500;
-				}
-				child_stat = 2;
-				return;
+				cerr << "Error: cgi killed by delivered signal: `" << signal << "`" << endl;
+				this->code = 500;
 			}
+			child_stat = 2;
+		}
+		else
+		{
+			int exit_stat = WEXITSTATUS(status);
+			if (exit_stat == 0)
+			{
+				code = 200;
+			}
+			else
+			{
+				cerr << "Error: cgi exited abnormally with: `" << exit_stat << "`" << endl;
+				code = 500;
+			}
+			child_stat = 2;
 		}
 	}
 }
