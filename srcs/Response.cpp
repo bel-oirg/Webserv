@@ -220,8 +220,6 @@ void response::set_content_type()
     mime["php"]     = "application/x-httpd-php";
     mime["exe"]     = "application/octet-stream";
 
-    _content_type = "";
-    pp "STAT ->" << this->stat_code;
     size_t dot_p = this->URI.find_last_of('.');
     if (dot_p == std::string::npos || this->stat_code != 200)
         return ;
@@ -296,7 +294,7 @@ bool response::prep_body(const std::string &path)
         return (true);
     struct stat s;
     infile.open(path.c_str(), std::ios::binary);
-    if (!infile.is_open() || !(s.st_mode & S_IFREG))
+    if (!infile.is_open() || stat(path.c_str(), &s) || !(s.st_mode & S_IFREG))
     {
         this->stat_code = 500;
         this-> _body = "<!DOCTYPE html>\n"
@@ -312,7 +310,7 @@ bool response::prep_body(const std::string &path)
         _content_length = _body.size();
         std::cerr << "Error opening " << path << std::endl;
         return (false);
-    }
+    }    
 
     infile.seekg(0, ios::end);
     _content_length = infile.tellg();
