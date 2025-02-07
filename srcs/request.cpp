@@ -513,6 +513,9 @@ bool request::unchunk_body()
             return (err_("end_hex on chunked npos"), false);
 
         size_str = unchunked.substr(beg_hex, end_hex - beg_hex);
+        if (!wbs::all_of(size_str.begin(), size_str.end(), ::isalnum))
+            return (err_("invalid size part of the chunked request"), false);
+
         test.clear();
         test.str("");
         test << size_str;
