@@ -49,6 +49,7 @@ class request
         int     init_parse_req();
         bool    is_uri_has_slash_in_end();
         bool    is_dir_has_index_path();
+        bool    prepare_index_path();
         bool    if_location_has_cgi();
         int     req_arch();
         bool    is_valid_URI();

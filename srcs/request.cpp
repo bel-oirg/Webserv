@@ -132,7 +132,6 @@ int request::is_req_well_formed() //REQ
     if (!valid_method())
         return (err_("METHOD NOT VALID"), 400);
 
-    //TODO retest this one
     std::getline(l1, this->URI, ' ');
     if (!is_valid_URI())
         return (err_("invalid URI"), 400);
@@ -325,6 +324,8 @@ int     request::GET()
         this->add_slash = true;
         if (!is_dir_has_index_path())
         {
+            if (!current_loc.index_path.empty())
+                return (err_("invalid index file"), 404);
             if (!get_auto_index())
                 return (err_("NO AUTO_INDEX"), 403);
             return (200); //return autoindex of the directory
@@ -353,6 +354,8 @@ int     request::POST()
         this->add_slash = true;
         if (is_dir_has_index_path())
         {
+            if (!current_loc.index_path.empty())
+                return (err_("invalid index file"), 404);
             if (!if_location_has_cgi())
                 return (err_("NO CGI ON DIR"), 403);
             return (-1);
@@ -384,7 +387,11 @@ int     request::DELETE()
             return (403);
         }
         if (!is_dir_has_index_path())
+        {
+            if (!current_loc.index_path.empty())
+                return (err_("invalid index file"), 404);
             return (403);
+        }
         return (-1);
     }
     if (!if_location_has_cgi()) // file

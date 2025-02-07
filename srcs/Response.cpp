@@ -246,8 +246,6 @@ void response::set_location()
     }
 }
 
-//TODO in case wrong index you should ret 404
-
 bool response::prepare_autoindex()
 {
     std::string dir = this->resource_path;
@@ -377,8 +375,6 @@ void response::_20X()
         throw_err_body("20X unknown");
 }
 
-//TODO create a fifo file and test it 
-
 void response::_40X_50X()
 {
     if (locations["default"].error_pages.find(this->stat_code) != locations["default"].error_pages.end())
@@ -486,7 +482,7 @@ response::response(std::string req, std::map<string, loc_details> locations, ser
     set_body();
     set_content_type();
     set_content_length();
-    if (stat_code != 204) //TODO maybe just check the file_name -> means there is an upload
+    if (stat_code != 204)
         this->upload_eof = true;
 }
 
