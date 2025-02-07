@@ -259,8 +259,13 @@ void ServersManager::get_request(pollfd &pfd)
 		return;
 	}
 
-	if (cur_client->cur_event != POLLIN)
+	cur_client->register_interaction();
+	if (cur_client->handshake)
+	{
+		cur_client->handshake = false;
+		cur_client->get_pollfd().events = POLLIN;
 		return ;
+	}
 
 	bzero(this->reading_buffer, REQUEST_MAX_SIZE);
 	int valread;
@@ -271,7 +276,6 @@ void ServersManager::get_request(pollfd &pfd)
 		return;
 	}
 
-	cur_client->register_interaction();
 	cur_client->save_request(std::string(this->reading_buffer, valread));
 
 	if (cur_client->request_buffer().empty() && (cur_client->_response && cur_client->_response->upload_eof))
@@ -293,6 +297,13 @@ void ServersManager::send_response(pollfd &pfd)
 		return;
 
 	cur_client->register_interaction();
+	if (cur_client->handshake)
+	{
+		cur_client->handshake = false;
+		cur_client->get_pollfd().events = POLLIN;
+		return ;
+	}
+
 	string response;
 	if (!cur_client->_headers_sended)
 	{

@@ -6,11 +6,12 @@ Client::Client(Server &server, int fd)
 	: _response(NULL),
 	  _headers_sended(false),
 	  first_response_read(true),
+	  handshake(true),
 	  _server(server),
 	  _request_buffer(""),
 	  _last_interaction()
 {
-	this->cur_event = POLLIN;
+	// this->cur_event = POLLIN;
 
 	_pfd.fd = fd;
 	_pfd.events = POLLIN | POLLOUT;
@@ -59,7 +60,7 @@ pollfd &Client::get_pollfd()
 
 void Client::listen_to_write()
 {
-	this->cur_event = POLLOUT;
+	// this->cur_event = POLLOUT;
 	this->_pfd.events = POLLOUT;
 }
 
