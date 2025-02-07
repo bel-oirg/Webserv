@@ -19,7 +19,6 @@ std::string response::set_status(int stat_code)
 {
     static std::map<int, std::string> status_map;
     status_map[200] = std::string("200 OK");
-    status_map[201] = std::string("201 Created");
     status_map[204] = std::string("204 No Content");
     status_map[301] = std::string("301 Moved Permanently");
     status_map[302] = std::string("302 Found");

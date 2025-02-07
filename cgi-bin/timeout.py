@@ -14,6 +14,5 @@ print("""
 
 # Infinite loop (does nothing, runs forevew)
 while True:
-    print("asdasasdasd")
     pass
  

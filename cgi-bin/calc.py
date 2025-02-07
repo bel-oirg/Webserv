@@ -1,6 +1,5 @@
 #!/usr/bin/python3
 
-print('Set-Cookie: username=Hamza; expires=Tue, 28 Jan 2025 20:47:49 GMT; Max-Age=30')
 print('Content-Type: text/html; charset=UTF-8')
 
 import os
