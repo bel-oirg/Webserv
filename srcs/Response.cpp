@@ -324,25 +324,23 @@ string response::get_to_send() //_____RESP_BODY_SEND__
         stat_code = _cgi->cgi_get_code();
         if (stat_code == 200)
         {
-            char buff[2001];
-            int readen = read(_cgi->get_outfd(), buff, 2000);
+            int readen = read(_cgi->get_outfd(), this->buffer, 2000);
             // pp string(buff, readen) << endl;
             if (readen > 0)
-                return (buff[readen] = 0, string(buff, readen));
+                return (string(this->buffer, readen));
             return (this->_eof = true,  "");
         }
     }
     if (!_body.empty()) //in this case i am sure that the body is small (indexing a dir / ..)
         return (this->_eof = true, _body);
 
-    char buff[REQUEST_MAX_SIZE + 1] = {0}; // BUG change this to a dynamic array
-    infile.read(buff, REQUEST_MAX_SIZE);
+    infile.read(this->buffer, REQUEST_MAX_SIZE);
     size_t readden = infile.gcount();
 
     if (!readden)
         return(this->_eof = true, infile.close(), "");
     
-    return(std::string(buff, readden));
+    return(std::string(this->buffer, readden));
 }
 
 void response::throw_err_body(string err)
@@ -475,6 +473,7 @@ response::response(std::string req, std::map<string, loc_details> locations, ser
     _content_length = 0;
 	_cgi = NULL;
 	this->_server_info = info;
+    buffer = new char[REQUEST_MAX_SIZE];
     set_connection();
     set_server();
     set_location();
@@ -487,6 +486,7 @@ response::response(std::string req, std::map<string, loc_details> locations, ser
 
 response::~response()
 {
+    delete buffer;
     infile.close();
 	if (_cgi)
     {

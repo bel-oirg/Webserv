@@ -89,7 +89,7 @@ bool    request::is_valid_URI()
         if (find_slash == string::npos)
             return (true);
 
-        this->PATH_INFO = URI.substr(find_slash + 1);
+        this->PATH_INFO = URI.substr(find_slash); // INFO i changed this so path with a slash
         this->PATH_INFO_URI = URI.substr(0, find_slash);
 
         pp "PATH INFO-> " <<  this->PATH_INFO << endl;

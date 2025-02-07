@@ -10,6 +10,7 @@ class response : public request
 {
     private:
         uint64_t _content_length;
+        char            *buffer;
 
         string          _status;
         string          _location; 
