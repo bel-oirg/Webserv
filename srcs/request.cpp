@@ -313,10 +313,7 @@ int     request::GET()
 {
 
     if (!current_loc.has_cgi && !this->PATH_INFO.empty())
-    {
-        pp "loc ->" << current_loc.root << endl;
         this->URI += "/" + this->PATH_INFO;
-    }
 
     resource_type = get_request_resource();
     if (resource_type <= 0)

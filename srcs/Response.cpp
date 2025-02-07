@@ -167,7 +167,11 @@ void response::set_connection()
 
 void response::set_content_type()
 {
-    this->_content_type = "";
+    if (this->stat_code / 400)
+    {
+        this->_content_type = "text/html";
+        return ;
+    }
 
     if (this->stat_code == -1)
         this->_content_type = "text/html";
@@ -217,6 +221,7 @@ void response::set_content_type()
     mime["exe"]     = "application/octet-stream";
 
     _content_type = "";
+    pp "STAT ->" << this->stat_code;
     size_t dot_p = this->URI.find_last_of('.');
     if (dot_p == std::string::npos || this->stat_code != 200)
         return ;
@@ -276,6 +281,7 @@ bool response::prepare_autoindex()
     }
     raw_body << "</ul>\n<hr>\n</body>\n</html>\n";
     _body = raw_body.str();
+    this->_content_type = "text/html";
     return (closedir(dirp), true);
 }
 
@@ -288,8 +294,9 @@ bool response::prep_body(const std::string &path)
 {
     if (!_body.empty())
         return (true);
+    struct stat s;
     infile.open(path.c_str(), std::ios::binary);
-    if (!infile)
+    if (!infile.is_open() || !(s.st_mode & S_IFREG))
     {
         this->stat_code = 500;
         this-> _body = "<!DOCTYPE html>\n"
