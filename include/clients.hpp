@@ -15,6 +15,7 @@ class Client
 		bool		_headers_sended;
 		bool		first_response_read;
 		int 		cur_event;
+		bool		handshake;
 
 	private :
 		Server&		_server;
