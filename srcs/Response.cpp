@@ -381,7 +381,7 @@ void response::_40X_50X()
         switch (this->stat_code)
         {
             case 400:
-            this-> _body =  "<!DOCTYPE html>\n"
+                this->_body = "<!DOCTYPE html>\n"
                             "<html>\n"
                             "    <head><title>400 Bad Request</title></head>\n"
                             "    <body>\n"
@@ -391,23 +391,114 @@ void response::_40X_50X()
                             "        </div>\n"
                             "    </body>\n"
                             "</html>";
-            break;
-
+                break;
+            
+            case 403:
+                this->_body = "<!DOCTYPE html>\n"
+                            "<html>\n"
+                            "    <head><title>403 Forbidden</title></head>\n"
+                            "    <body>\n"
+                            "        <div>\n"
+                            "            <h1>403 Forbidden</h1>\n"
+                            "            <p>You do not have permission to access this resource.</p>\n"
+                            "        </div>\n"
+                            "    </body>\n"
+                            "</html>";
+                break;
+            
             case 404:
-            this-> _body =  "<!DOCTYPE html>\n"
+                this->_body = "<!DOCTYPE html>\n"
                             "<html>\n"
                             "    <head><title>404 Not Found</title></head>\n"
                             "    <body>\n"
                             "        <div>\n"
                             "            <h1>404 Not Found</h1>\n"
-                            "            <p>Unable to find a representation of the requested resource</p>\n"
+                            "            <p>Unable to find a representation of the requested resource.</p>\n"
                             "        </div>\n"
                             "    </body>\n"
                             "</html>";
-            break;
-
+                break;
+            
+            case 405:
+                this->_body = "<!DOCTYPE html>\n"
+                            "<html>\n"
+                            "    <head><title>405 Method Not Allowed</title></head>\n"
+                            "    <body>\n"
+                            "        <div>\n"
+                            "            <h1>405 Method Not Allowed</h1>\n"
+                            "            <p>The requested method is not supported for the resource.</p>\n"
+                            "        </div>\n"
+                            "    </body>\n"
+                            "</html>";
+                break;
+            
+            case 409:
+                this->_body = "<!DOCTYPE html>\n"
+                            "<html>\n"
+                            "    <head><title>409 Conflict</title></head>\n"
+                            "    <body>\n"
+                            "        <div>\n"
+                            "            <h1>409 Conflict</h1>\n"
+                            "            <p>The request could not be completed due to a conflict with the current state of the resource.</p>\n"
+                            "        </div>\n"
+                            "    </body>\n"
+                            "</html>";
+                break;
+            
+            case 413:
+                this->_body = "<!DOCTYPE html>\n"
+                            "<html>\n"
+                            "    <head><title>413 Payload Too Large</title></head>\n"
+                            "    <body>\n"
+                            "        <div>\n"
+                            "            <h1>413 Payload Too Large</h1>\n"
+                            "            <p>The request entity is larger than the server is willing or able to process.</p>\n"
+                            "        </div>\n"
+                            "    </body>\n"
+                            "</html>";
+                break;
+            
+            case 414:
+                this->_body = "<!DOCTYPE html>\n"
+                            "<html>\n"
+                            "    <head><title>414 URI Too Long</title></head>\n"
+                            "    <body>\n"
+                            "        <div>\n"
+                            "            <h1>414 URI Too Long</h1>\n"
+                            "            <p>The URI requested by the client is longer than the server can interpret.</p>\n"
+                            "        </div>\n"
+                            "    </body>\n"
+                            "</html>";
+                break;
+            
+            case 501:
+                this->_body = "<!DOCTYPE html>\n"
+                            "<html>\n"
+                            "    <head><title>501 Not Implemented</title></head>\n"
+                            "    <body>\n"
+                            "        <div>\n"
+                            "            <h1>501 Not Implemented</h1>\n"
+                            "            <p>The server does not support the functionality required to fulfill the request.</p>\n"
+                            "        </div>\n"
+                            "    </body>\n"
+                            "</html>";
+                break;
+            
+            case 504:
+                this->_body = "<!DOCTYPE html>\n"
+                            "<html>\n"
+                            "    <head><title>504 Gateway Timeout</title></head>\n"
+                            "    <body>\n"
+                            "        <div>\n"
+                            "            <h1>504 Gateway Timeout</h1>\n"
+                            "            <p>The server, while acting as a gateway or proxy, did not receive a timely response from the upstream server.</p>\n"
+                            "        </div>\n"
+                            "    </body>\n"
+                            "</html>";
+                break;
+            
             default:
-            this-> _body = "<!DOCTYPE html>\n"
+                this->_body = "<!DOCTYPE html>\n"
                             "<html>\n"
                             "    <head><title>500 Internal Server Error</title></head>\n"
                             "    <body>\n"
@@ -417,10 +508,9 @@ void response::_40X_50X()
                             "        </div>\n"
                             "    </body>\n"
                             "</html>";
-
-            pp this->stat_code << " | " << "Default Internal err" << endl;
-            this->stat_code = 500;
-            break;
+                pp this->stat_code << " | " << "Default Internal err" << endl;
+                this->stat_code = 500;
+                break;
         }
         this->_content_length = _body.size();
     }

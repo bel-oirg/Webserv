@@ -14,35 +14,35 @@ Server::Server() : locations(),
 				   port(-1),
 				   server_name(),
 				   _timeout(100),
+				   _is_up(false),
 				   _host(-1),
 				   socket_fd(-1),
 				   address(),
-				   _pfd(),
-				   _is_up(false)
+				   _pfd()
 {
 }
 
-Server::Server(const Server &cpy)
-{
-	*this = cpy;
-}
+// Server::Server(const Server &cpy)
+// {
+// 	*this = cpy;
+// }
 
-Server &Server::operator=(const Server &cpy)
-{
-	if (this != &cpy)
-	{
-		server_fds = cpy.server_fds;
-		locations = cpy.locations;
-		port = cpy.port;
-		server_name = cpy.server_name;
-		_host = cpy._host;
-		socket_fd = cpy.socket_fd;
-		address = cpy.address;
-		_pfd = cpy._pfd;
-		_timeout = cpy._timeout;
-	}
-	return *this;
-}
+// Server &Server::operator=(const Server &cpy)
+// {
+// 	if (this != &cpy)
+// 	{
+// 		server_fds = cpy.server_fds;
+// 		locations = cpy.locations;
+// 		port = cpy.port;
+// 		server_name = cpy.server_name;
+// 		_host = cpy._host;
+// 		socket_fd = cpy.socket_fd;
+// 		address = cpy.address;
+// 		_pfd = cpy._pfd;
+// 		_timeout = cpy._timeout;
+// 	}
+// 	return *this;
+// }
 
 void ServersManager::add_client_to_pool(Client *new_client)
 {
@@ -117,20 +117,19 @@ void ServersManager::setup()
 			servers[i].setup();
 			pollfd tmp = {.fd = servers[i].socket(), .events = POLLIN, .revents = 0};
 			servers_pollfds.push_back(tmp);
-			servers[i].up() = true;
+			servers[i]._is_up = true;
 		}
 		catch (runtime_error &e)
 		{
 			cerr << "webserv: " << RED "error" RESET << " on server [" WHITE << i + 1 << RESET "] => " << e.what() << "." << endl;
 			cerr << "Skipping...\n"
 				 << endl;
-			continue;
 		}
 	}
 	cout << "Servers: " << endl;
 	for (size_t i = 0; i < servers.size(); ++i)
 	{
-		std::string status = servers[i].up() ? GREEN "running" RESET : RED "failed" RESET;
+		std::string status = servers[i]._is_up ? GREEN "running" RESET : RED "failed" RESET;
 
 		string host = wbs::host2string(servers[i].get_host());
 		string port = wbs::to_string(servers[i].port);

@@ -17,6 +17,7 @@ class	Server
 		uint32_t						port;
 		string							server_name;
 		time_t							_timeout;
+		bool							_is_up;
 
 	private :
 		in_addr_t						_host;
@@ -24,21 +25,14 @@ class	Server
 		struct sockaddr_in				address;
 		pollfd							_pfd;
 		server_info						_server_info;
-		bool							_is_up;
 
 	public :
 		Server();
-		Server& operator= (const Server &cpy);
-		Server(const Server& cpy);
 
 		std::map<string, loc_details>&		get_locations(); 
-		void 								add_client(int fd, ServersManager &manager);
 		void 								setup();
 		void								accept_connections(ServersManager &manager);
 		void								print() const;
-		std::vector<pollfd>					get_fds();
-		Client*								get_client_by_fd(int fd);
-		bool								erase(int fd);
 		server_info&						get_info();
 		bool&								up();
 		int 								socket();
