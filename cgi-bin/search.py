@@ -28,7 +28,7 @@ login_search = form.getvalue('login', '')
 # Ensure that both path_info (directory) and login_search (login) are provided
 if path_info and login_search:
     # Construct the path to the CSV file using the directory from PATH_INFO
-    csv_file_path = f"/Users/abennar/Desktop/webserv/{path_info}/data.csv"
+    csv_file_path = f"/Users/bel-oirg/Desktop/web_/{path_info}/data.csv"
     
     # Function to search for the login in the CSV file
     def get_level_from_csv(file_path, login):

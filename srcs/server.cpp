@@ -132,7 +132,7 @@ void ServersManager::setup()
 		std::string status = servers[i]._is_up ? GREEN "running" RESET : RED "failed" RESET;
 
 		string host = wbs::host2string(servers[i].get_host());
-		string port = wbs::to_string(servers[i].port);
+		string port = wbs::to_string(servers[i].port); // TODO fix port 0
 		std::cout << "    http://" << host
 				  << ":" << port
 				  << std::setw(35 - (host.size() + port.size()))
