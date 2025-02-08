@@ -7,23 +7,38 @@
 using namespace std;
 
 
+
 int	main(int argc, char **argv)
 {
-	if (argc == 2 && string(argv[1]) != "-h")
+	std::string		filename;
+
+	switch (argc)
 	{
-		std::string		filename(argv[1]);
-		std::vector<Server>	servers;
-		ServersManager		manager;
-
-		servers = Parse::get_servers(filename);
-
-		{
-			manager.init_servers(servers);
-			manager.print();
-			// cout << "\033[2J\033[H" << endl;
-			manager.setup();
-			manager.run();
+		case 1:
+			filename = "test.conf";
+			break;
+		case 2:
+		{	
+			if (string(argv[1]) != "-h")
+			{
+				filename = argv[1];
+				break;
+			}
 		}
+		default:
+			Parse::display_help();
+			break;
 	}
-	Parse::display_help();
+
+	std::vector<Server>	servers;
+	ServersManager		manager;
+
+	servers = Parse::get_servers(filename);
+	{
+		manager.init_servers(servers);
+		manager.print();
+		// cout << "\033[2J\033[H" << endl;
+		manager.setup();
+		manager.run();
+	}
 }

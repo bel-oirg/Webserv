@@ -17,6 +17,7 @@ class	Server
 		uint32_t						port;
 		string							server_name;
 		time_t							_timeout;
+		server_info						_server_info;
 		bool							_is_up;
 
 	private :
@@ -24,7 +25,6 @@ class	Server
 		int 							socket_fd;
 		struct sockaddr_in				address;
 		pollfd							_pfd;
-		server_info						_server_info;
 
 	public :
 		Server();
@@ -34,7 +34,6 @@ class	Server
 		void								accept_connections(ServersManager &manager);
 		void								print() const;
 		server_info&						get_info();
-		bool&								up();
 		int 								socket();
 		void								set_host(in_addr_t host);
 		in_addr_t							get_host();
@@ -57,6 +56,7 @@ class ServersManager
 	public :
 		ServersManager();
 		~ServersManager();
+	
 		void		init_servers(Server server);
 		void		init_servers(std::vector<Server> &new_servers);
 		void		check_timeout(pollfd& fd);

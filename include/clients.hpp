@@ -22,13 +22,10 @@ class Client
 		string		_request_buffer;
 		pollfd		_pfd;
 		time_t		_last_interaction;
-		char		*reading_buffer;
 
 
 	public:
 		Client(Server &server, int fd);
-		Client(const Client &other);
-		Client&		operator=(const Client &other);
 		~Client();
 
 

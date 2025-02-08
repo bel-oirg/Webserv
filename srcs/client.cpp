@@ -84,20 +84,6 @@ Server&	Client::server()
 	return (this->_server);
 }
 
-// Client::Client(const Client &other)
-// 	: _server(other._server), _pfd(other._pfd), _headers_sended(other._headers_sended), _last_interaction(other._last_interaction)
-// {
-// }
-
-Client &Client::operator=(const Client &other)
-{
-	if (this != &other)
-	{
-		_pfd = other._pfd;
-	}
-	return *this;
-}
-
 Client::~Client()
 {
 	if (_response)

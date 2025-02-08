@@ -22,28 +22,6 @@ Server::Server() : locations(),
 {
 }
 
-// Server::Server(const Server &cpy)
-// {
-// 	*this = cpy;
-// }
-
-// Server &Server::operator=(const Server &cpy)
-// {
-// 	if (this != &cpy)
-// 	{
-// 		server_fds = cpy.server_fds;
-// 		locations = cpy.locations;
-// 		port = cpy.port;
-// 		server_name = cpy.server_name;
-// 		_host = cpy._host;
-// 		socket_fd = cpy.socket_fd;
-// 		address = cpy.address;
-// 		_pfd = cpy._pfd;
-// 		_timeout = cpy._timeout;
-// 	}
-// 	return *this;
-// }
-
 void ServersManager::add_client_to_pool(Client *new_client)
 {
 	client_pool[new_client->get_pollfd().fd] = new_client;
@@ -91,10 +69,6 @@ server_info &Server::get_info()
 	return (this->_server_info);
 }
 
-bool &Server::up()
-{
-	return _is_up;
-}
 int Server::socket()
 {
 	return socket_fd;
@@ -124,20 +98,22 @@ void ServersManager::setup()
 			cerr << "webserv: " << RED "error" RESET << " on server [" WHITE << i + 1 << RESET "] => " << e.what() << "." << endl;
 			cerr << "Skipping...\n"
 				 << endl;
+			continue;
 		}
 	}
 	cout << "Servers: " << endl;
-	for (size_t i = 0; i < servers.size(); ++i)
-	{
-		std::string status = servers[i]._is_up ? GREEN "running" RESET : RED "failed" RESET;
+	for (size_t i = 0; i < servers.size(); ++i) {
+        std::string status = servers[i]._is_up ? GREEN "running" RESET : RED "failed" RESET;
 
 		string host = wbs::host2string(servers[i].get_host());
-		string port = wbs::to_string(servers[i].port); // TODO fix port 0
-		std::cout << "    http://" << host
-				  << ":" << port
-				  << std::setw(35 - (host.size() + port.size()))
-				  << status << std::endl;
-	}
+      	std::cout << "    http://" << host
+          << ":" << (servers[i]._server_info.server_port.empty() 
+                     ? wbs::to_string(servers[i].port) 
+                     : servers[i]._server_info.server_port)
+          << std::setw(35 - (host.length() + servers[i]._server_info.server_port.length())) 
+          << status << std::endl;
+
+    }
 }
 
 void ServersManager::print()
