@@ -2,17 +2,17 @@
 #include "clients.hpp"
 #include "response.hpp"
 
-Client::Client(Server &server, int fd)
+Client::Client(int fd_serv, int fd, vector<Server> *servers, int port)
 	: _response(NULL),
 	  _headers_sended(false),
 	  first_response_read(true),
 	  handshake(true),
-	  _server(server),
+	  servers(servers),
+	  server_fd(fd_serv),
 	  _request_buffer(""),
 	  _last_interaction()
 {
-	// this->cur_event = POLLIN;
-
+	entry_port = port;
 	_pfd.fd = fd;
 	_pfd.events = POLLIN | POLLOUT;
 	_pfd.revents = 0;
@@ -42,7 +42,7 @@ void Client::save_request(string request)
 		_request_buffer += request;
 		if (headers_complet(_request_buffer))
 		{
-			this->_response = new response(_request_buffer, this->_server.get_locations(), this->_server.get_info());
+			this->_response = new response(_request_buffer, *servers, this->entry_port);
 			first_response_read = false;
 			_request_buffer.clear();
 		}
@@ -60,7 +60,6 @@ pollfd &Client::get_pollfd()
 
 void Client::listen_to_write()
 {
-	// this->cur_event = POLLOUT;
 	this->_pfd.events = POLLOUT;
 }
 
@@ -79,10 +78,10 @@ string& Client::request_buffer()
 	return (_request_buffer);
 }
 
-Server&	Client::server()
-{
-	return (this->_server);
-}
+// Server&	Client::server()
+// {
+// 	// return (this->_server);
+// }
 
 Client::~Client()
 {

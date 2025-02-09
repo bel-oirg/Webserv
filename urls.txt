@@ -2,25 +2,23 @@
 
 
 
-http://127.0.0.1:8003/Snake.html
-http://127.0.0.1:8003/Upload.html
-http://127.0.0.1:8003/calc.html
-http://127.0.0.1:8003/delete_test.html
-http://127.0.0.1:8003/keepalive.html
-http://127.0.0.1:8003/landing.html
+http://127.0.0.1:8080/Upload.html
+http://127.0.0.1:8080/delete_test.html
+http://127.0.0.1:8080/landing.html
 
 
 
-http://127.0.0.1:8003/cgi/big.php/random/path/to/deeply/nested/resource/with/multiple/segments?param=123&extra=long_value_with_special_chars_%24%26%40%5E%25
-http://127.0.0.1:8003/cgi/calc.py/compute/very/long/path/with/lots/of/numbers/12345/67890/and/letters?x=999999&y=-54321&operation=multiply&precision=high
-http://127.0.0.1:8003/cgi/cgi.js/foo/bar/deeper/nested/structure/with/lots/of/parameters?mode=debug&complexity=high&values=%7B%22nested%22%3A%5B1%2C2%2C3%2C4%5D%7D
-http://127.0.0.1:8003/cgi/cookie.php/user/data/profile/settings/preferences/theme/dark/mode/on?session=abcd1234longlongsessionstring&user=admin&permissions=%5B%22read%22%2C%22write%22%2C%22execute%22%5D
-http://127.0.0.1:8003/cgi/delete_test.php/delete/item/inventory/stock/warehouse/section/row/column?item_id=998877665544332211&confirm=true&reason=expired
-http://127.0.0.1:8003/cgi/more.php/deeply/structured/data/endpoint/api/v2/resource/metadata?flag=true&debug=1&extra_info=%7B%22info%22%3A%22large_text_block_here%22%7D
-http://127.0.0.1:8003/cgi/name.php/person/details/address/street/city/state/zip/extra?name=JohnDoeSuperLongFullName&history=%5B%22change1%22%2C%22change2%22%5D
-http://127.0.0.1:8003/cgi/name.py/info/account/login/attempts/failures/blocked?user=guestUserWithLongName&logs=%5B%7B%22attempt%22%3A1%2C%22time%22%3A%2212%3A30%22%7D%5D
-http://127.0.0.1:8003/cgi/path_info.php/api/v1/resource/data/structured/in/deeply/nested/format/json?key=value&filter=%7B%22type%22%3A%22complex%22%2C%22limit%22%3A1000%7D
-http://127.0.0.1:8003/cgi/rpn_calc.py/calculate/stack/deeply/embedded/expressions/long_formula/special_cases?expr=3,4,+,5,*,6,-,sqrt,log,exp,sin,cos
-http://127.0.0.1:8003/cgi/shape.py/triangle/area/circle/square/hexagon/complex_shape?dimensions=%7B%22triangle%22%3A%5B5%2C10%5D%2C%22circle%22%3A%2215%22%7D
-http://127.0.0.1:8003/cgi/testenv.php/env/system/configuration/settings/deeply_nested_configs?var=PATH&debug=true&extra_env_vars=%5B%22VAR1%22%2C%22VAR2%22%2C%22VAR3%22%5D
+http://127.0.0.1:8080/cgi/big.php/env/system/configuration/settings/deeply_nested_configs?var=PATH&debug=true&extra_env_vars=%5B%22VAR1%22%2C%22VAR2%22%2C%22VAR3%22%5D
+http://127.0.0.1:8080/cgi/calc.py/compute/very/long/path/with/lots/of/numbers/12345/67890/and/letters?x=999999&y=-54321&operation=multiply&precision=high
+http://127.0.0.1:8080/cgi/cookies.py/user/data/profile/settings/preferences/theme/dark/mode/on?session=abcd1234longlongsessionstring&user=admin&permissions=%5B%22read%22%2C%22write%22%2C%22execute%22%5D
+http://127.0.0.1:8080/cgi/env.php/delete/item/inventory/stock/warehouse/section/row/column?item_id=998877665544332211&confirm=true&reason=expired
+http://127.0.0.1:8080/cgi/extrem_large.py/deeply/structured/data/endpoint/api/v2/resource/metadata?flag=true&debug=1&extra_info=%7B%22info%22%3A%22large_text_block_here%22%7D
+http://127.0.0.1:8080/cgi/name.py/api/v1/resource/data/structured/in/deeply/nested/format/json?key=value&filter=%7B%22type%22%3A%22complex%22%2C%22limit%22%3A1000%7D
+http://127.0.0.1:8080/cgi/path_info.php/calculate/stack/deeply/embedded/expressions/long_formula/special_cases?expr=3,4,+,5,*,6,-,sqrt,log,exp,sin,cos
+http://127.0.0.1:8080/cgi/search.py/triangle/area/circle/square/hexagon/complex_shape?dimensions=%7B%22triangle%22%3A%5B5%2C10%5D%2C%22circle%22%3A%2215%22%7D
+http://127.0.0.1:8080/cgi/shape.py/triangle/area/circle/square/hexagon/complex_shape?dimensions=%7B%22triangle%22%3A%5B5%2C10%5D%2C%22circle%22%3A%2215%22%7D
+http://127.0.0.1:8080/cgi/testenv.php/triangle/area/circle/square/hexagon/complex_shape?dimensions=%7B%22triangle%22%3A%5B5%2C10%5D%2C%22circle%22%3A%2215%22%7D
+
+http://127.0.0.1:8080/cgi/rpn_calc.py/triangle/area/circle/square/hexagon/complex_shape?dimensions=%7B%22triangle%22%3A%5B5%2C10%5D%2C%22circle%22%3A%2215%22%7D
+
 

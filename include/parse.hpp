@@ -25,7 +25,7 @@ Config File:\n\
 Directives for Server:\n\
 -----------------------\n\
 - listen: listen <portnum>;\n\
-- server_name: server_name <name>;\n\
+- server_names: server_names <name>, ...;\n\
 - host: host <IPv4_address>;\n\
 - error_page: error_page <error_code> <file_path>;\n\
 - client_max_body_size: client_max_body_size <size_in_bytes>;\n\

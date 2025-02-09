@@ -31,7 +31,7 @@ class response : public request
         bool            _is_cgi;
 		bool			_is_closed;
         bool            _eof;
-        response(string req, std::map<string, loc_details> locations, server_info);
+        response(string req, vector<Server> &servers, int);
         ~response();
         static std::string set_status(int stat_code);
         void set_content_length();

@@ -16,16 +16,18 @@ class Client
 		bool		first_response_read;
 		int 		cur_event;
 		bool		handshake;
+		int			entry_port;
+		vector<Server>	*servers;
+		int				server_fd;
 
 	private :
-		Server&		_server;
 		string		_request_buffer;
 		pollfd		_pfd;
 		time_t		_last_interaction;
 
 
 	public:
-		Client(Server &server, int fd);
+		Client(int fd_serv, int fd, vector<Server> *servers, int port);
 		~Client();
 
 

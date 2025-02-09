@@ -15,7 +15,7 @@ class	Server
 		std::map<string, loc_details>	locations;
 		std::vector<pollfd>				server_fds;
 		uint32_t						port;
-		string							server_name;
+		vector<string>					server_names;
 		time_t							_timeout;
 		server_info						_server_info;
 		bool							_is_up;

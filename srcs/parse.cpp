@@ -118,8 +118,11 @@ void Parse::defaults(std::map<string, string>::iterator iter, Server &server, lo
 		}
 		server.port = port;
 	}
-	else if (key == "server_name")
-		server.server_name = value;
+	else if (key == "server_names")
+	{
+		server.server_names = wbs::split(value, ",");
+		for_each(server.server_names.begin(), server.server_names.end(), wbs::trim_line);
+	}
 	else if (key == "host")
 	{
 		if (value == "localhost")

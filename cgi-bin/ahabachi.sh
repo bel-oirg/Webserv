@@ -1,6 +1,4 @@
 #!/bin/bash
 
-echo "Content-Type: text/html; charset=utf-8"
-echo ""
 
-echo "<p>hell</p>"
+curl    -s http://127.0.0.1:8080/cgi/ahabachi.sh

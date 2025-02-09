@@ -555,14 +555,14 @@ std::map<std::string, std::string>    response::prepare_env_cgi()
     return (environ_vars);
 }
 
-response::response(std::string req, std::map<string, loc_details> locations, server_info info) : request(req, locations)
+response::response(std::string req, vector<Server> &servers, int p_cfd) : request(req, servers, p_cfd)
 {
     this->_eof = false;
     this->_is_cgi = false;
 	this->_is_closed = false;
     _content_length = 0;
 	_cgi = NULL;
-	this->_server_info = info;
+	// this->_server_info = info;
     buffer = new char[REQUEST_MAX_SIZE];
     set_connection();
     set_server();

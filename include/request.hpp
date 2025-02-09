@@ -14,6 +14,9 @@ class request
         string req;
         size_t uploaded_size;
         size_t length;
+        string host;
+        vector<Server> &servers;
+        int    cl_entry_port;
 
     protected:
         std::map<string, string> headers;
@@ -36,10 +39,11 @@ class request
 
     public:
 		bool		upload_eof;
-        request(std::string raw_req, std::map<std::string, loc_details> locations);
+        request(std::string raw_req, vector<Server> &server, int client_fd);
         virtual ~request();
         void    display_req();
         bool    valid_method();
+        void    set_locations();
         bool    valid_elem(std::string elem);
         int     is_req_well_formed();
         bool    get_matched_loc_for_req_uri();

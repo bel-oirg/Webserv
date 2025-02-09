@@ -12,7 +12,7 @@ std::map<string, loc_details> &Server::get_locations()
 Server::Server() : locations(),
 				   server_fds(),
 				   port(-1),
-				   server_name(),
+				   server_names(),
 				   _timeout(100),
 				   _is_up(false),
 				   _host(-1),
@@ -29,7 +29,7 @@ void ServersManager::add_client_to_pool(Client *new_client)
 
 void Server::print() const
 {
-	cout << "Server Name: " << server_name << std::endl;
+	// cout << "Server Names: " << server_name << std::endl;
 	cout << "Port: " << port << std::endl;
 	cout << "Host: " << wbs::host2string(_host) << std::endl;
 	cout << "Timeout: " << _timeout << endl;
@@ -169,6 +169,9 @@ void Server::setup()
 	if (setsockopt(this->socket_fd, SOL_SOCKET, SO_REUSEADDR, &enable, sizeof(int)) < 0)
 		throw runtime_error(string("setsockopt(SO_REUSEADDR) failed: ") + strerror(errno));
 	enable = 1;
+	if (setsockopt(this->socket_fd, SOL_SOCKET, SO_REUSEPORT, &enable, sizeof(int)) < 0)
+		throw runtime_error(string("setsockopt(SO_REUSEPORT) failed: ") + strerror(errno));
+	enable = 1;
 	if (setsockopt(socket_fd, SOL_SOCKET, SO_NOSIGPIPE, &enable, sizeof(enable)) < 0)
 		throw runtime_error(string("setsockopt(SO_NOSIGPIPE) failed: ") + strerror(errno));
 
@@ -187,7 +190,7 @@ void Server::setup()
 		throw runtime_error(string("getsockname() failed: ") + std::string(strerror(errno)));
 
 	this->_server_info.remote_addr = wbs::host2string(this->get_host());
-	this->_server_info.server_name = this->server_name;
+	// this->_server_info.server_names = this->server_names;
 	this->_server_info.server_port = wbs::to_string(ntohs(socket_info.sin_port));
 
 	this->_pfd.events = POLLIN;
@@ -195,23 +198,10 @@ void Server::setup()
 	this->_pfd.fd = this->socket_fd;
 }
 
-void Server::accept_connections(ServersManager &manager)
-{
-	socklen_t address_size = sizeof(this->address);
-	int client_fd = accept(this->socket_fd, (sockaddr *)&(this->address), &address_size);
-	if (client_fd < 0)
-	{
-		if (errno == EAGAIN || errno == EWOULDBLOCK)
-			return;
-		perror("accept() failed");
-		return;
-	}
-
-	Client *client = new Client(*this, client_fd);
-	client->register_interaction();
-
-	manager.add_client_to_pool(client);
-}
+// void Server::accept_connections(ServersManager &manager)
+// {
+	
+// }
 
 void ServersManager::remove_client(int fd)
 {
@@ -310,7 +300,7 @@ void ServersManager::send_response(pollfd &pfd)
 		}
 		else
 		{
-			Client *new_client = new Client(cur_client->server(), pfd.fd);
+			Client *new_client = new Client(cur_client->server_fd, pfd.fd, &servers, cur_client->entry_port);
 			client_pool[pfd.fd] = new_client;
 			delete cur_client;
 		}
@@ -341,14 +331,24 @@ void ServersManager::check_timeout(pollfd &fd)
 
 void ServersManager::accept_connections(pollfd &fd)
 {
-	for (size_t j = 0; j < servers.size(); ++j)
+	socklen_t address_size;
+	sockaddr_in addr;
+	int client_fd = accept(fd.fd, (sockaddr *)&(addr), &address_size);
+	if (client_fd < 0)
 	{
-		if (servers[j].socket() == fd.fd)
-		{
-			servers[j].accept_connections(*this);
-			break;
-		}
+		if (errno == EAGAIN || errno == EWOULDBLOCK)
+			return;
+		perror("accept() failed");
+		return;
 	}
+
+	sockaddr_in server_info;
+    socklen_t len = sizeof(server_info);
+    getsockname(client_fd, (struct sockaddr*)&server_info, &len);
+	Client *client = new Client(fd.fd, client_fd, &servers, ntohs(server_info.sin_port));
+	client->register_interaction();
+
+	add_client_to_pool(client);
 }
 
 void ServersManager::reset_servers()
