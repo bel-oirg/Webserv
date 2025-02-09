@@ -2,7 +2,7 @@
 
 #define CHUNK_SIZE       1024
 #define MAX_URI_SIZE     2048
-#define REQUEST_MAX_SIZE 2000
+#define RW_BUFFER        2000
 #define pp cout << 
 #define ttt cout << CYAN << "\n\nTOUCHED TOUCHED\n\n" << RESET << endl; 
 
@@ -55,8 +55,3 @@ using std::string;
 
 string   fix_slash(string base, string file);
 void     err_(const std::string &err);
-// using std::endl;
-// using std::cerr;
-// using std::vector;
-// using std::map;
-// using std::deque;

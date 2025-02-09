@@ -1,14 +1,64 @@
 #include "cgi.hpp"
 #include "webserv.hpp"
 
+Cgi::Cgi(string p_scriptpath, string p_request_body, map<string, string> env_map,
+		loc_details &cur_loc, loc_details &def_loc)
+	:location(cur_loc), defa_ult(def_loc)
+{
+
+    this->script_path = p_scriptpath;
+    this->request_body = p_request_body;
+    this->excutor = "";
+    this->code = 0;
+    this->child_stat = 0;
+    this->forked = 0;
+    this->env = new char *[env_map.size() + 1];
+    this->args[0] = NULL;
+    this->args[1] = NULL;
+    this->args[2] = NULL;
+    this->outfile = NULL;
+    this->infile = NULL;
+	load_cgi_script();
+
+	int i = 0;
+	for (map<string, string>::iterator it = env_map.begin(); it != env_map.end(); ++it)
+	{
+		string combined;
+
+		combined = it->first + "=" + it->second;
+		this->env[i] = new char[combined.size() + 1];
+		strlcpy(env[i], combined.c_str(), combined.size() + 1);
+		i++;
+	}
+
+	this->env[i] = NULL;
+}
+
+Cgi::~Cgi()
+{
+	for (int i = 0; env[i]; ++i)
+	{
+		delete[] env[i];
+	}
+	delete[] env;
+
+	if (infile)
+	{
+		int fd = fileno(infile);
+		close(fd);
+		fclose(infile);
+	}
+	if (outfile)
+	{
+		int fd = fileno(outfile);
+		close(fd);
+		fclose(outfile);
+	}
+}
+
 int Cgi::cgi_get_code()
 {
 	return this->code;
-}
-
-string Cgi::cgi_get_response()
-{
-	return this->response;
 }
 
 void	Cgi::load_cgi_script()
@@ -145,59 +195,6 @@ bool Cgi::is_cgi_ready()
 		return (true);
 	}
 	return (false);
-}
-
-Cgi::Cgi(string _scriptpath, string _request_body, map<string, string> env_map, loc_details &cur_loc, loc_details &def_loc)
-	: response(""),
-	  script_path(_scriptpath),
-	  request_body(_request_body),
-	  excutor(""),
-	  code(0),
-	  child_stat(0),
-	  forked(0),
-	  env(new char *[env_map.size() + 1]),
-	  args(),
-	  outfile(NULL),
-	  infile(NULL),
-	  location(cur_loc),
-	  defa_ult(def_loc)
-{
-	load_cgi_script();
-
-	int i = 0;
-	for (map<string, string>::iterator it = env_map.begin(); it != env_map.end(); ++it)
-	{
-		string combined;
-
-		combined = it->first + "=" + it->second;
-		this->env[i] = new char[combined.size() + 1];
-		strlcpy(env[i], combined.c_str(), combined.size() + 1);
-		i++;
-	}
-
-	this->env[i] = NULL;
-}
-
-Cgi::~Cgi()
-{
-	for (int i = 0; env[i]; ++i)
-	{
-		delete[] env[i];
-	}
-	delete[] env;
-
-	if (infile)
-	{
-		int fd = fileno(infile);
-		close(fd);
-		fclose(infile);
-	}
-	if (outfile)
-	{
-		int fd = fileno(outfile);
-		close(fd);
-		fclose(outfile);
-	}
 }
 
 int 	Cgi::get_outfd()

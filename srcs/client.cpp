@@ -2,21 +2,20 @@
 #include "clients.hpp"
 #include "response.hpp"
 
-Client::Client(int fd_serv, int fd, vector<Server> *servers, int port)
-	: _response(NULL),
-	  _headers_sended(false),
-	  first_response_read(true),
-	  handshake(true),
-	  servers(servers),
-	  server_fd(fd_serv),
-	  _request_buffer(""),
-	  _last_interaction()
+Client::Client(int fd, vector<Server> *p_servers, int port)
 {
-	entry_port = port;
-	_pfd.fd = fd;
-	_pfd.events = POLLIN | POLLOUT;
-	_pfd.revents = 0;
-	this->register_interaction();
+	this->_response = NULL;
+    this->_headers_sended = false;
+    this->first_response_read = true;
+    this->handshake = true;
+    this->_request_buffer = "";
+
+    this->servers = p_servers;
+    this->entry_port = port;
+    this->_pfd.fd = fd;
+    this->_pfd.events = POLLIN | POLLOUT;
+	this->_pfd.revents = 0;
+    this->_last_interaction = time(NULL);
 }
 
 bool headers_complet(string &request)
@@ -77,11 +76,6 @@ string& Client::request_buffer()
 {
 	return (_request_buffer);
 }
-
-// Server&	Client::server()
-// {
-// 	// return (this->_server);
-// }
 
 Client::~Client()
 {

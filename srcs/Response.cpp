@@ -54,8 +54,8 @@ bool response::prep_cgi()
     _content_length = lseek(_cgi->get_outfd(), 0, SEEK_END);
     lseek(_cgi->get_outfd(), 0, SEEK_SET); //CHANGE HERE
 
-    char buff[REQUEST_MAX_SIZE + 1];
-    int readen = read(_cgi->get_outfd(), buff, REQUEST_MAX_SIZE);
+    char buff[RW_BUFFER + 1]; // TODO mabe buff unused here
+    int readen = read(_cgi->get_outfd(), buff, RW_BUFFER);
 
     if (readen <= 0)
     {
@@ -334,7 +334,7 @@ string response::get_to_send() //_____RESP_BODY_SEND__
     if (!_body.empty()) //in this case i am sure that the body is small (indexing a dir / ..)
         return (this->_eof = true, _body);
 
-    infile.read(this->buffer, REQUEST_MAX_SIZE);
+    infile.read(this->buffer, RW_BUFFER);
     size_t readden = infile.gcount();
 
     if (!readden)
@@ -563,7 +563,7 @@ response::response(std::string req, vector<Server> &servers, int p_cfd) : reques
     _content_length = 0;
 	_cgi = NULL;
 	// this->_server_info = info;
-    buffer = new char[REQUEST_MAX_SIZE];
+    buffer = new char[RW_BUFFER];
     set_connection();
     set_server();
     set_location();

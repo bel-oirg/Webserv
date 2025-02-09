@@ -5,7 +5,6 @@
 class	Cgi
 {
 	private:
-		string		response;
 		string		script_path;
 		string 		request_body;
 		string		excutor;
@@ -23,8 +22,6 @@ class	Cgi
 		Cgi(string _scriptpath, string _request_body, map<string, string> env_map, loc_details &cur_loc, loc_details &def_loc);
 		~Cgi();
 
-
-		string 	cgi_get_response();
 		void 	cgi_run();
 		void	load_cgi_script();
 		int 	cgi_get_code();

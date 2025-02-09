@@ -16,7 +16,6 @@ class	Server
 		std::vector<pollfd>				server_fds;
 		uint32_t						port;
 		vector<string>					server_names;
-		time_t							_timeout;
 		server_info						_server_info;
 		bool							_is_up;
 
@@ -30,13 +29,12 @@ class	Server
 		Server();
 
 		std::map<string, loc_details>&		get_locations(); 
-		void 								setup();
-		void								accept_connections(ServersManager &manager);
-		void								print() const;
 		server_info&						get_info();
+		in_addr_t							get_host();
+		void 								setup();
+		void								print() const;
 		int 								socket();
 		void								set_host(in_addr_t host);
-		in_addr_t							get_host();
 };
 
 class ServersManager

@@ -9,17 +9,15 @@ std::map<string, loc_details> &Server::get_locations()
 	return (this->locations);
 }
 
-Server::Server() : locations(),
-				   server_fds(),
-				   port(-1),
-				   server_names(),
-				   _timeout(100),
-				   _is_up(false),
-				   _host(-1),
-				   socket_fd(-1),
-				   address(),
-				   _pfd()
+Server::Server()
 {
+	this->port = -1;
+    this->_host = -1;
+    this->_is_up = false;
+    this->socket_fd = -1;
+    this->_pfd.fd = -1;
+    this->_pfd.events = 0;
+    this->_pfd.revents = 0;
 }
 
 void ServersManager::add_client_to_pool(Client *new_client)
@@ -29,10 +27,8 @@ void ServersManager::add_client_to_pool(Client *new_client)
 
 void Server::print() const
 {
-	// cout << "Server Names: " << server_name << std::endl;
 	cout << "Port: " << port << std::endl;
 	cout << "Host: " << wbs::host2string(_host) << std::endl;
-	cout << "Timeout: " << _timeout << endl;
 	cout << "Locations:" << std::endl;
 	for (std::map<std::string, loc_details>::const_iterator it = locations.begin(); it != locations.end(); ++it)
 	{
@@ -48,7 +44,8 @@ void ServersManager::init_servers(Server server)
 
 ServersManager::ServersManager()
 {
-	this->reading_buffer = new char [REQUEST_MAX_SIZE];
+	this->poll_timeout = 0;
+	this->reading_buffer = new char [RW_BUFFER];
 }
 
 ServersManager::~ServersManager()
@@ -232,9 +229,9 @@ void ServersManager::get_request(pollfd &pfd)
 		return ;
 	}
 
-	bzero(this->reading_buffer, REQUEST_MAX_SIZE);
+	bzero(this->reading_buffer, RW_BUFFER);
 	int valread;
-	valread = recv(pfd.fd, this->reading_buffer, REQUEST_MAX_SIZE, 0);
+	valread = recv(pfd.fd, this->reading_buffer, RW_BUFFER, 0);
 	if (valread <= 0)
 	{
 		this->remove_client(pfd.fd);
@@ -300,7 +297,7 @@ void ServersManager::send_response(pollfd &pfd)
 		}
 		else
 		{
-			Client *new_client = new Client(cur_client->server_fd, pfd.fd, &servers, cur_client->entry_port);
+			Client *new_client = new Client(pfd.fd, &servers, cur_client->entry_port);
 			client_pool[pfd.fd] = new_client;
 			delete cur_client;
 		}
@@ -345,7 +342,7 @@ void ServersManager::accept_connections(pollfd &fd)
 	sockaddr_in server_info;
     socklen_t len = sizeof(server_info);
     getsockname(client_fd, (struct sockaddr*)&server_info, &len);
-	Client *client = new Client(fd.fd, client_fd, &servers, ntohs(server_info.sin_port));
+	Client *client = new Client(client_fd, &servers, ntohs(server_info.sin_port));
 	client->register_interaction();
 
 	add_client_to_pool(client);

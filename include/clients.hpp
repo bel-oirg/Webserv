@@ -11,23 +11,21 @@ class Server;
 class Client
 {
 	public :
-		response*	_response;
-		bool		_headers_sended;
-		bool		first_response_read;
-		int 		cur_event;
-		bool		handshake;
-		int			entry_port;
+		response*		_response;
+		bool			_headers_sended;
+		bool			first_response_read;
+		bool			handshake;
+		int				entry_port;
 		vector<Server>	*servers;
-		int				server_fd;
 
 	private :
-		string		_request_buffer;
-		pollfd		_pfd;
-		time_t		_last_interaction;
+		string			_request_buffer;
+		pollfd			_pfd;
+		time_t			_last_interaction;
 
 
 	public:
-		Client(int fd_serv, int fd, vector<Server> *servers, int port);
+		Client(int fd, vector<Server> *servers, int port);
 		~Client();
 
 

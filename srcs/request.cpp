@@ -4,34 +4,17 @@
 #include "utils.hpp"
 
 
-bool    has_duplicates_port(vector<Server> &servers)
-{
-    for (size_t i = 0; i < servers.size(); i++) {
-        for (size_t j = i + 1; j < servers.size(); j++) {
-            if (servers[i].port == servers[j].port) {
-                return true;
-            }
-        }
-    }
-    return false;
-}
-
 request::request(std::string raw_req, vector<Server> &p_servers, int port) : req(raw_req), servers(p_servers)
 {
 	cl_entry_port = port;
-    cout << servers.size() << endl;
+    // cout << servers.size() << endl;
 	upload_eof = false;
     chunked = false;
     add_slash = false;
     PATH_first = false;
     body = "";
 
-    // this->locations = servers[0].locations;
-    this->stat_code = init_parse_req(); // location needed somewhere inside this call 
-
-   
-
-
+    this->stat_code = init_parse_req();
     if (!this->stat_code)
         this->stat_code = req_arch();
     
@@ -455,7 +438,6 @@ bool    request::set_locations()
 
 int     request::init_parse_req()
 {
-    // TODO HERE
     int stat_code = is_req_well_formed();
 
 	if (!set_locations())
