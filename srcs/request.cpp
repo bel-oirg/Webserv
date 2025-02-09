@@ -429,7 +429,7 @@ int     request::DELETE()
     return (-1);
 }
 
-void    request::set_locations() // TODO need also to check for 
+bool    request::set_locations()
 {
 	cout << "PORT: " << cl_entry_port << endl ;
 	for (size_t i = 0; i < servers.size(); i++)
@@ -438,23 +438,19 @@ void    request::set_locations() // TODO need also to check for
         ||  (servers[i]._server_info.remote_addr == this->host && servers[i].port == 80))
         {
             this->locations = servers[i].get_locations();
-			if (servers[i].port != (uint32_t)cl_entry_port)
-				cout << "NOT VALID:  " << servers[i].port << " & "  << cl_entry_port << " differ" << endl; // ERROR -> 400
-            return;
+			return (servers[i].port == (uint32_t)cl_entry_port);
         }
 		for (size_t j = 0; j < servers[i].server_names.size(); ++j)
 		{
-			if (servers[i].server_names[j] + ":" + wbs::to_string(servers[i].port) == host // TODO add a loop here over all names
+			if (servers[i].server_names[j] + ":" + wbs::to_string(servers[i].port) == host 
 			||  servers[i].server_names[j] == servers[i]._server_info.remote_addr)
 			{
 				this->locations = servers[i].get_locations();
-				if (servers[i].port != (uint32_t)cl_entry_port)
-				    cout << "NOT VALID:  " << servers[i].port << " & "  << cl_entry_port << " differ" << endl; // ERROR -> 400
-				return;
+				return (servers[i].port == (uint32_t)cl_entry_port);
 			}
 		}
     }
-    cout << "No Server Found!!!" << endl; 
+    return false; 
 }
 
 int     request::init_parse_req()
@@ -462,7 +458,8 @@ int     request::init_parse_req()
     // TODO HERE
     int stat_code = is_req_well_formed();
 
-	set_locations();
+	if (!set_locations())
+        return (404);
 
     if (stat_code)
         return (stat_code);

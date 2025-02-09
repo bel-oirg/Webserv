@@ -43,7 +43,7 @@ class request
         virtual ~request();
         void    display_req();
         bool    valid_method();
-        void    set_locations();
+        bool    set_locations();
         bool    valid_elem(std::string elem);
         int     is_req_well_formed();
         bool    get_matched_loc_for_req_uri();
