@@ -217,12 +217,15 @@ bool request::get_matched_loc_for_req_uri() //REQ
     }
     for (std::vector<std::string>::iterator it = potential_locations.begin(); it != potential_locations.end(); ++it)
     {
-        if (is_file_exist(locations[*it].root + URI))
-            return (current_loc = this->locations[*it], true);
+
         if (tmp_size < it->size())
         {
-            tmp_size = it->size();
-            correct_loc_name = *it;
+            pp  locations[*it].root << URI << endl;
+            if (is_file_exist(locations[*it].root + "/" + URI.substr(it->size())))
+            {
+                tmp_size = it->size();
+                correct_loc_name = *it;
+            }
         }
     }
     current_loc = this->locations[correct_loc_name];
@@ -250,7 +253,6 @@ int request::get_request_resource() //get_resource_type()
     }
     else
         this->resource_path = fix_slash(current_loc.root, this->URI);
-
     struct stat s;
     if (!stat(this->resource_path.c_str(), &s))
     {
@@ -333,7 +335,7 @@ int     request::GET()
         this->add_slash = true;
         if (!is_dir_has_index_path())
         {
-            if (!current_loc.index_path.empty())
+            if (!current_loc.index_path.empty() && !get_auto_index())
                 return (err_("invalid index file"), 404);
             if (!get_auto_index())
                 return (err_("NO AUTO_INDEX"), 403);
