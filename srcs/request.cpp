@@ -4,6 +4,9 @@
 #include "utils.hpp"
 
 
+//TODO 127.0.0.1:8080 -> 501 why
+//file.html/ab works why
+
 request::request(std::string raw_req, vector<Server> &p_servers, int port) : req(raw_req), servers(p_servers)
 {
 	cl_entry_port = port;
@@ -96,7 +99,7 @@ bool    request::is_valid_URI()
         this->PATH_INFO_URI = URI.substr(0, find_slash);
 
         pp "PATH INFO-> " <<  this->PATH_INFO << endl;
-        pp "QUERY-> " <<  this->query << endl;
+        // pp "QUERY-> " <<  this->query << endl;
     }
     return (true);
 }
@@ -217,11 +220,10 @@ bool request::get_matched_loc_for_req_uri() //REQ
     }
     for (std::vector<std::string>::iterator it = potential_locations.begin(); it != potential_locations.end(); ++it)
     {
-
         if (tmp_size < it->size())
         {
-            pp  locations[*it].root << URI << endl;
-            if (is_file_exist(locations[*it].root + "/" + URI.substr(it->size())))
+            if (is_file_exist(locations[*it].root + "/" + URI.substr(it->size()))
+                || URI.find(fix_slash(*it, "/")) == 0)
             {
                 tmp_size = it->size();
                 correct_loc_name = *it;
@@ -265,6 +267,7 @@ int request::get_request_resource() //get_resource_type()
     }
     else
     {
+        pp "ROOT -> " << current_loc.root << endl;
         if (!this->PATH_INFO.empty() && current_loc.has_cgi && !PATH_first)
         {
             this->URI = this->PATH_INFO_URI;
@@ -416,7 +419,7 @@ int     request::DELETE()
 
 bool    request::set_locations()
 {
-	cout << "PORT: " << cl_entry_port << endl ;
+	// cout << "PORT: " << cl_entry_port << endl ;
 	for (size_t i = 0; i < servers.size(); i++)
     {
         if (servers[i]._server_info.remote_addr + ":" + wbs::to_string(servers[i].port) == this->host
@@ -452,7 +455,6 @@ int     request::init_parse_req()
 
     if (!is_valid_size_t(this->headers["Content-Length"], length))
         return (err_("invalid content_length"), 400);
-    pp length << endl;
     if (length > locations["default"].client_max_body_size)
         return (err_("BODY > CLIENT_MAX_BODY _SIZE"), 413);
 
