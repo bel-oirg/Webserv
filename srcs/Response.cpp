@@ -554,6 +554,7 @@ std::map<std::string, std::string>    response::prepare_env_cgi()
 	environ_vars["REMOTE_HOST"] = this->_server_info.server_name;
     environ_vars["QUERY_STRING"] = this->query;
     environ_vars["PATH_INFO"] = this->PATH_INFO;
+    //TODO srv port/name are empty
 
     return (environ_vars);
 }
