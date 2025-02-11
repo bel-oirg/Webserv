@@ -258,7 +258,8 @@ bool response::prepare_autoindex()
         return (err_("opendir failed on prepare_autoindex()"), false);
     
     std::stringstream raw_body;
-    raw_body    << "<title>Directory listing for "<< dir
+    raw_body    << "<meta http-equiv='Content-Type' content='text/html; charset=utf-8' />"
+                << "<title>Directory listing for "<< dir
                 << "</title>\n<body>\n<h2>Directory listing for "
                 << dir << "</h2>\n<hr>\n<ul>\r";
     std::string current;
@@ -274,9 +275,10 @@ bool response::prepare_autoindex()
             return (closedir(dirp), err_("stat < 0 on prepare_auto_index()"), false);
 
         if (S_ISDIR(s.st_mode))
-            raw_body << "<li><a href=\"" << dp->d_name << "/\">" << "d -> " << dp->d_name << "</a>" << std::endl;
+            raw_body << "<li><a href=\"" << dp->d_name << "/\">" << "📁 " << dp->d_name << "</a>" << std::endl;
+
         else if (S_ISREG(s.st_mode))
-            raw_body << "<li><a href=\"" << dp->d_name << "\">" << "f -> " << dp->d_name << "</a>" << std::endl;
+            raw_body << "<li><a href=\"" << dp->d_name << "\">" << "📄 " << dp->d_name << "</a>" << std::endl;
     }
     raw_body << "</ul>\n<hr>\n</body>\n</html>\n";
     _body = raw_body.str();
@@ -540,7 +542,7 @@ std::map<std::string, std::string>    response::prepare_env_cgi()
 {
     std::map<std::string, std::string> environ_vars;
     environ_vars["REQUEST_METHOD"] = this->method;
-    environ_vars["SERVER_NAME"] = this->_server_info.server_name;
+    environ_vars["SERVER_NAME"] = this->server_info.server_name;
     environ_vars["SCRIPT_NAME"] = this->URI ;
     environ_vars["CONTENT_TYPE"] = this->_content_type;
 
@@ -549,12 +551,11 @@ std::map<std::string, std::string>    response::prepare_env_cgi()
     environ_vars["SCRIPT_FILENAME"] = this->resource_path;
     environ_vars["HTTP_USER_AGENT"] = this->headers["User-Agent"];
     environ_vars["HTTP_COOKIE"] = this->_cookies;
-    environ_vars["SERVER_PORT"] = this->_server_info.server_port;
+    environ_vars["SERVER_PORT"] = this->server_info.server_port;
 	environ_vars["GATEWAY_INTERFACE"] = "CGI/1337";
 	environ_vars["SERVER_SOFTWARE"] = "42 webserv (Unix)";
 	environ_vars["SERVER_PROTOCOL"] =  "HTTP/1.1";
-	environ_vars["REMOTE_ADDR"] = this->_server_info.remote_addr;
-	environ_vars["REMOTE_HOST"] = this->_server_info.server_name;
+	environ_vars["REMOTE_ADDR"] = this->server_info.remote_addr;
     environ_vars["QUERY_STRING"] = this->query;
     environ_vars["PATH_INFO"] = this->PATH_INFO;
     //TODO srv port/name are empty

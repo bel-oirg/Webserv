@@ -23,6 +23,7 @@ class request
         std::map<string, string> headers;
         std::map<string, loc_details> locations;
         loc_details current_loc;
+		server_info server_info;
 
         string resource_path;
         string PATH_INFO_URI;

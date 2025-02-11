@@ -2,10 +2,9 @@
 
 
 
-http://127.0.0.1:8080/Upload.html
-http://127.0.0.1:8080/delete_test.html
-http://127.0.0.1:8080/landing.html
-
+http://127.0.0.1:8080/WWW/Upload.html
+http://127.0.0.1:8080/WWW/delete_test.html
+http://127.0.0.1:8080/WWW/landing.html
 
 
 http://127.0.0.1:8080/cgi/big.php/env/system/configuration/settings/deeply_nested_configs?var=PATH&debug=true&extra_env_vars=%5B%22VAR1%22%2C%22VAR2%22%2C%22VAR3%22%5D

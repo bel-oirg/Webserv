@@ -20,7 +20,6 @@ class response : public request
         string          _connection;
         string          _body;
         std::ifstream   infile;
-		server_info		_server_info;
         map<string, string> _cgi_headers;
         
         Cgi             *_cgi;

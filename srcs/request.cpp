@@ -455,6 +455,8 @@ bool    request::set_locations()
         ||  (servers[i]._server_info.remote_addr == this->host && servers[i].port == 80))
         {
             this->locations = servers[i].get_locations();
+            this->server_info = servers[i]._server_info;
+            this->server_info.server_name = servers[i]._server_info.remote_addr;
 			return (servers[i].port == (uint32_t)cl_entry_port);
         }
 		for (size_t j = 0; j < servers[i].server_names.size(); ++j)
@@ -463,6 +465,8 @@ bool    request::set_locations()
 			||  servers[i].server_names[j] == servers[i]._server_info.remote_addr)
 			{
 				this->locations = servers[i].get_locations();
+                this->server_info.server_name = servers[i].server_names[j];
+                this->server_info = servers[i]._server_info;
 				return (servers[i].port == (uint32_t)cl_entry_port);
 			}
 		}
