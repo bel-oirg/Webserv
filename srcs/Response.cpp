@@ -167,6 +167,7 @@ void response::set_connection()
 
 void response::set_content_type()
 {
+    pp "-> " << _content_type << endl;
     if (this->stat_code / 400)
     {
         this->_content_type = "text/html";
@@ -223,7 +224,9 @@ void response::set_content_type()
     size_t dot_p = this->URI.find_last_of('.');
     if (dot_p == std::string::npos || this->stat_code != 200)
         return ;
+    pp "-> " << _content_type << endl;
 
+    //TODO content0-type on html does not work well
     std::string ext = this->URI.substr(dot_p + 1);
     std::transform(ext.begin(), ext.end(), ext.begin(), ::tolower);
     std::map<std::string, std::string>::iterator it = mime.find(ext);
@@ -271,9 +274,9 @@ bool response::prepare_autoindex()
             return (closedir(dirp), err_("stat < 0 on prepare_auto_index()"), false);
 
         if (S_ISDIR(s.st_mode))
-            raw_body << "<li><a href=\"" << dp->d_name << "/\">" << dp->d_name << "</a>" << std::endl;
+            raw_body << "<li><a href=\"" << dp->d_name << "/\">" << "d -> " << dp->d_name << "</a>" << std::endl;
         else if (S_ISREG(s.st_mode))
-            raw_body << "<li><a href=\"" << dp->d_name << "\">" << dp->d_name << "</a>" << std::endl;
+            raw_body << "<li><a href=\"" << dp->d_name << "\">" << "f -> " << dp->d_name << "</a>" << std::endl;
     }
     raw_body << "</ul>\n<hr>\n</body>\n</html>\n";
     _body = raw_body.str();

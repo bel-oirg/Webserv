@@ -281,7 +281,7 @@ void ServersManager::send_response(pollfd &pfd)
 
 	if (response == "\177")
 		return;
-	pp GREEN << response << RESET << endl;
+	// pp GREEN << response << RESET << endl;  ///DEBUG
 
 	int wr_ret = send(pfd.fd, (void *)response.c_str(), response.size(), 0);
 	if (wr_ret < 0)

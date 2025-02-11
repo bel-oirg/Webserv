@@ -1,10 +1,6 @@
-#define	ERR_DIR "./Error_pages/"
-
-#define CHUNK_SIZE       1024
 #define MAX_URI_SIZE     2048
 #define RW_BUFFER        2000
 #define pp cout << 
-#define ttt cout << CYAN << "\n\nTOUCHED TOUCHED\n\n" << RESET << endl; 
 
 
 #define RESET   "\033[0m"
@@ -49,7 +45,7 @@
 #include <sys/stat.h>
 #include <dirent.h>
 
-using namespace std;
+using namespace std; //TODO possible ?
 
 using std::string;
 

@@ -31,6 +31,7 @@ string fix_slash(string base, string file)
     {
         if (!file.empty() && file[0] != '/')
             base.append(1, '/');
+            //TODO do a cpp11 check
     }
     return (base + file);
 }
@@ -96,9 +97,6 @@ bool    request::is_valid_URI()
 
         this->PATH_INFO = URI.substr(find_slash); // INFO i changed this so path with a slash
         this->PATH_INFO_URI = URI.substr(0, find_slash);
-
-        pp "PATH INFO-> " <<  this->PATH_INFO << endl;
-        // pp "QUERY-> " <<  this->query << endl;
     }
     return (true);
 }
@@ -126,7 +124,7 @@ int request::is_req_well_formed() //REQ
     //LINE 1
     std::string l1_s, tmp_line, field, value;
 
-    pp YELLOW << req << RESET << endl;
+    // pp YELLOW << req << RESET << endl;
     if (req.empty())
         return (err_("EMPTY"), 400);
     std::stringstream ss(req);
@@ -283,7 +281,6 @@ int request::get_request_resource() //get_resource_type()
     }
     else
     {
-        pp "ROOT -> " << current_loc.root << endl;
         if (!this->PATH_INFO.empty() && current_loc.has_cgi && !PATH_first)
         {
             this->URI = this->PATH_INFO_URI;
