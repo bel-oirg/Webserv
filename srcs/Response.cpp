@@ -251,7 +251,7 @@ bool response::prepare_autoindex()
     DIR *dirp = opendir(dir.c_str());
 
     if (!dirp)
-        return (perror("opendir failed on prepare_autoindex()"), false);
+        return (err_("opendir failed on prepare_autoindex()"), false);
     
     std::stringstream raw_body;
     raw_body    << "<title>Directory listing for "<< dir

@@ -271,9 +271,17 @@ int request::get_request_resource() //get_resource_type()
     if (!stat(this->resource_path.c_str(), &s))
     {
         if (S_ISDIR(s.st_mode))
+        {
+            if (access(this->resource_path.c_str(), R_OK | X_OK)) //exec so i can access the dir
+                return (err_("Read/Exec access"), -11);
             return (1);
+        }
         else if (S_ISREG(s.st_mode))
+        {
+            if (access(this->resource_path.c_str(), R_OK))
+                return (err_("Read access"), -22);
             return (2);
+        }
         else
             return (err_("get_request_resource"), -1);
     }
@@ -351,6 +359,8 @@ int     request::GET()
         this->URI += "/" + this->PATH_INFO;
 
     resource_type = get_request_resource();
+    if (resource_type < -10)
+        return (403);
     if (resource_type <= 0)
         return (404);
     if (resource_type == 1) // dir
@@ -381,6 +391,8 @@ int     request::POST()
         return (if_loc_support_upload());
 
     resource_type = get_request_resource();
+    if (resource_type < -10)
+        return (403);
     if (resource_type <= 0)
         return (404);
     if (resource_type == 1) // dir
@@ -407,6 +419,8 @@ int     request::POST()
 int     request::DELETE()
 {
     resource_type = get_request_resource();
+    if (resource_type < -10)
+        return (403);
     if (resource_type <= 0)
         return (404);
     if (resource_type == 1) // dir
