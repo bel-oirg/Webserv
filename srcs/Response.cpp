@@ -152,7 +152,8 @@ void response::set_server()
 
 void response::set_cookies()
 {
-    _cookies = headers["Cookie"];
+    if (this->headers.find("Cookie") != this->headers.end())
+        _cookies = headers["Cookie"];
 }
 
 void response::set_connection()
@@ -567,6 +568,7 @@ response::response(std::string req, vector<Server> &servers, int p_cfd) : reques
 	// this->_server_info = info;
     buffer = new char[RW_BUFFER];
     set_connection();
+    set_cookies();
     set_server();
     set_location();
     set_body();

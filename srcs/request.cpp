@@ -4,9 +4,6 @@
 #include "utils.hpp"
 
 
-//TODO 127.0.0.1:8080 -> 501 why
-//file.html/ab works why
-
 request::request(std::string raw_req, vector<Server> &p_servers, int port) : req(raw_req), servers(p_servers)
 {
 	cl_entry_port = port;
@@ -129,6 +126,7 @@ int request::is_req_well_formed() //REQ
     //LINE 1
     std::string l1_s, tmp_line, field, value;
 
+    pp YELLOW << req << RESET << endl;
     if (req.empty())
         return (err_("EMPTY"), 400);
     std::stringstream ss(req);
@@ -168,7 +166,7 @@ int request::is_req_well_formed() //REQ
         if (value.empty())
             continue;
         
-        this->headers.insert(std::make_pair(field, wbs::get_trimed(value)));
+        this->headers.insert(std::make_pair(field, value));
     }
     if (headers.find("Host") == headers.end())
         return (err_("NO HOST FOUND"), 400);
@@ -176,8 +174,6 @@ int request::is_req_well_formed() //REQ
     this->host = headers["Host"];
 
     
-
-
     if (req.size() > head_end + 4)
     {
         this->body = req.substr(head_end + 4);
