@@ -12,6 +12,7 @@ class request
         std::fstream outfile;
         string HTTP;
         string req;
+        string extension;
         size_t uploaded_size;
         size_t length;
         string host;
@@ -42,6 +43,7 @@ class request
         request(std::string raw_req, vector<Server> &server, int client_fd);
         virtual ~request();
         void    display_req();
+        void    set_resource_path();
         bool    valid_method();
         bool    set_locations();
         bool    valid_elem(std::string elem);

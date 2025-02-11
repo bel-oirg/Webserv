@@ -94,6 +94,8 @@ bool    request::is_valid_URI()
         size_t find_slash = URI.find("/", find_dot);
         if (find_slash == string::npos)
             return (true);
+        
+       this->extension =  URI.substr(find_dot + 1, find_slash - find_dot - 1);
 
         this->PATH_INFO = URI.substr(find_slash); // INFO i changed this so path with a slash
         this->PATH_INFO_URI = URI.substr(0, find_slash);
@@ -196,10 +198,17 @@ int request::is_req_well_formed() //REQ
     return (0);
 }
 
-bool is_file_exist(const string &file)
+int is_file_dir(const string &file)
 {
     struct stat buffer;
-    return (stat(file.c_str(), &buffer) == 0);
+    if (stat(file.c_str(), &buffer) == 0)
+    {
+        if (buffer.st_mode & S_IFDIR)
+            return (1); //dir
+        else if (buffer.st_mode & S_IFREG)
+            return (2); //file
+    }
+    return (0);
 }
 
 bool request::get_matched_loc_for_req_uri() //REQ
@@ -222,7 +231,7 @@ bool request::get_matched_loc_for_req_uri() //REQ
     {
         if (tmp_size < it->size())
         {
-            if (is_file_exist(locations[*it].root + "/" + URI.substr(it->size()))
+            if (is_file_dir(locations[*it].root + "/" + URI.substr(it->size()))
                 || URI.find(fix_slash(*it, "/")) == 0)
             {
                 tmp_size = it->size();
@@ -247,14 +256,17 @@ bool request::is_method_allowed_in_loc() //REQ
     return (std::find(met.begin(), met.end(), this->method) != met.end());
 }
 
-int request::get_request_resource() //get_resource_type()
+void request::set_resource_path()
 {
     if (correct_loc_name != "default")
-    {
         this->resource_path = fix_slash(current_loc.root, this->URI.substr(correct_loc_name.size(), URI.size() - correct_loc_name.size()));
-    }
     else
         this->resource_path = fix_slash(current_loc.root, this->URI);
+}
+
+int request::get_request_resource() //get_resource_type()
+{
+    set_resource_path();
     struct stat s;
     if (!stat(this->resource_path.c_str(), &s))
     {
@@ -271,8 +283,18 @@ int request::get_request_resource() //get_resource_type()
         if (!this->PATH_INFO.empty() && current_loc.has_cgi && !PATH_first)
         {
             this->URI = this->PATH_INFO_URI;
-            PATH_first = true;
-            return (get_request_resource());
+            set_resource_path();
+            if (is_file_dir(this->resource_path) != 2)
+                return (err_("PATH_INFO + dir " + this->resource_path), 0);
+            for (std::vector<std::string>::iterator it = current_loc.cgi_extentions.begin(); it != current_loc.cgi_extentions.end(); ++it)
+            {
+                if (this->extension == *it)
+                {
+                    PATH_first = true;
+                    return (get_request_resource());
+                }
+            }
+            return (err_("PATH_INFO + invalid extension"), 0);
         }
         return (err_("Resource not found " + resource_path), 0);
     }

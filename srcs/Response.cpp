@@ -251,7 +251,7 @@ bool response::prepare_autoindex()
     DIR *dirp = opendir(dir.c_str());
 
     if (!dirp)
-        return (perror("opendir failed"), false);
+        return (perror("opendir failed on prepare_autoindex()"), false);
     
     std::stringstream raw_body;
     raw_body    << "<title>Directory listing for "<< dir
@@ -265,9 +265,9 @@ bool response::prepare_autoindex()
         current = dp->d_name;
         if ((current == ".") || (current == ".."))
             continue;
-        current = dir + dp->d_name;
+        current = dir + "/" + dp->d_name;
         if (stat(current.c_str(), &s) < 0)
-            return (closedir(dirp), perror(NULL), false);
+            return (closedir(dirp), err_("stat < 0 on prepare_auto_index()"), false);
 
         if (S_ISDIR(s.st_mode))
             raw_body << "<li><a href=\"" << dp->d_name << "/\">" << dp->d_name << "</a>" << std::endl;
@@ -361,7 +361,9 @@ void response::_20X()
             if (is_dir_has_index_path())
                 prep_body(this->resource_path);
             else if (get_auto_index() && !prepare_autoindex())
-		        throw_err_body("");
+            {
+		        throw_err_body("prepare_autoindex() failed");
+            }
         }
         else if (resource_type == 2)
             prep_body(this->resource_path);
